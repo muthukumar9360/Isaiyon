@@ -339,7 +339,7 @@ export default function HomePage({
   };
 
   return (
-    <div className="w-full mt-6 flex flex-col gap-5 select-none">
+    <div className="w-full flex-1 flex flex-col justify-between mt-6 gap-5 select-none">
       
       {/* 1. Dynamic Welcome Hero Card */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-black p-5 text-white shadow-xl border border-white/10">
@@ -657,7 +657,7 @@ export default function HomePage({
       </div>
 
       {/* 6. Paginated Tracklist Section */}
-      <section className="flex flex-col gap-3">
+      <section className="flex-1 flex flex-col justify-between gap-3">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display -mt-2">
@@ -799,7 +799,7 @@ export default function HomePage({
 
         {/* Pagination Controls - Always display page number even if only 1 page */}
         {displayedTracks.length > 0 && (
-          <div className="flex flex-col items-center gap-2 pt-3 pb-1">
+          <div className="flex flex-col items-center gap-2 pt-2 pb-0 mt-auto">
             <div className="flex items-center justify-between w-full px-1">
               <button
                 type="button"

@@ -787,7 +787,11 @@ export default function App() {
         />
 
         {/* Main Screen Router */}
-        <main className={`w-full pt-16 ${activePage === 'nowplaying' ? 'flex-1 min-h-screen pb-20 px-3 flex flex-col justify-between' : (isBottomPlayerDismissed ? 'pb-20 px-4' : 'pb-28 px-4')}`}>
+        <main className={`w-full pt-16 ${
+          activePage === 'nowplaying' 
+            ? 'flex-1 min-h-screen pb-20 px-3 flex flex-col justify-between' 
+            : `flex-1 flex flex-col ${currentTrack && !isBottomPlayerDismissed ? 'pb-24 px-4' : 'pb-16 px-4'}`
+        }`}>
           {activePage === 'home' && (
             <HomePage 
               tracks={tracks}

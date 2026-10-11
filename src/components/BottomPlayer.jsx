@@ -17,7 +17,7 @@ export default function BottomPlayer({
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-22 left-0 right-0 max-w-md mx-auto px-3 z-40 pointer-events-none">
+    <div className="fixed bottom-16 left-0 right-0 max-w-md mx-auto px-3 z-40 pointer-events-none">
       <aside 
         onClick={onOpenFullPlayer}
         className="pointer-events-auto w-full bg-slate-900/95 hover:bg-slate-900 text-white backdrop-blur-xl border border-slate-800/90 rounded-2xl p-2 shadow-[0_12px_32px_rgba(15,23,42,0.25)] flex items-center justify-between gap-3 select-none cursor-pointer active:scale-[0.99] transition-all duration-200"

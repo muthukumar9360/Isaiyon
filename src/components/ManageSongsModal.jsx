@@ -213,24 +213,7 @@ export default function ManageSongsModal({
         {/* MAIN BODY: Either Edit Mode OR List Mode */}
         {editingTrackId && editForm ? (
           /* EDIT SINGLE TRACK FORM */
-          <div className="flex-1 overflow-y-auto py-3 pr-1">
-            {/* Top Navigation Row */}
-            <div className="flex items-center justify-between mb-3 bg-slate-50/80 p-2 rounded-2xl border border-slate-200/80">
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition-all cursor-pointer shadow-2xs active:scale-95"
-              >
-                <ChevronLeft size={15} />
-                <span>Back to Songs List</span>
-              </button>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-amber-800 bg-amber-100/90 border border-amber-300/60 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <Edit3 size={11} />
-                  <span>Editing Song Details</span>
-                </span>
-              </div>
-            </div>
+          <div className="flex-1 overflow-y-auto py-3">
 
             <form onSubmit={handleSaveEdit} className="flex flex-col gap-3">
               {/* Song Thumbnail & Upload Controls Card - Zero empty space, crystal-clear layout */}
@@ -239,10 +222,10 @@ export default function ManageSongsModal({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <Upload size={13} className="text-amber-500" />
-                    <span>Song Thumbnail & Artwork</span>
+                    <span>Song Thumbnail</span>
                   </span>
                   <span className="text-[10px] font-semibold text-slate-400">
-                    JPG, PNG • Square Recommended
+                    JPG, PNG 
                   </span>
                 </div>
 
@@ -252,7 +235,7 @@ export default function ManageSongsModal({
                     <img 
                       src={editForm.coverUrl || FALLBACK_ARTWORK} 
                       alt="Thumb" 
-                      className="w-20 h-20 rounded-2xl object-cover shadow-sm border border-slate-200 ring-2 ring-amber-400/20"
+                      className="w-30 h-18 rounded-2xl object-cover shadow-sm border border-slate-200 ring-2 ring-amber-400/20"
                       onError={(e) => { e.currentTarget.src = FALLBACK_ARTWORK; }}
                     />
                     <label 
@@ -276,7 +259,7 @@ export default function ManageSongsModal({
                     {/* Primary Upload Button */}
                     <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-98 text-white text-xs font-bold shadow-xs cursor-pointer transition-all">
                       <Upload size={13} strokeWidth={2.5} />
-                      <span>{isUploadingPhoto ? 'Uploading to Archive.org...' : 'Upload / Replace Thumbnail'}</span>
+                      <span>{isUploadingPhoto ? 'Uploading to Archive.org...' : 'Upload Thumbnail'}</span>
                       <input 
                         type="file" 
                         accept="image/*" 
