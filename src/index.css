@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* ==========================================================================
    ISAIYON MUSIC - PURE WHITE THEME & HOLOGRAPHIC DVD DISC
    Ultra-Clean Porcelain Aesthetics + Dynamic Iridescent Laser Disc
@@ -568,7 +570,8 @@ img {
   box-shadow: 0 0 6px rgba(217, 119, 6, 0.4);
 }
 
-.ref-wave-stem.animated.played {
+.ref-wave-stem.animated.played,
+.ref-wave-stem-pulse {
   animation: stemPulse 1.2s ease-in-out infinite alternate;
 }
 
