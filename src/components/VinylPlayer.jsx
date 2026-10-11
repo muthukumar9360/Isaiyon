@@ -73,34 +73,34 @@ export default function VinylPlayer({
   };
 
   return (
-    /* Centered, Bordered Player Card (Direct Height & Padding Control) */
-    <div className="w-full max-w-[380px] h-[calc(100dvh-150px)] mx-auto flex flex-col justify-between items-center px-6 py-6 bg-white rounded-[32px] border-2 border-slate-900/40 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
+    /* Fluid Full-Height Responsive Player (Self-Contained Styling, No Static Pixels) */
+    <div className="w-full max-w-lg h-full mx-auto flex flex-col justify-between items-center px-6 py-4 select-none relative overflow-hidden bg-white">
       
       {/* 1. Header Row: "Now Playing" and action pills */}
-      <div className="w-full flex items-center justify-between mb-2 shrink-0">
+      <div className="w-full flex items-center justify-between pt-1 mb-2 shrink-0">
         <button 
-          className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-amber-600 transition-transform active:scale-95 shadow-2xs"
+          className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-amber-600 transition-all active:scale-95 shadow-xs"
           title="Now Playing"
         >
-          <Music2 size={16} />
+          <Music2 size={18} />
         </button>
 
-        <h1 className="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight">
+        <h1 className="text-base font-extrabold text-slate-800 tracking-tight">
           Now Playing
         </h1>
 
         <button 
-          className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-transform active:scale-95 shadow-2xs"
+          className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all active:scale-95 shadow-xs"
           title="More Options"
         >
-          <MoreHorizontal size={16} />
+          <MoreHorizontal size={18} />
         </button>
       </div>
 
       {/* 2. Centerpiece: Full-bleed Rotating Vinyl Disc with Halo Ring */}
       <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0 py-2">
-        <div className="w-[min(58vw,28vh,220px)] h-[min(58vw,28vh,220px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-amber-500/15 via-amber-400/5 to-amber-600/20 border-2 border-amber-500/25 shadow-[0_14px_36px_rgba(217,119,6,0.18)] flex items-center justify-center shrink-0">
-          <div className={`w-full h-full rounded-full overflow-hidden relative shadow-[0_10px_25px_rgba(15,23,42,0.22)] border-[3px] border-white ref-disc ${isPlaying ? 'rotating' : ''}`}>
+        <div className="w-[min(62vw,28vh)] h-[min(62vw,28vh)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-amber-500/15 via-amber-400/5 to-amber-600/20 border border-amber-500/25 shadow-xl flex items-center justify-center shrink-0">
+          <div className={`w-full h-full rounded-full overflow-hidden relative shadow-lg border-4 border-white ref-disc ${isPlaying ? 'rotating' : ''}`}>
             {/* Full 100% cover image filling entire 360 circle */}
             <img 
               src={currentTrack?.coverUrl || FALLBACK_ARTWORK} 
@@ -113,13 +113,13 @@ export default function VinylPlayer({
               }}
             />
             {/* Center vinyl spindle dot */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-4 border-amber-900 shadow-[0_2px_8px_rgba(0,0,0,0.3)] z-10" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-4 border-amber-800 shadow-md z-10" />
           </div>
         </div>
       </div>
 
       {/* 3. Track Details: Title and Artist */}
-      <div className="w-full text-center px-4 my-1.5 shrink-0">
+      <div className="w-full text-center px-4 my-1 shrink-0">
         <h2 className="text-xl font-black text-slate-900 tracking-tight truncate">
           {currentTrack?.title || 'No Song Selected'}
         </h2>
@@ -130,9 +130,9 @@ export default function VinylPlayer({
       </div>
 
       {/* 4. Sub-Actions: Movie badge and Liked Heart */}
-      <div className="w-full flex items-center justify-between px-3 my-1.5 shrink-0">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 border border-slate-200/80 text-slate-700 text-xs font-semibold shadow-xs">
-          <Film size={13} className="text-amber-600 shrink-0" />
+      <div className="w-full flex items-center justify-between px-2 my-1 shrink-0">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 text-slate-700 text-xs font-semibold shadow-xs">
+          <Film size={14} className="text-amber-600 shrink-0" />
           <span className="truncate max-w-[200px]">{currentTrack?.movie || 'Soundtrack'}</span>
         </div>
 
@@ -148,14 +148,14 @@ export default function VinylPlayer({
       </div>
 
       {/* 5. Soundwave Audio Frequency Seekbar (Touch/Click seekable) */}
-      <div className="w-full flex items-center justify-between gap-2.5 px-2 my-2 shrink-0">
+      <div className="w-full flex items-center justify-between gap-3 px-2 my-1.5 shrink-0">
         <span className="text-xs font-bold text-slate-500 tabular-nums min-w-[34px] text-center">
           {formatTime(currentTime)}
         </span>
 
         <div 
           ref={waveformTrackRef}
-          className="flex-1 h-9 flex items-center justify-between gap-[2.5px] px-1 py-1 cursor-pointer select-none touch-none" 
+          className="flex-1 h-9 flex items-center justify-between gap-1 px-1 py-1 cursor-pointer select-none touch-none" 
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -168,7 +168,7 @@ export default function VinylPlayer({
             return (
               <div 
                 key={i} 
-                className={`flex-1 min-w-[2px] max-w-[4.5px] rounded-full transition-colors duration-200 ${
+                className={`flex-1 rounded-full transition-colors duration-200 ${
                   isPlayed 
                     ? 'bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_8px_rgba(217,119,6,0.45)]' 
                     : 'bg-slate-200'
@@ -188,7 +188,7 @@ export default function VinylPlayer({
       </div>
 
       {/* 6. Media Playback Controls: Previous, Glowing Play/Pause, Next */}
-      <div className="w-full flex items-center justify-center gap-7 my-2 shrink-0">
+      <div className="w-full flex items-center justify-center gap-8 pt-2 pb-6 mb-2 shrink-0">
         <button 
           className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-slate-700 transition-all active:scale-95 hover:scale-105 shadow-sm" 
           onClick={onPrev} 
