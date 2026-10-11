@@ -8,6 +8,7 @@ import VinylPlayer from './components/VinylPlayer';
 import BottomPlayer from './components/BottomPlayer';
 import MovieDetailModal from './components/MovieDetailModal';
 import AdminModal from './components/AdminModal';
+import ManageSongsModal from './components/ManageSongsModal';
 import AddToPlaylistModal from './components/AddToPlaylistModal';
 import LoginView from './components/LoginView';
 import HistoryPage from './components/HistoryPage';
@@ -23,6 +24,7 @@ import {
   onSnapshot, 
   setDoc, 
   addDoc, 
+  updateDoc,
   deleteDoc, 
   serverTimestamp 
 } from './firebase/config';
@@ -60,9 +62,11 @@ export default function App() {
   // Modals & Toasts
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [playlistModalTrack, setPlaylistModalTrack] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const toastTimeoutRef = useRef(null);
+
 
   const handleNavigateToSearch = (queryTerm) => {
     setSearchQuery(queryTerm || '');
@@ -327,6 +331,11 @@ export default function App() {
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => {
+      // If user closed the bottom player, do not auto-advance or resurrect player
+      if (isBottomPlayerDismissed) {
+        setIsPlaying(false);
+        return;
+      }
       if (sleepTimer === 'track') {
         setIsPlaying(false);
         setSleepTimer(0);
@@ -373,7 +382,7 @@ export default function App() {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [currentTrack, queue, repeatMode, volume, playbackRate, sleepTimer, isQueueMode, tracks, listenedHistory]);
+  }, [currentTrack, queue, repeatMode, volume, playbackRate, sleepTimer, isQueueMode, tracks, listenedHistory, isBottomPlayerDismissed]);
 
   // 7. Track change & Lock-screen Media Session setup
   useEffect(() => {
@@ -703,16 +712,41 @@ export default function App() {
     }
   };
 
-  // Admin YouTube Import
+  // Admin YouTube Import (Keep modal open so user sees completion / details)
   const handleSaveTrack = async (trackData) => {
     try {
       await addDoc(collection(db, 'tracks'), {
         ...trackData,
         createdAt: serverTimestamp()
       });
-      setIsAdminModalOpen(false);
+      showToast('Track permanently saved to Vault!');
     } catch (err) {
       alert('Error saving track: ' + err.message);
+      throw err;
+    }
+  };
+
+  // Admin Manage & Edit Vault Tracks
+  const handleUpdateTrack = async (trackId, updatedFields) => {
+    try {
+      await updateDoc(doc(db, 'tracks', trackId), {
+        ...updatedFields,
+        updatedAt: serverTimestamp()
+      });
+      showToast('Track updated in vault successfully!');
+    } catch (err) {
+      alert('Error updating track: ' + err.message);
+      throw err;
+    }
+  };
+
+  const handleDeleteTrack = async (trackId) => {
+    try {
+      await deleteDoc(doc(db, 'tracks', trackId));
+      showToast('Track removed from vault.');
+    } catch (err) {
+      alert('Error deleting track: ' + err.message);
+      throw err;
     }
   };
 
@@ -749,10 +783,11 @@ export default function App() {
         <Navbar 
           user={user} 
           onOpenAdminModal={() => setIsAdminModalOpen(true)} 
+          onOpenManageModal={() => setIsManageModalOpen(true)}
         />
 
         {/* Main Screen Router */}
-        <main className={`flex-1 w-full pt-16 ${activePage === 'nowplaying' ? 'pb-20 px-3 flex flex-col justify-between' : 'pb-36 px-4'}`}>
+        <main className={`w-full pt-16 ${activePage === 'nowplaying' ? 'flex-1 min-h-screen pb-20 px-3 flex flex-col justify-between' : (isBottomPlayerDismissed ? 'pb-20 px-4' : 'pb-28 px-4')}`}>
           {activePage === 'home' && (
             <HomePage 
               tracks={tracks}
@@ -885,7 +920,12 @@ export default function App() {
             user={user}
             onOpenFullPlayer={() => setActivePage('nowplaying')}
             onClose={() => {
-              if (audioRef.current) audioRef.current.pause();
+              if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+                audioRef.current.removeAttribute('src');
+                audioRef.current.load();
+              }
               setIsPlaying(false);
               setIsBottomPlayerDismissed(true);
             }}
@@ -979,6 +1019,16 @@ export default function App() {
           isOpen={isAdminModalOpen}
           onClose={() => setIsAdminModalOpen(false)}
           onSaveTrack={handleSaveTrack}
+          tracks={tracks}
+        />
+
+        {/* Admin Manage & Edit Vault Tracks Modal */}
+        <ManageSongsModal 
+          isOpen={isManageModalOpen}
+          onClose={() => setIsManageModalOpen(false)}
+          tracks={tracks}
+          onUpdateTrack={handleUpdateTrack}
+          onDeleteTrack={handleDeleteTrack}
         />
 
         {/* Add to Playlist Modal */}

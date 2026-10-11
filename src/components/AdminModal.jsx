@@ -1,26 +1,38 @@
-import React, { useState } from 'react';
-import { X, RefreshCw, Upload, CheckCircle2, ExternalLink, Sparkles, Edit3 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, RefreshCw, Upload, CheckCircle2, ExternalLink, Sparkles, Edit3, FolderCheck } from 'lucide-react';
 
 const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className="inline mr-1.5 shrink-0">
-    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
   </svg>
 );
 
 export default function AdminModal({
   isOpen,
   onClose,
-  onSaveTrack
+  onSaveTrack,
+  tracks = []
 }) {
   const [ytUrl, setYtUrl] = useState('');
   const [projectIdentifier] = useState('muthuramalingam_a-vault');
-  
+
+  // Existing movies for folder reuse
+  const existingMovies = useMemo(() => {
+    const movieSet = new Set();
+    tracks.forEach(t => {
+      if (t.movie && typeof t.movie === 'string' && t.movie.trim()) {
+        movieSet.add(t.movie.trim());
+      }
+    });
+    return Array.from(movieSet).sort((a, b) => a.localeCompare(b));
+  }, [tracks]);
+
   // Two-step flow: 'input' -> 'preview_edit' -> 'uploading' -> 'done'
   const [stage, setStage] = useState('input');
   const [isFetching, setIsFetching] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-  
+
   // Editable fields
   const [editMeta, setEditMeta] = useState({
     title: '',
@@ -64,7 +76,7 @@ export default function AdminModal({
           projectIdentifier
         });
         setStage('preview_edit');
-        setStatusMessage('Information fetched! Review or edit details below before uploading.');
+        setStatusMessage('Review or edit details below before uploading.');
       } else {
         setStatusMessage('Fetch error: ' + (data.error || 'Could not extract metadata'));
       }
@@ -82,8 +94,15 @@ export default function AdminModal({
     setStatusMessage('1/2 Downloading audio & uploading to Archive.org folders ({Movie}/{Song}/)...');
 
     try {
+      // Reuse existing movie folder name if matched
+      const matchedMovie = existingMovies.find(
+        m => m.toLowerCase() === (editMeta.movie || '').trim().toLowerCase()
+      );
+      const canonicalMovie = matchedMovie || (editMeta.movie || '').trim();
+
       const payload = {
         ...editMeta,
+        movie: canonicalMovie,
         url: ytUrl,
         projectIdentifier
       };
@@ -99,8 +118,8 @@ export default function AdminModal({
         setStatusMessage('2/2 Saving track to your Firebase database...');
 
         const trackToSave = {
-          title: editMeta.title,
-          movie: editMeta.movie,
+          title: editMeta.title.trim(),
+          movie: canonicalMovie,
           actors: editMeta.actors,
           composer: editMeta.composer,
           artist: editMeta.artist,
@@ -135,26 +154,43 @@ export default function AdminModal({
     setStatusMessage('');
   };
 
+  const handleCustomImagePick = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const b64 = reader.result;
+      setEditMeta(prev => ({
+        ...prev,
+        thumbnailUrl: b64,
+        customCoverBase64: b64
+      }));
+      setStatusMessage('Custom photo selected! It will be uploaded into Archive.org.');
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
-    <div 
-      className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]" 
-      onClick={onClose}
+    <div
+      className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
     >
-      <div 
-        className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto relative" 
+      <div
+        className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto relative"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Header - Only closes when clicking the X button */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
           <div className="flex items-center gap-2">
             <YoutubeIcon size={20} />
             <h3 className="text-sm font-extrabold text-slate-900 font-display">
-              YouTube to Archive Importer
+              YouTube Song Importer
             </h3>
           </div>
-          <button 
+          <button
+            type="button"
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90"
+            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+            title="Close Importer"
           >
             <X size={15} />
           </button>
@@ -163,16 +199,13 @@ export default function AdminModal({
         {/* STAGE 1: Paste Link & Fetch */}
         {stage === 'input' && (
           <form onSubmit={handleFetchInfo} className="flex flex-col gap-3">
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Paste any Tamil / YouTube song URL. We will extract song credits so you can review before uploading to your vault.
-            </p>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                YouTube Song URL *
+                * Paste YouTube Song URL
               </label>
-              <input 
-                type="url" 
+              <input
+                type="url"
                 required
                 placeholder="https://www.youtube.com/watch?v=..."
                 value={ytUrl}
@@ -182,13 +215,8 @@ export default function AdminModal({
               />
             </div>
 
-            <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/60 text-xs">
-              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">Sound Vault Destination</span>
-              <span className="text-amber-900 font-semibold">{projectIdentifier}</span>
-            </div>
-
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isFetching}
               className="mt-1 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
             >
@@ -199,7 +227,6 @@ export default function AdminModal({
                 </>
               ) : (
                 <>
-                  <Sparkles size={14} />
                   <span>Fetch Song Details & Preview</span>
                 </>
               )}
@@ -217,34 +244,86 @@ export default function AdminModal({
               </span>
             </div>
 
-            {/* Thumbnail Preview */}
-            {editMeta.thumbnailUrl && (
-              <div className="flex gap-3 items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
-                <img src={editMeta.thumbnailUrl} alt="Thumb" className="w-14 h-14 rounded-lg object-cover shadow-2xs shrink-0" />
-                <div className="text-[11px] text-slate-500 min-w-0">
-                  <div className="font-bold text-slate-700">Folder destination:</div>
-                  <code className="text-[10px] text-amber-700 block truncate">{projectIdentifier}/{editMeta.movie || 'Movie'}/{editMeta.title || 'Song'}/</code>
+            {/* Full Destination Path Preview & Change Thumbnail */}
+            <div className="flex flex-col gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200/80">
+              <div className="flex gap-2.5 items-center">
+                <div className="relative group shrink-0">
+                  <img 
+                    src={editMeta.thumbnailUrl || '/logo.png'} 
+                    alt="Thumb" 
+                    className="w-14 h-14 rounded-xl object-cover shadow-2xs border border-slate-200" 
+                  />
+                  <label 
+                    className="absolute inset-0 bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[9px] font-bold cursor-pointer"
+                    title="Change thumbnail photo"
+                  >
+                    <Upload size={12} />
+                    <span>Change</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleCustomImagePick}
+                    />
+                  </label>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-slate-700">Destination:</span>
+                    <label className="text-[10px] font-bold text-amber-600 hover:text-amber-700 cursor-pointer flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/60 transition-all hover:bg-amber-100">
+                      <Upload size={10} />
+                      <span>{editMeta.customCoverBase64 ? 'Photo Selected' : 'Change Photo'}</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleCustomImagePick}
+                      />
+                    </label>
+                  </div>
+                  <div className="bg-amber-50/90 border border-amber-200/70 p-1.5 rounded-xl">
+                    <code className="text-[11px] text-amber-900 font-mono font-bold break-all whitespace-normal select-all block leading-tight">
+                      {projectIdentifier}/{(existingMovies.find(m => m.toLowerCase() === (editMeta.movie || '').trim().toLowerCase()) || editMeta.movie || 'Movie')}/{(editMeta.title || 'Song')}/
+                    </code>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Existing Movies Datalist */}
+            <datalist id="admin-existing-movies">
+              {existingMovies.map(m => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
 
             <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-bold text-slate-600">Movie / Album *</label>
-              <input 
-                type="text" 
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-slate-600">Movie / Album *</label>
+                {existingMovies.find(m => m.toLowerCase() === (editMeta.movie || '').trim().toLowerCase()) && (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                    <FolderCheck size={11} />
+                    Reusing folder: {existingMovies.find(m => m.toLowerCase() === (editMeta.movie || '').trim().toLowerCase())}
+                  </span>
+                )}
+              </div>
+              <input
+                type="text"
                 required
-                placeholder="e.g. Unnai Ninaithu or Yaaradi Nee Mohini"
+                list="admin-existing-movies"
+                placeholder="e.g. Kandukondain Kandukondain or Yaaradi Nee Mohini"
                 value={editMeta.movie}
                 onChange={e => setEditMeta({ ...editMeta, movie: e.target.value })}
                 disabled={isUploading}
-                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
+                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
               />
             </div>
 
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-slate-600">Song Title *</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 required
                 placeholder="e.g. Ennai Thalaatiya Varuvala"
                 value={editMeta.title}
@@ -256,8 +335,8 @@ export default function AdminModal({
 
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-slate-600">Starring / Actors</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="e.g. Suriya, Laila or Dhanush, Nayanthara"
                 value={editMeta.actors}
                 onChange={e => setEditMeta({ ...editMeta, actors: e.target.value })}
@@ -269,8 +348,8 @@ export default function AdminModal({
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-bold text-slate-600">Music Director</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="e.g. Sirpy, Yuvan"
                   value={editMeta.composer}
                   onChange={e => setEditMeta({ ...editMeta, composer: e.target.value })}
@@ -281,8 +360,8 @@ export default function AdminModal({
 
               <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-bold text-slate-600">Singers</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="e.g. Hariharan"
                   value={editMeta.artist}
                   onChange={e => setEditMeta({ ...editMeta, artist: e.target.value })}
@@ -294,7 +373,7 @@ export default function AdminModal({
 
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-bold text-slate-600">Mood / Category</label>
-              <select 
+              <select
                 value={editMeta.mood}
                 onChange={e => setEditMeta({ ...editMeta, mood: e.target.value })}
                 disabled={isUploading}
@@ -308,8 +387,8 @@ export default function AdminModal({
             </div>
 
             <div className="flex gap-2 mt-2">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setStage('input')}
                 disabled={isUploading}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all active:scale-95"
@@ -317,8 +396,8 @@ export default function AdminModal({
                 Back
               </button>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isUploading}
                 className="flex-1 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
               >
@@ -350,9 +429,9 @@ export default function AdminModal({
             </p>
 
             <div className="flex flex-col gap-2 mt-2">
-              <a 
-                href={uploadResult.archiveDetailsUrl} 
-                target="_blank" 
+              <a
+                href={uploadResult.archiveDetailsUrl}
+                target="_blank"
                 rel="noreferrer"
                 className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs hover:bg-slate-800 transition-all active:scale-95"
               >
@@ -360,11 +439,18 @@ export default function AdminModal({
                 <ExternalLink size={13} />
               </a>
 
-              <button 
+              <button
                 onClick={resetAll}
-                className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-all active:scale-95"
+                className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-all active:scale-95 cursor-pointer"
               >
                 + Add Another Song
+              </button>
+
+              <button
+                onClick={onClose}
+                className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold hover:bg-slate-200 transition-all active:scale-95 cursor-pointer"
+              >
+                Done & Close
               </button>
             </div>
           </div>
@@ -372,11 +458,10 @@ export default function AdminModal({
 
         {/* Status Message */}
         {statusMessage && (
-          <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${
-            statusMessage.includes('Success') || statusMessage.includes('permanently')
+          <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${statusMessage.includes('Success') || statusMessage.includes('permanently')
               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/50'
               : 'bg-slate-50 text-slate-600 border border-slate-100'
-          }`}>
+            }`}>
             {statusMessage}
           </div>
         )}

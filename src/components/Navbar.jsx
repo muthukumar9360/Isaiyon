@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Plus, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink } from 'lucide-react';
+import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink } from 'lucide-react';
 import { 
   auth, 
   googleProvider, 
@@ -53,7 +53,7 @@ function getAuthErrorMessage(err) {
   }
 }
 
-export default function Navbar({ user, onOpenAdminModal }) {
+export default function Navbar({ user, onOpenAdminModal, onOpenManageModal }) {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -155,16 +155,27 @@ export default function Navbar({ user, onOpenAdminModal }) {
             </button>
           )}
 
-          {/* Discreet Admin Button: ONLY visible for perumpatayans@gmail.com */}
+          {/* Discreet Admin Actions: ONLY visible for perumpatayans@gmail.com */}
           {isAdmin && (
-            <button 
-              className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-md font-bold shadow-xs hover:from-amber-600 hover:to-amber-700 transition-all active:scale-95 cursor-pointer" 
-              onClick={onOpenAdminModal}
-              title="Import YouTube track to Archive.org"
-            >
-              <Plus size={20} strokeWidth={3} />
-              <span>Add</span>
-            </button>
+            <div className="flex items-center gap-1">
+              <button 
+                type="button"
+                className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-white flex items-center justify-center shadow-xs hover:from-amber-600 hover:to-amber-700 transition-all active:scale-90 cursor-pointer mr-0.5" 
+                onClick={onOpenAdminModal}
+                title="Add Track from YouTube to Archive.org"
+              >
+                <Plus size={18} strokeWidth={2.8} />
+              </button>
+
+              <button 
+                type="button"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 flex items-center justify-center shadow-2xs transition-all active:scale-90 cursor-pointer" 
+                onClick={onOpenManageModal}
+                title="Manage & Edit Vault Songs"
+              >
+                <SlidersHorizontal size={15} strokeWidth={2.2} />
+              </button>
+            </div>
           )}
 
           {/* Google Authentication */}

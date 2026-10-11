@@ -101,6 +101,46 @@ def parse_rich_metadata(info):
     music_match = re.search(r'(?:Music|Composer|Music Director)\s*[:\-]\s*([^\n\r,]+)', desc, re.I)
     if music_match:
         composer = music_match.group(1).strip()
+    elif not composer or composer.lower() in ['music director', 'soundtrack', '']:
+        known_composers = [
+            (r'A\.?\s*R\.?\s*Rahman|AR\s*Rahman', 'A. R. Rahman'),
+            (r'Harris\s*Jayaraj', 'Harris Jayaraj'),
+            (r'Yuvan\s*Shankar\s*Raja|Yuvan', 'Yuvan Shankar Raja'),
+            (r'Anirudh\s*Ravichander|Anirudh', 'Anirudh Ravichander'),
+            (r'Ilaiyaraaja|Ilayaraja|Ilaiyaraja', 'Ilaiyaraaja'),
+            (r'D\.?\s*Imman|Imman', 'D. Imman'),
+            (r'Santhosh\s*Narayanan', 'Santhosh Narayanan'),
+            (r'G\.?\s*V\.?\s*Prakash', 'G. V. Prakash Kumar'),
+            (r'Deva', 'Deva'),
+            (r'Vidyasagar', 'Vidyasagar'),
+            (r'Sirpy', 'Sirpy')
+        ]
+        full_text = title + " " + desc
+        for pat, cname in known_composers:
+            if re.search(r'\b' + pat + r'\b', full_text, re.I):
+                composer = cname
+                break
+
+    # Cast / Actors
+    cast_match = re.search(r'(?:Starring|Cast|Actors?)\s*[:\-]\s*([^\n\r]+)', desc, re.I)
+    if cast_match:
+        actors = cast_match.group(1).strip()
+    elif not actors or actors.lower() in ['featured stars', 'featured cast', '']:
+        known_actors = [
+            'Ajith Kumar', 'Ajith', 'Thalapathy Vijay', 'Vijay', 'Suriya', 'Dhanush',
+            'Sivakarthikeyan', 'Vikram', 'Rajinikanth', 'Kamal Haasan', 'Tabu',
+            'Aishwarya Rai', 'Nayanthara', 'Trisha', 'Samantha', 'Simran', 'Jyothika',
+            'Sneha', 'Laila', 'Manisha Koirala', 'Raghuvaran', 'Prashanth', 'Madhavan'
+        ]
+        found_actors = []
+        full_text = title + " " + desc
+        for aname in known_actors:
+            if re.search(r'\b' + re.escape(aname) + r'\b', full_text, re.I):
+                # Avoid duplicate like Ajith and Ajith Kumar
+                if not any(aname in f for f in found_actors):
+                    found_actors.append(aname)
+        if found_actors:
+            actors = ", ".join(found_actors[:4])
 
     # Singers
     singers_match = re.search(r'(?:Singers?|Vocals?|Artist)\s*[:\-]\s*([^\n\r,]+)', desc, re.I)
@@ -150,13 +190,11 @@ def extract_info_only(youtube_url):
         return parse_rich_metadata(info)
 
 def download_audio_and_thumb(youtube_url, vid_id):
-    ytdl_exe = r"C:\Users\a.muthuramalingam\AppData\Local\Programs\Python\Python312\Scripts\yt-dlp.exe"
     out_template = os.path.join(DOWNLOADS_DIR, f"{vid_id}.%(ext)s")
     
     cmd = [
-        ytdl_exe,
-        "--js-runtimes", "node:node",
-        "--extractor-args", "youtube:player_client=android",
+        sys.executable, "-m", "yt_dlp",
+        "--extractor-args", "youtube:player_client=android,web",
         "-f", "ba/b",
         "--write-thumbnail",
         "-o", out_template,
@@ -266,74 +304,167 @@ class BridgeHTTPHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(content_length).decode('utf-8')
-        data = json.loads(body) if body else {}
-
-        # 1. Preview / Extract Info endpoint (fast, download=False)
-        if self.path == '/api/extract-info':
-            url = data.get('url')
-            if not url:
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8')
+            try:
+                data = json.loads(body) if body else {}
+            except Exception as json_err:
                 self.send_response(400)
                 self._set_cors_headers()
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({'error': 'Missing YouTube URL'}).encode('utf-8'))
-                return
-            try:
-                info = extract_info_only(url)
-                self.send_response(200)
-                self._set_cors_headers()
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'success': True, 'data': info}).encode('utf-8'))
-            except Exception as e:
-                self.send_response(500)
-                self._set_cors_headers()
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
-
-        # 2. Confirm & Upload endpoint
-        elif self.path == '/api/upload-track':
-            url = data.get('url')
-            vid_id = data.get('id') or 'video'
-            movie = data.get('movie') or 'Singles'
-            title = data.get('title') or 'Unknown Title'
-            proj_id = data.get('projectIdentifier') or DEFAULT_PROJECT_IDENTIFIER
-
-            if not url:
-                self.send_response(400)
-                self._set_cors_headers()
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'error': 'Missing URL'}).encode('utf-8'))
+                self.wfile.write(json.dumps({'error': f'Invalid JSON payload: {str(json_err)}'}).encode('utf-8'))
                 return
 
-            try:
-                audio_file, thumb_file = download_audio_and_thumb(url, vid_id)
-                res = upload_to_archive_nested(audio_file, thumb_file, movie, title, data, proj_id)
-                
-                # Combine original edited metadata with uploaded URLs
-                full_result = {
-                    **data,
-                    **res
-                }
+            # 1. Preview / Extract Info endpoint (fast, download=False)
+            if self.path == '/api/extract-info':
+                url = data.get('url')
+                if not url:
+                    self.send_response(400)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': 'Missing YouTube URL'}).encode('utf-8'))
+                    return
+                try:
+                    info = extract_info_only(url)
+                    self.send_response(200)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'success': True, 'data': info}).encode('utf-8'))
+                except Exception as e:
+                    self.send_response(500)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
 
-                self.send_response(200)
-                self._set_cors_headers()
-                self.send_header('Content-Type', 'application/json')
+            # 2. Confirm & Upload endpoint
+            elif self.path == '/api/upload-track':
+                url = data.get('url')
+                vid_id = data.get('id') or 'video'
+                movie = data.get('movie') or 'Singles'
+                title = data.get('title') or 'Unknown Title'
+                proj_id = data.get('projectIdentifier') or DEFAULT_PROJECT_IDENTIFIER
+
+                if not url:
+                    self.send_response(400)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': 'Missing URL'}).encode('utf-8'))
+                    return
+
+                try:
+                    audio_file, thumb_file = download_audio_and_thumb(url, vid_id)
+                    
+                    # If custom thumbnail provided, override downloaded thumb
+                    if data.get('customCoverBase64'):
+                        import base64
+                        c_b64 = data['customCoverBase64']
+                        if ',' in c_b64:
+                            c_b64 = c_b64.split(',', 1)[1]
+                        custom_thumb = os.path.join(DOWNLOADS_DIR, f"{vid_id}_custom.jpg")
+                        with open(custom_thumb, 'wb') as f:
+                            f.write(base64.b64decode(c_b64))
+                        thumb_file = custom_thumb
+
+                    res = upload_to_archive_nested(audio_file, thumb_file, movie, title, data, proj_id)
+                    
+                    # Combine original edited metadata with uploaded URLs
+                    full_result = {
+                        **data,
+                        **res
+                    }
+
+                    self.send_response(200)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps(full_result).encode('utf-8'))
+                except Exception as e:
+                    self.send_response(500)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
+
+            # 3. Update / Replace Cover Thumbnail in Archive.org
+            elif self.path == '/api/update-cover':
+                movie = data.get('movie') or 'Singles'
+                title = data.get('title') or 'Unknown Title'
+                image_base64 = data.get('imageBase64')
+                custom_url = data.get('coverUrl')
+                proj_id = data.get('projectIdentifier') or DEFAULT_PROJECT_IDENTIFIER
+
+                movie_slug = slugify(movie)
+                song_slug = slugify(title)
+                remote_thumb_path = f"{movie_slug}/{song_slug}/{song_slug}.jpg"
+                temp_thumb = os.path.join(DOWNLOADS_DIR, f"temp_{song_slug}_{int(time.time())}.jpg")
+
+                if image_base64:
+                    import base64
+                    if ',' in image_base64:
+                        image_base64 = image_base64.split(',', 1)[1]
+                    img_bytes = base64.b64decode(image_base64)
+                    with open(temp_thumb, 'wb') as f:
+                        f.write(img_bytes)
+                elif custom_url:
+                    import urllib.request
+                    urllib.request.urlretrieve(custom_url, temp_thumb)
+                else:
+                    self.send_response(400)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': 'No image provided'}).encode('utf-8'))
+                    return
+
+                try:
+                    creds = get_ia_credentials()
+                    session = ia.get_session({
+                        's3': {
+                            'access': creds['access_key'],
+                            'secret': creds['secret_key']
+                        }
+                    })
+                    item = session.get_item(proj_id)
+                    item.upload({remote_thumb_path: temp_thumb}, verbose=True)
+
+                    direct_thumb_url = f"https://archive.org/download/{proj_id}/{remote_thumb_path}?t={int(time.time())}"
+                    
+                    self.send_response(200)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        'success': True,
+                        'coverUrl': direct_thumb_url,
+                        'remotePath': remote_thumb_path
+                    }).encode('utf-8'))
+                except Exception as e:
+                    self.send_response(500)
+                    self._set_cors_headers()
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
+                finally:
+                    if os.path.exists(temp_thumb):
+                        try:
+                            os.remove(temp_thumb)
+                        except Exception:
+                            pass
+            else:
+                self.send_response(404)
                 self.end_headers()
-                self.wfile.write(json.dumps(full_result).encode('utf-8'))
-            except Exception as e:
-                self.send_response(500)
-                self._set_cors_headers()
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
-        else:
-            self.send_response(404)
+        except Exception as top_err:
+            self.send_response(500)
+            self._set_cors_headers()
+            self.send_header('Content-Type', 'application/json')
             self.end_headers()
+            self.wfile.write(json.dumps({'error': str(top_err)}).encode('utf-8'))
 
 if __name__ == "__main__":
     port = 5001

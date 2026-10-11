@@ -53,6 +53,14 @@
   scrollbar-width: none;
 }
 
+/* Hide browser default datalist dropdown indicator / downward arrows */
+input::-webkit-calendar-picker-indicator {
+  display: none !important;
+  opacity: 0 !important;
+  -webkit-appearance: none !important;
+  pointer-events: none;
+}
+
 /* Custom Keyframe Animations for Vinyl & Audio Waves */
 @keyframes spinDisc {
   from {

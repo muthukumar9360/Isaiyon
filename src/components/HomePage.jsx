@@ -121,17 +121,16 @@ const ARTIST_SPOTLIGHTS = [
   }
 ];
 
-// Curated Genre & Vibe Stations (Grid Layout)
+// Curated Genre & Vibe Stations (High-Aesthetic Luminous Palettes)
 const GENRE_STATIONS = [
   {
     id: 'melody',
     name: 'Melody & Soul',
     subtitle: 'Calm & Heartfelt',
     query: 'Melody',
-    gradient: 'from-rose-500 to-pink-600',
-    bg: 'bg-rose-50/70',
-    border: 'border-rose-200/80',
-    text: 'text-rose-950',
+    gradient: 'from-rose-600 via-pink-600 to-purple-950',
+    glow: 'shadow-rose-500/20 group-hover:shadow-rose-500/40',
+    border: 'border-rose-400/30',
     icon: Heart
   },
   {
@@ -139,10 +138,9 @@ const GENRE_STATIONS = [
     name: 'Mass & Folk',
     subtitle: 'High Energy Anthems',
     query: 'Mass',
-    gradient: 'from-amber-500 to-orange-600',
-    bg: 'bg-amber-50/70',
-    border: 'border-amber-200/80',
-    text: 'text-amber-950',
+    gradient: 'from-amber-500 via-orange-600 to-stone-950',
+    glow: 'shadow-amber-500/20 group-hover:shadow-amber-500/40',
+    border: 'border-amber-400/30',
     icon: Flame
   },
   {
@@ -150,21 +148,19 @@ const GENRE_STATIONS = [
     name: 'Love & Romance',
     subtitle: 'Soulful Moments',
     query: 'Love',
-    gradient: 'from-red-500 to-rose-600',
-    bg: 'bg-red-50/70',
-    border: 'border-red-200/80',
-    text: 'text-red-950',
+    gradient: 'from-red-600 via-rose-600 to-slate-950',
+    glow: 'shadow-red-500/20 group-hover:shadow-red-500/40',
+    border: 'border-red-400/30',
     icon: Sparkles
   },
   {
     id: 'failure',
     name: 'Soul Therapy',
-    subtitle: 'Deep Emotions',
+    subtitle: 'Deep Emotions & Late Nights',
     query: 'Failure',
-    gradient: 'from-indigo-500 to-purple-600',
-    bg: 'bg-indigo-50/70',
-    border: 'border-indigo-200/80',
-    text: 'text-indigo-950',
+    gradient: 'from-indigo-600 via-purple-700 to-slate-950',
+    glow: 'shadow-indigo-500/20 group-hover:shadow-indigo-500/40',
+    border: 'border-indigo-400/30',
     icon: TrendingUp
   },
   {
@@ -172,10 +168,9 @@ const GENRE_STATIONS = [
     name: '2000s Nostalgia',
     subtitle: 'Golden Vault Hits',
     query: '200',
-    gradient: 'from-emerald-500 to-teal-600',
-    bg: 'bg-emerald-50/70',
-    border: 'border-emerald-200/80',
-    text: 'text-emerald-950',
+    gradient: 'from-emerald-600 via-teal-700 to-stone-950',
+    glow: 'shadow-emerald-500/20 group-hover:shadow-emerald-500/40',
+    border: 'border-emerald-400/30',
     icon: Disc3
   },
   {
@@ -183,10 +178,9 @@ const GENRE_STATIONS = [
     name: 'Acoustic Bliss',
     subtitle: 'Breeze & Guitar Strings',
     query: 'Acoustic',
-    gradient: 'from-cyan-500 to-blue-600',
-    bg: 'bg-cyan-50/70',
-    border: 'border-cyan-200/80',
-    text: 'text-cyan-950',
+    gradient: 'from-cyan-500 via-sky-600 to-slate-950',
+    glow: 'shadow-cyan-500/20 group-hover:shadow-cyan-500/40',
+    border: 'border-cyan-400/30',
     icon: Music
   }
 ];
@@ -565,17 +559,15 @@ export default function HomePage({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display flex items-center gap-1.5">
-              <Radio size={18} className="text-rose-500" />
               <span>Genres & Vibes</span>
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Tap any vibe to explore songs
+              Curated mood portals & sonic atmospheres
             </p>
           </div>
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">All Vibes</span>
         </div>
 
-        {/* 2-Column Responsive Bento Grid */}
+        {/* 2-Column Responsive Bento Grid with Stylish Gradient Glass Cards */}
         <div className="grid grid-cols-2 gap-2.5">
           {GENRE_STATIONS.map(station => {
             const Icon = station.icon;
@@ -585,24 +577,37 @@ export default function HomePage({
               <div
                 key={station.id}
                 onClick={() => onNavigateToSearch?.(station.query)}
-                className={`p-3 rounded-2xl border ${station.border} ${station.bg} hover:shadow-md transition-all active:scale-95 cursor-pointer flex flex-col justify-between gap-3 group shadow-2xs relative overflow-hidden`}
+                className={`relative p-3.5 rounded-2xl bg-gradient-to-br ${station.gradient} border ${station.border} shadow-md ${station.glow} hover:scale-[1.02] hover:shadow-xl transition-all duration-200 active:scale-95 cursor-pointer flex flex-col justify-between gap-3 group overflow-hidden`}
               >
-                <div className="flex items-center justify-between">
-                  <div className={`w-8 h-8 rounded-xl bg-gradient-to-tr ${station.gradient} flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform`}>
-                    <Icon size={15} />
+                {/* Decorative Ambient Radial Spot */}
+                <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-300" />
+
+                {/* Top Row: Glowing Icon Badge + Count Tag */}
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs group-hover:bg-white/25 transition-all">
+                    <Icon size={16} strokeWidth={2.5} />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-600 bg-white/80 backdrop-blur-xs px-2 py-0.5 rounded-md border border-slate-200/60">
-                    {count > 0 ? `${count} songs` : 'Curated'}
+                  <span className="text-[10px] font-bold text-white/95 bg-black/30 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
+                    {count > 0 ? `${count} songs` : 'Explore'}
                   </span>
                 </div>
 
-                <div>
-                  <h4 className={`text-xs sm:text-sm font-black font-display truncate ${station.text}`}>
+                {/* Bottom Row: Title, Subtitle, and Soundwave Graphic */}
+                <div className="relative z-10">
+                  <h4 className="text-xs sm:text-sm font-black font-display text-white tracking-wide truncate drop-shadow-xs group-hover:translate-x-0.5 transition-transform">
                     {station.name}
                   </h4>
-                  <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
+                  <p className="text-[10px] text-white/75 font-medium truncate mt-0.5">
                     {station.subtitle}
                   </p>
+
+                  {/* Micro Visual Soundwave Indicator */}
+                  <div className="flex items-end gap-0.5 h-2 mt-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <span className="w-0.5 h-1.5 bg-white/90 rounded-full animate-pulse" />
+                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:150ms]" />
+                    <span className="w-0.5 h-1 bg-white/90 rounded-full animate-pulse [animation-delay:300ms]" />
+                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:75ms]" />
+                  </div>
                 </div>
               </div>
             );
@@ -663,7 +668,7 @@ export default function HomePage({
                 : 'All Vault Songs'
               }
             </h3>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-slate-500 font-medium mb-2">
               Page {currentPage} of {totalPages} • {displayedTracks.length} total songs
             </p>
           </div>
@@ -792,8 +797,8 @@ export default function HomePage({
           )}
         </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
+        {/* Pagination Controls - Always display page number even if only 1 page */}
+        {displayedTracks.length > 0 && (
           <div className="flex flex-col items-center gap-2 pt-3 pb-1">
             <div className="flex items-center justify-between w-full px-1">
               <button
@@ -810,9 +815,9 @@ export default function HomePage({
                 <span>Previous</span>
               </button>
 
-              {/* Numbered Page Buttons */}
+              {/* Numbered Page Buttons & Badge */}
               <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                {Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1)
                   .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
                   .map((pageNum, idx, arr) => (
                     <React.Fragment key={pageNum}>
@@ -836,10 +841,10 @@ export default function HomePage({
 
               <button
                 type="button"
-                disabled={currentPage === totalPages}
+                disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  currentPage === totalPages
+                  currentPage >= totalPages
                     ? 'opacity-40 cursor-not-allowed text-slate-400 bg-slate-100'
                     : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
                 }`}
@@ -848,10 +853,6 @@ export default function HomePage({
                 <ChevronRight size={15} />
               </button>
             </div>
-
-            <p className="text-xs font-medium text-slate-400">
-              Showing {(currentPage - 1) * SONGS_PER_PAGE + 1} - {Math.min(currentPage * SONGS_PER_PAGE, displayedTracks.length)} of {displayedTracks.length} songs
-            </p>
           </div>
         )}
       </section>
