@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons.svg', 'robots.txt'],
+      includeAssets: ['favicon.svg', 'icons.svg', 'robots.txt', 'pwa-icon.png', 'pwa-icon-192.png', 'pwa-icon-512.png'],
       manifest: {
         name: 'Isaiyon Music',
         short_name: 'Isaiyon',
@@ -22,13 +22,13 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/logo.png',
+            src: '/pwa-icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/logo.png',
+            src: '/pwa-icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

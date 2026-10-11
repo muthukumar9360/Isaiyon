@@ -39,17 +39,37 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.9);
+  const [volume, setVolume] = useState(() => {
+    try {
+      const saved = localStorage.getItem('isaiyon_volume');
+      return saved !== null ? parseFloat(saved) : 0.9;
+    } catch (_) {
+      return 0.9;
+    }
+  });
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [sleepTimer, setSleepTimer] = useState(0);
   const [isShuffle, setIsShuffle] = useState(false);
-  const [repeatMode, setRepeatMode] = useState('all'); // 'off' | 'all' | 'one'
+  const [repeatMode, setRepeatMode] = useState(() => {
+    try {
+      return localStorage.getItem('isaiyon_repeat_mode') || 'all';
+    } catch (_) {
+      return 'all';
+    }
+  });
   const [favorites, setFavorites] = useState([]);
   const [savedAlbums, setSavedAlbums] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
   const [listenedHistory, setListenedHistory] = useState([]);
-  const [isQueueMode, setIsQueueMode] = useState(true);
+  const [isQueueMode, setIsQueueMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('isaiyon_queue_mode');
+      return saved !== null ? saved === 'true' : true;
+    } catch (_) {
+      return true;
+    }
+  });
   const [searchQuery, setSearchQuery] = useState('');
   
   // Navigation: 'home' | 'search' | 'queue' | 'history' | 'library' | 'nowplaying'
@@ -61,6 +81,35 @@ export default function App() {
   const [queue, setQueue] = useState([]);
   const [queueHistory, setQueueHistory] = useState([]);
   const [miniPosition, setMiniPosition] = useState({ x: 0, y: 0 });
+
+  // Sync player preferences and queue changes to localStorage
+  useEffect(() => {
+    try {
+      if (queue.length > 0) {
+        localStorage.setItem('isaiyon_saved_queue', JSON.stringify(queue.map(t => t.id)));
+      } else {
+        localStorage.removeItem('isaiyon_saved_queue');
+      }
+    } catch (_) {}
+  }, [queue]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('isaiyon_queue_mode', String(isQueueMode));
+    } catch (_) {}
+  }, [isQueueMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('isaiyon_volume', String(volume));
+    } catch (_) {}
+  }, [volume]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('isaiyon_repeat_mode', repeatMode);
+    } catch (_) {}
+  }, [repeatMode]);
 
   // Track previous active page so minimizing VinylPlayer returns back to where user was
   const lastActivePageRef = useRef('home');
@@ -250,6 +299,18 @@ export default function App() {
             if (idx !== -1) {
               setCurrentTrackIndex((prev) => (prev === null ? idx : prev));
               setIsBottomPlayerDismissed(false);
+            }
+          }
+
+          // Restore queue from localStorage
+          const savedQueueRaw = localStorage.getItem('isaiyon_saved_queue');
+          if (savedQueueRaw) {
+            const savedIds = JSON.parse(savedQueueRaw);
+            if (Array.isArray(savedIds)) {
+              const restoredQueue = savedIds
+                .map(id => loadedTracks.find(t => t.id === id))
+                .filter(Boolean);
+              setQueue(prev => prev.length === 0 ? restoredQueue : prev);
             }
           }
         } catch (_) {}
@@ -547,7 +608,8 @@ export default function App() {
         }
         handleSelectTrack(nextTrack, false);
       } else {
-        showToast("⚠️ Queue is empty!");
+        // Queue finished -> smoothly convert to random mode without any warning
+        setIsQueueMode(false);
         const randomTrack = getRandomTrack();
         if (randomTrack) handleSelectTrack(randomTrack, false);
       }
@@ -721,7 +783,7 @@ export default function App() {
         handleSelectTrack(nextTrack, false);
         return;
       } else {
-        showToast("⚠️ Queue is empty!");
+        setIsQueueMode(false);
         const randomTrack = getRandomTrack();
         if (randomTrack) {
           handleSelectTrack(randomTrack, false);
@@ -778,7 +840,7 @@ export default function App() {
         handleSelectTrack(prevTrack, false);
         return;
       } else {
-        showToast("⚠️ Queue is empty!");
+        setIsQueueMode(false);
         const randomTrack = getRandomTrack();
         if (randomTrack) {
           handleSelectTrack(randomTrack, false);
