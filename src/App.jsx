@@ -419,7 +419,7 @@ export default function App() {
       />
 
       {/* Main Screen Router */}
-      <main className="mobile-content">
+      <main className={`mobile-content ${activePage === 'nowplaying' ? 'nowplaying-content' : ''}`}>
         {activePage === 'home' && (
           <HomePage 
             tracks={tracks}

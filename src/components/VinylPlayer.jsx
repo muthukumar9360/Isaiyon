@@ -43,11 +43,35 @@ export default function VinylPlayer({
   const progressRatio = duration > 0 ? currentTime / duration : 0;
   const progressPercent = Math.min(100, Math.max(0, progressRatio * 100));
 
-  const handleWaveformClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+  const waveformTrackRef = React.useRef(null);
+  const isDraggingRef = React.useRef(false);
+
+  const seekFromClientX = (clientX) => {
+    if (!waveformTrackRef.current || !duration) return;
+    const rect = waveformTrackRef.current.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     onSeek(ratio * duration);
+  };
+
+  const handlePointerDown = (e) => {
+    isDraggingRef.current = true;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    seekFromClientX(e.clientX);
+  };
+
+  const handlePointerMove = (e) => {
+    if (isDraggingRef.current) {
+      seekFromClientX(e.clientX);
+    }
+  };
+
+  const handlePointerUp = (e) => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      try {
+        e.currentTarget.releasePointerCapture?.(e.pointerId);
+      } catch (_) {}
+    }
   };
 
   return (
@@ -113,7 +137,15 @@ export default function VinylPlayer({
       <div className="ref-waveform-container">
         <span className="ref-time-label">{formatTime(currentTime)}</span>
         
-        <div className="ref-waveform-track" onClick={handleWaveformClick} title="Seek Audio">
+        <div 
+          ref={waveformTrackRef}
+          className="ref-waveform-track" 
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          title="Drag or click to seek audio"
+        >
           {WAVE_BAR_HEIGHTS.map((h, i) => {
             const barRatio = i / WAVE_BAR_HEIGHTS.length;
             const isPlayed = barRatio <= progressRatio;
@@ -122,7 +154,7 @@ export default function VinylPlayer({
                 key={i} 
                 className={`ref-wave-stem ${isPlayed ? 'played' : ''} ${isPlaying ? 'animated' : ''}`}
                 style={{ 
-                  height: `${h}px`,
+                  height: `${Math.round((h / 34) * 100)}%`,
                   animationDelay: `${(i % 5) * 0.15}s` 
                 }}
               />
