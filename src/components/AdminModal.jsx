@@ -355,10 +355,10 @@ export default function AdminModal({
               const currentMb = ((directAudioFile.size * pct / 100) / (1024 * 1024)).toFixed(1);
               if (pct >= 100) {
                 setUploadProgress(92);
-                setStatusMessage(`Audio uploaded (${sizeMb} MB). Verifying and securing in Vault...`);
+                setStatusMessage(`Audio uploaded. Verifying in Vault`);
               } else {
                 setUploadProgress(Math.round(10 + pct * 0.78));
-                setStatusMessage(`Uploading audio to Vault: ${currentMb} / ${sizeMb} MB (${pct}%)...`);
+                setStatusMessage(`Uploading audio : ${currentMb} / ${sizeMb} MB`);
               }
             },
             mimeType
@@ -1106,7 +1106,7 @@ export default function AdminModal({
             </div>
             {uploadProgress < 100 && (
               <p className="text-[10px] text-amber-300/80 font-medium text-center tracking-wide">
-                Screen will stay awake. Please keep this app active while uploading.
+                Please keep this app active while uploading.
               </p>
             )}
           </div>
