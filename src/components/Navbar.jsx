@@ -57,7 +57,6 @@ export default function Navbar({ user, onOpenAdminModal }) {
         <div>
           <span className="brand-title">Isaiyon</span>
         </div>
-        <span className="brand-badge">PRO</span>
       </div>
 
       <div className="nav-actions">

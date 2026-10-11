@@ -146,7 +146,7 @@ export default function AdminModal({
               Direct YouTube to Archive Importer
             </h3>
           </div>
-          <button className="ctrl-btn" onClick={onClose}>
+          <button className="modal-close-btn" onClick={onClose}>
             <X size={18} />
           </button>
         </div>
@@ -171,15 +171,9 @@ export default function AdminModal({
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Target Archive.org Project Folder</label>
-              <input 
-                type="text" 
-                className="form-input"
-                value={projectIdentifier}
-                onChange={e => setProjectIdentifier(e.target.value)}
-                disabled={isFetching}
-              />
+            <div className="vault-badge-banner">
+              <span className="vbb-label">Active Sound Vault</span>
+              <span className="vbb-val">muthuramalingam_a-vault (Master Collection)</span>
             </div>
 
             <button type="submit" className="btn-primary" disabled={isFetching} style={{ marginTop: 8 }}>
