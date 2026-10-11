@@ -372,12 +372,9 @@ export default function AdminModal({
               <Music size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-slate-900 font-display">
+              <h3 className="text-md font-extrabold text-slate-900 font-display">
                 Add New Track to Vault
               </h3>
-              <p className="text-[10px] text-slate-500 font-medium">
-                Admin Sound Library Management
-              </p>
             </div>
           </div>
           <button
@@ -391,7 +388,7 @@ export default function AdminModal({
         </div>
 
         {/* Tab Switcher: Direct Mobile Upload vs YouTube Importer */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl mb-3.5">
+        <div className="flex items-center gap-1.5 p-2 bg-slate-100 rounded-2xl mb-3.5">
           <button
             type="button"
             onClick={() => { setActiveTab('direct'); setStatusMessage(''); }}
@@ -403,9 +400,6 @@ export default function AdminModal({
           >
             <Smartphone size={14} className={activeTab === 'direct' ? 'text-amber-500' : ''} />
             <span>Direct Upload</span>
-            <span className="text-[9px] px-1 py-0.2 rounded-full bg-amber-100 text-amber-700 font-black">
-              Mobile
-            </span>
           </button>
 
           <button
@@ -419,11 +413,6 @@ export default function AdminModal({
           >
             <YoutubeIcon size={14} />
             <span>YouTube Bridge</span>
-            <span className={`text-[9px] px-1 py-0.2 rounded-full font-black ${
-              isBridgeOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
-            }`}>
-              {isBridgeOnline ? 'Online' : 'PC'}
-            </span>
           </button>
         </div>
 
@@ -557,7 +546,7 @@ export default function AdminModal({
                     <img 
                       src={directCoverBase64 || directCoverUrl || '/logo.png'} 
                       alt="Cover Preview" 
-                      className="w-13 h-13 rounded-xl object-cover shrink-0 border border-slate-200 bg-white shadow-2xs" 
+                      className="w-15 h-15 rounded-xl object-cover shrink-0 border border-slate-200 bg-white shadow-2xs" 
                     />
                     <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                       <input
@@ -582,7 +571,7 @@ export default function AdminModal({
                         value={directCoverUrl}
                         onChange={e => { setDirectCoverUrl(e.target.value); setDirectCoverBase64(''); }}
                         disabled={isSubmitting}
-                        className="w-full px-2 py-1 bg-white text-[11px] rounded-lg border border-slate-200 focus:border-amber-400 outline-hidden"
+                        className="w-full px-2 py-1 bg-white text-[11px] rounded-lg border border-slate-200 focus:border-amber-400 outline-hidden text-center"
                       />
                     </div>
                   </div>
