@@ -411,169 +411,191 @@ export default function App() {
   );
 
   return (
-    <div className="mobile-app-shell">
-      {/* Top Mobile App Header */}
-      <Navbar 
-        user={user} 
-        onOpenAdminModal={() => setIsAdminModalOpen(true)} 
-      />
+    <div className="min-h-screen bg-slate-950/5 flex justify-center text-slate-900 antialiased selection:bg-amber-100 selection:text-amber-800">
+      <div className="w-full max-w-md min-h-screen bg-white shadow-2xl relative flex flex-col border-x border-slate-200/60 overflow-x-hidden">
+        {/* Top Mobile App Header */}
+        <Navbar 
+          user={user} 
+          onOpenAdminModal={() => setIsAdminModalOpen(true)} 
+        />
 
-      {/* Main Screen Router */}
-      <main className={`mobile-content ${activePage === 'nowplaying' ? 'nowplaying-content' : ''}`}>
-        {activePage === 'home' && (
-          <HomePage 
-            tracks={tracks}
+        {/* Main Screen Router */}
+        <main className={`flex-1 w-full pt-16 ${activePage === 'nowplaying' ? 'pb-20 px-3 flex flex-col justify-between' : 'pb-36 px-4'}`}>
+          {activePage === 'home' && (
+            <HomePage 
+              tracks={tracks}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              onSelectTrack={handleSelectTrack}
+              onPlayPause={handlePlayPause}
+              favorites={favorites}
+              onToggleFavorite={handleToggleFavorite}
+              onOpenMovieModal={setSelectedMovie}
+              user={user}
+            />
+          )}
+
+          {activePage === 'search' && (
+            <SearchPage 
+              tracks={tracks}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              onSelectTrack={handleSelectTrack}
+              onPlayPause={handlePlayPause}
+              favorites={favorites}
+              onToggleFavorite={handleToggleFavorite}
+              user={user}
+            />
+          )}
+
+          {activePage === 'queue' && (
+            <QueueDrawer 
+              currentTrack={currentTrack}
+              queue={queue}
+              onReorderQueue={handleReorderQueue}
+              onPlayQueueTrack={handlePlayQueueTrack}
+              onRemoveFromQueue={handleRemoveFromQueue}
+              suggestedTracks={suggestedTracks}
+              onAddToQueue={handleAddToQueue}
+              isPlaying={isPlaying}
+              onPlayPause={handlePlayPause}
+            />
+          )}
+
+          {activePage === 'library' && (
+            <LibraryPage 
+              tracks={tracks}
+              favorites={favorites}
+              user={user}
+              playlists={playlists}
+              onCreatePlaylist={handleCreatePlaylist}
+              onDeletePlaylist={handleDeletePlaylist}
+              onSelectTrack={handleSelectTrack}
+              onPlayPause={handlePlayPause}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              onToggleFavorite={handleToggleFavorite}
+              onOpenMovieModal={setSelectedMovie}
+            />
+          )}
+
+          {activePage === 'nowplaying' && (
+            <VinylPlayer 
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              duration={duration}
+              onPlayPause={handlePlayPause}
+              onSeek={handleSeek}
+              onPrev={handlePrev}
+              onNext={handleNext}
+              isFavorite={currentTrack ? favorites.includes(currentTrack.id) : false}
+              onToggleFavorite={handleToggleFavorite}
+              user={user}
+            />
+          )}
+        </main>
+
+        {/* Floating Bottom Mini Player (when browsing other pages) */}
+        {activePage !== 'nowplaying' && currentTrack && (
+          <BottomPlayer 
             currentTrack={currentTrack}
             isPlaying={isPlaying}
-            onSelectTrack={handleSelectTrack}
             onPlayPause={handlePlayPause}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-            onOpenMovieModal={setSelectedMovie}
-            user={user}
-          />
-        )}
-
-        {activePage === 'search' && (
-          <SearchPage 
-            tracks={tracks}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-            onSelectTrack={handleSelectTrack}
-            onPlayPause={handlePlayPause}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-            user={user}
-          />
-        )}
-
-        {activePage === 'queue' && (
-          <QueueDrawer 
-            currentTrack={currentTrack}
-            queue={queue}
-            onReorderQueue={handleReorderQueue}
-            onPlayQueueTrack={handlePlayQueueTrack}
-            onRemoveFromQueue={handleRemoveFromQueue}
-            suggestedTracks={suggestedTracks}
-            onAddToQueue={handleAddToQueue}
-            isPlaying={isPlaying}
-            onPlayPause={handlePlayPause}
-          />
-        )}
-
-        {activePage === 'library' && (
-          <LibraryPage 
-            tracks={tracks}
-            favorites={favorites}
-            user={user}
-            playlists={playlists}
-            onCreatePlaylist={handleCreatePlaylist}
-            onDeletePlaylist={handleDeletePlaylist}
-            onSelectTrack={handleSelectTrack}
-            onPlayPause={handlePlayPause}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-            onToggleFavorite={handleToggleFavorite}
-            onOpenMovieModal={setSelectedMovie}
-          />
-        )}
-
-        {activePage === 'nowplaying' && (
-          <VinylPlayer 
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            duration={duration}
-            onPlayPause={handlePlayPause}
-            onSeek={handleSeek}
             onPrev={handlePrev}
             onNext={handleNext}
             isFavorite={currentTrack ? favorites.includes(currentTrack.id) : false}
             onToggleFavorite={handleToggleFavorite}
             user={user}
+            onOpenFullPlayer={() => setActivePage('nowplaying')}
           />
         )}
-      </main>
 
-      {/* Floating Bottom Mini Player (when browsing other pages) */}
-      {activePage !== 'nowplaying' && currentTrack && (
-        <BottomPlayer 
+        {/* Bottom Navigation Bar */}
+        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-300 px-3 py-2 pb-4 flex items-center justify-around z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] select-none">
+          <button 
+            className={`flex flex-col items-center justify-center py-2 px-2 rounded-2xl text-[10px] font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
+              activePage === 'home' 
+                ? 'text-white bg-black font-extrabold scale-105' 
+                : 'text-black hover:text-slate-600'
+            }`}
+            onClick={() => setActivePage('home')}
+          >
+            <Home size={18} />
+            <span>Home</span>
+          </button>
+
+          <button 
+            className={`flex flex-col items-center justify-center py-2 px-2 rounded-2xl text-[10px] font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
+              activePage === 'search' 
+                ? 'text-white bg-black font-extrabold scale-110' 
+                : 'text-black hover:text-slate-600'
+            }`}
+            onClick={() => setActivePage('search')}
+          >
+            <Search size={18} />
+            <span>Search</span>
+          </button>
+
+          <button 
+            className={`flex flex-col items-center justify-center py-2 px-2 rounded-2xl text-[10px] font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
+              activePage === 'queue' 
+                ? 'text-white bg-black font-extrabold scale-110' 
+                : 'text-black hover:text-slate-600'
+            }`}
+            onClick={() => setActivePage('queue')}
+          >
+            <ListMusic size={18} />
+            <span>Queue</span>
+          </button>
+
+          <button 
+            className={`flex flex-col items-center justify-center py-2 px-2 rounded-2xl text-[10px] font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
+              activePage === 'library' 
+                ? 'text-white bg-black font-extrabold scale-110' 
+                : 'text-black hover:text-slate-600'
+            }`}
+            onClick={() => setActivePage('library')}
+          >
+            <Library size={18} />
+            <span>Library</span>
+          </button>
+
+          <button 
+            className={`flex flex-col items-center justify-center py-2 px-2 rounded-2xl text-[10px] font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
+              activePage === 'nowplaying' 
+                ? 'text-white bg-black font-extrabold scale-110' 
+                : 'text-black hover:text-slate-600'
+            }`}
+            onClick={() => setActivePage('nowplaying')}
+          >
+            <Disc3 size={18} />
+            <span>Player</span>
+          </button>
+        </nav>
+
+        {/* Movie Details Modal */}
+        <MovieDetailModal 
+          movie={selectedMovie}
+          onClose={() => setSelectedMovie(null)}
+          tracks={tracks}
           currentTrack={currentTrack}
           isPlaying={isPlaying}
+          onSelectTrack={handleSelectTrack}
           onPlayPause={handlePlayPause}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          isFavorite={currentTrack ? favorites.includes(currentTrack.id) : false}
+          favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
+          onPlayAlbum={handlePlayAlbum}
           user={user}
-          onOpenFullPlayer={() => setActivePage('nowplaying')}
         />
-      )}
 
-      {/* Bottom Navigation Bar (Spotify & YouTube Music Parity) */}
-      <nav className="mobile-bottom-nav">
-        <button 
-          className={`nav-tab-item ${activePage === 'home' ? 'active' : ''}`}
-          onClick={() => setActivePage('home')}
-        >
-          <Home size={19} />
-          <span>Home</span>
-        </button>
-
-        <button 
-          className={`nav-tab-item ${activePage === 'search' ? 'active' : ''}`}
-          onClick={() => setActivePage('search')}
-        >
-          <Search size={19} />
-          <span>Search</span>
-        </button>
-
-        <button 
-          className={`nav-tab-item ${activePage === 'queue' ? 'active' : ''}`}
-          onClick={() => setActivePage('queue')}
-        >
-          <ListMusic size={19} />
-          <span>Queue ({queue.length})</span>
-        </button>
-
-        <button 
-          className={`nav-tab-item ${activePage === 'library' ? 'active' : ''}`}
-          onClick={() => setActivePage('library')}
-        >
-          <Library size={19} />
-          <span>Library</span>
-        </button>
-
-        <button 
-          className={`nav-tab-item ${activePage === 'nowplaying' ? 'active' : ''}`}
-          onClick={() => setActivePage('nowplaying')}
-        >
-          <Disc3 size={19} />
-          <span>Player</span>
-        </button>
-      </nav>
-
-      {/* Movie Details Modal */}
-      <MovieDetailModal 
-        movie={selectedMovie}
-        onClose={() => setSelectedMovie(null)}
-        tracks={tracks}
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        onSelectTrack={handleSelectTrack}
-        onPlayPause={handlePlayPause}
-        favorites={favorites}
-        onToggleFavorite={handleToggleFavorite}
-        onPlayAlbum={handlePlayAlbum}
-        user={user}
-      />
-
-      {/* Secret Admin YouTube Importer Modal */}
-      <AdminModal 
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        onSaveTrack={handleSaveTrack}
-      />
+        {/* Secret Admin YouTube Importer Modal */}
+        <AdminModal 
+          isOpen={isAdminModalOpen}
+          onClose={() => setIsAdminModalOpen(false)}
+          onSaveTrack={handleSaveTrack}
+        />
+      </div>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
   Play, 
-  Pause, 
   Heart, 
   Search, 
   Music, 
@@ -44,25 +43,25 @@ export default function SongList({
   });
 
   return (
-    <div className="library-panel-mobile">
+    <div className="w-full flex flex-col gap-4 select-none">
       {/* Search Input */}
-      <div className="search-box">
-        <Search size={15} className="search-icon" />
+      <div className="relative flex items-center">
+        <Search size={16} className="absolute left-3.5 text-slate-400 pointer-events-none" />
         <input 
           type="text" 
           placeholder="Search by song, movie, actor, or artist..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="search-input"
+          className="w-full pl-10 pr-4 py-2.5 bg-slate-100 hover:bg-slate-100/90 focus:bg-white text-xs font-semibold text-slate-800 placeholder-slate-400 rounded-2xl border border-transparent focus:border-amber-400 focus:ring-3 focus:ring-amber-400/10 outline-hidden transition-all"
         />
       </div>
 
       {/* Song Rows */}
-      <div className="track-list" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+      <div className="flex flex-col gap-2">
         {filteredTracks.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '36px 16px', color: 'var(--text-muted)' }}>
-            <Music size={32} style={{ margin: '0 auto 10px', opacity: 0.3 }} />
-            <p style={{ fontSize: '0.85rem' }}>No songs found.</p>
+          <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <Music size={32} className="mx-auto mb-2 opacity-30" />
+            <p className="text-xs font-medium">No songs found.</p>
           </div>
         ) : (
           filteredTracks.map((track, idx) => {
@@ -72,61 +71,68 @@ export default function SongList({
             return (
               <div 
                 key={track.id || idx}
-                className={`track-row ${isCurrent ? 'active' : ''}`}
                 onClick={() => onSelectTrack(track)}
+                className={`p-2.5 rounded-2xl border transition-all duration-150 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
+                  isCurrent 
+                    ? 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-400/40 shadow-xs' 
+                    : 'bg-white hover:bg-slate-50 border-slate-100 shadow-2xs'
+                }`}
               >
-                <div className="track-left">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <img 
                     src={track.coverUrl || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=200'} 
                     alt={track.title}
-                    className="track-thumb"
+                    className="w-11 h-11 rounded-xl object-cover shrink-0 shadow-2xs"
                   />
-                  <div className="track-meta">
-                    <span className="track-name">{track.title}</span>
-                    <span className="track-sub">
-                      {track.movie ? <span className="track-badge-movie">[{track.movie}] </span> : null}
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs font-bold text-slate-900 truncate leading-snug">
+                      {track.title}
+                    </h4>
+                    <p className="text-[11px] font-medium text-slate-500 truncate leading-tight mt-0.5">
+                      {track.movie ? <span className="font-semibold text-amber-700">[{track.movie}] </span> : null}
                       {track.artist}
-                    </span>
+                    </p>
                     {track.actors && track.actors !== 'Featured Cast' && (
-                      <span style={{ fontSize: '0.68rem', color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <span className="text-[10px] text-slate-400 truncate block mt-0.5">
                         {track.actors}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="track-actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-faint)' }}>
+                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-[11px] font-semibold text-slate-400 tabular-nums">
                     {formatDuration(track.duration)}
                   </span>
 
                   {/* Play Indicator */}
                   <button 
-                    className="ctrl-btn" 
                     onClick={() => {
-                      if (isCurrent) {
-                        onPlayPause();
-                      } else {
-                        onSelectTrack(track);
-                      }
+                      if (isCurrent) onPlayPause();
+                      else onSelectTrack(track);
                     }}
-                    title={isCurrent && isPlaying ? 'Pause' : 'Play'}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
+                      isCurrent && isPlaying
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    }`}
                   >
                     {isCurrent && isPlaying ? (
-                      <Volume2 size={17} color="var(--accent-gold)" />
+                      <Volume2 size={15} />
                     ) : (
-                      <Play size={17} />
+                      <Play size={15} className="ml-0.5" />
                     )}
                   </button>
 
                   {/* Favorite */}
                   {user && (
                     <button 
-                      className={`fav-btn ${isFav ? 'favorited' : ''}`}
                       onClick={() => onToggleFavorite(track.id)}
-                      title="Favorite"
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
+                        isFav ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-500 hover:bg-slate-50'
+                      }`}
                     >
-                      <Heart size={17} fill={isFav ? '#e11d48' : 'none'} />
+                      <Heart size={16} fill={isFav ? '#e11d48' : 'none'} color={isFav ? '#e11d48' : 'currentColor'} />
                     </button>
                   )}
 
@@ -136,23 +142,21 @@ export default function SongList({
                       href={track.archiveDetailsUrl} 
                       target="_blank" 
                       rel="noreferrer" 
-                      className="ctrl-btn"
+                      className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors"
                       title="View Archive.org item files"
-                      style={{ color: 'var(--text-faint)' }}
                     >
-                      <ExternalLink size={14} />
+                      <ExternalLink size={13} />
                     </a>
                   )}
 
                   {/* Admin Only Delete */}
                   {isAdmin && (
                     <button 
-                      className="ctrl-btn"
                       onClick={() => onDeleteTrack(track.id)}
+                      className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors"
                       title="Delete from Vault"
-                      style={{ color: 'var(--accent-rose)' }}
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={13} />
                     </button>
                   )}
                 </div>

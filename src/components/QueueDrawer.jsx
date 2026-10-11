@@ -57,97 +57,122 @@ export default function QueueDrawer({
   };
 
   return (
-    <div className="queue-container">
-      {/* Currently Playing Card */}
-      <div className="queue-section">
-        <h4 className="queue-section-title">Now Playing</h4>
+    <div className="w-full flex flex-col gap-5 select-none">
+      {/* 1. Currently Playing Card */}
+      <section className="flex flex-col gap-2.5">
+        <h4 className="text-sm font-extrabold text-slate-900 tracking-tight font-display">
+          Now Playing
+        </h4>
         {currentTrack ? (
-          <div className="queue-now-playing-card">
-            <img 
-              src={currentTrack.coverUrl || FALLBACK_ARTWORK} 
-              alt={currentTrack.title} 
-              className="queue-thumb"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = FALLBACK_ARTWORK;
-              }}
-            />
-            <div className="queue-meta">
-              <span className="queue-title">{currentTrack.title}</span>
-              <span className="queue-sub">{currentTrack.movie || currentTrack.artist}</span>
+          <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-300 ring-1 ring-amber-400/30 flex items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <img 
+                src={currentTrack.coverUrl || FALLBACK_ARTWORK} 
+                alt={currentTrack.title} 
+                className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-2xs ring-1 ring-amber-400/40"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = FALLBACK_ARTWORK;
+                }}
+              />
+              <div className="min-w-0 flex-1">
+                <span className="text-xs sm:text-sm font-bold text-slate-900 truncate block leading-snug">
+                  {currentTrack.title}
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 truncate block mt-0.5">
+                  {currentTrack.movie ? `${currentTrack.movie} • ` : ''}{currentTrack.artist}
+                </span>
+              </div>
             </div>
-            <button className="ctrl-btn" onClick={onPlayPause}>
-              {isPlaying ? <Volume2 size={18} color="var(--accent-gold)" /> : <Play size={18} />}
+            <button 
+              onClick={onPlayPause}
+              className="w-9 h-9 rounded-full bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center font-bold shadow-xs transition-all active:scale-95 shrink-0"
+            >
+              {isPlaying ? <Volume2 size={16} /> : <Play size={16} className="ml-0.5" />}
             </button>
           </div>
         ) : (
-          <p className="queue-empty-text">No track selected.</p>
+          <p className="text-xs text-slate-400 italic py-2">No track selected.</p>
         )}
-      </div>
+      </section>
 
-      {/* Up Next / Reorderable Queue */}
-      <div className="queue-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <h4 className="queue-section-title">Up Next (Drag & Drop to Reorder)</h4>
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-faint)' }}>{queue.length} in queue</span>
+      {/* 2. Up Next / Reorderable Queue */}
+      <section className="flex flex-col gap-2.5">
+        <div className="flex justify-between items-center">
+          <h4 className="text-sm font-extrabold text-slate-900 tracking-tight font-display">
+            Up Next
+          </h4>
+          <span className="text-xs font-semibold text-slate-400">
+            {queue.length} in queue
+          </span>
         </div>
 
         {queue.length === 0 ? (
-          <p className="queue-empty-text">Queue is empty. Suggested tracks below will play automatically.</p>
+          <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <p className="text-xs font-medium">Queue is empty. Suggested tracks below will play automatically.</p>
+          </div>
         ) : (
-          <div className="queue-items-list">
+          <div className="flex flex-col gap-2">
             {queue.map((track, idx) => (
               <div
                 key={`${track.id}-${idx}`}
-                className={`queue-item-row ${draggedIndex === idx ? 'dragging' : ''}`}
+                className={`p-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-100 flex items-center gap-2.5 transition-all shadow-2xs ${
+                  draggedIndex === idx ? 'opacity-50 ring-2 ring-amber-400' : ''
+                }`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, idx)}
                 onDragOver={(e) => handleDragOver(e, idx)}
                 onDrop={(e) => handleDrop(e, idx)}
               >
                 {/* Drag Handle */}
-                <div className="queue-drag-handle" title="Drag to reorder">
-                  <GripVertical size={16} color="var(--text-faint)" />
+                <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 px-0.5" title="Drag to reorder">
+                  <GripVertical size={16} />
                 </div>
 
                 <img 
                   src={track.coverUrl || FALLBACK_ARTWORK} 
                   alt={track.title} 
-                  className="queue-thumb-sm"
+                  className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = FALLBACK_ARTWORK;
                   }}
                 />
 
-                <div className="queue-meta" onClick={() => onPlayQueueTrack(idx)}>
-                  <span className="queue-title">{track.title}</span>
-                  <span className="queue-sub">{track.movie || track.artist}</span>
+                <div 
+                  className="min-w-0 flex-1 cursor-pointer" 
+                  onClick={() => onPlayQueueTrack(idx)}
+                >
+                  <span className="text-xs font-bold text-slate-900 truncate block leading-snug">
+                    {track.title}
+                  </span>
+                  <span className="text-[11px] text-slate-500 truncate block mt-0.5 font-medium">
+                    {track.movie ? `${track.movie} • ` : ''}{track.artist}
+                  </span>
                 </div>
 
                 {/* Move Up/Down arrows for mobile + Remove */}
-                <div className="queue-actions">
+                <div className="flex items-center gap-1 shrink-0">
                   <button 
-                    className="ctrl-btn-mini" 
                     onClick={() => moveItem(idx, idx - 1)}
                     disabled={idx === 0}
+                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-all active:scale-90"
                     title="Move up"
                   >
                     <ArrowUp size={13} />
                   </button>
                   <button 
-                    className="ctrl-btn-mini" 
                     onClick={() => moveItem(idx, idx + 1)}
                     disabled={idx === queue.length - 1}
+                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-all active:scale-90"
                     title="Move down"
                   >
                     <ArrowDown size={13} />
                   </button>
                   <button 
-                    className="ctrl-btn-mini" 
                     onClick={() => onRemoveFromQueue(idx)}
+                    className="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-all active:scale-90 ml-0.5"
                     title="Remove from queue"
-                    style={{ color: 'var(--accent-rose)' }}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -156,45 +181,55 @@ export default function QueueDrawer({
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Suggested Songs (Auto-loaded based on movie / mood) */}
-      <div className="queue-section">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-          <Sparkles size={14} color="var(--accent-gold)" />
-          <h4 className="queue-section-title" style={{ margin: 0 }}>
+      {/* 3. Suggested Songs */}
+      <section className="flex flex-col gap-2.5">
+        <div className="flex items-center gap-1.5">
+          <Sparkles size={14} className="text-amber-500" />
+          <h4 className="text-sm font-extrabold text-slate-900 tracking-tight font-display">
             Suggested For You
           </h4>
         </div>
 
-        <div className="suggested-list">
+        <div className="flex flex-col gap-2">
           {suggestedTracks.slice(0, 5).map(track => (
-            <div key={track.id} className="suggested-row">
-              <img 
-                src={track.coverUrl || FALLBACK_ARTWORK} 
-                alt={track.title} 
-                className="queue-thumb-sm"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = FALLBACK_ARTWORK;
-                }}
-              />
-              <div className="queue-meta">
-                <span className="queue-title">{track.title}</span>
-                <span className="queue-sub">{track.movie ? `[${track.movie}] ` : ''}{track.artist}</span>
+            <div 
+              key={track.id} 
+              className="p-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-100 flex items-center justify-between gap-2.5 shadow-2xs transition-all"
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <img 
+                  src={track.coverUrl || FALLBACK_ARTWORK} 
+                  alt={track.title} 
+                  className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = FALLBACK_ARTWORK;
+                  }}
+                />
+                <div className="min-w-0 flex-1">
+                  <span className="text-xs font-bold text-slate-900 truncate block leading-snug">
+                    {track.title}
+                  </span>
+                  <span className="text-[11px] text-slate-500 truncate block mt-0.5 font-medium">
+                    {track.movie ? `[${track.movie}] ` : ''}{track.artist}
+                  </span>
+                </div>
               </div>
+
               <button 
-                className="btn-add-queue"
                 onClick={() => onAddToQueue(track)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
                 title="Add to queue"
               >
-                <Plus size={14} />
+                <Plus size={13} strokeWidth={2.5} />
                 <span>Queue</span>
               </button>
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

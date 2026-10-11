@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, RefreshCw, Upload, CheckCircle2, ExternalLink, Sparkles, Edit3 } from 'lucide-react';
 
 const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ display: 'inline', marginRight: 6 }}>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className="inline mr-1.5 shrink-0">
     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
   </svg>
 );
@@ -13,7 +13,7 @@ export default function AdminModal({
   onSaveTrack
 }) {
   const [ytUrl, setYtUrl] = useState('');
-  const [projectIdentifier, setProjectIdentifier] = useState('muthuramalingam_a-vault');
+  const [projectIdentifier] = useState('muthuramalingam_a-vault');
   
   // Two-step flow: 'input' -> 'preview_edit' -> 'uploading' -> 'done'
   const [stage, setStage] = useState('input');
@@ -136,56 +136,71 @@ export default function AdminModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+    <div 
+      className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]" 
+      onClick={onClose}
+    >
+      <div 
+        className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto relative" 
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+          <div className="flex items-center gap-2">
             <YoutubeIcon size={20} />
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Direct YouTube to Archive Importer
+            <h3 className="text-sm font-extrabold text-slate-900 font-display">
+              YouTube to Archive Importer
             </h3>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>
-            <X size={18} />
+          <button 
+            onClick={onClose}
+            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90"
+          >
+            <X size={15} />
           </button>
         </div>
 
         {/* STAGE 1: Paste Link & Fetch */}
         {stage === 'input' && (
-          <form onSubmit={handleFetchInfo}>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.4 }}>
-              Paste any Tamil / YouTube song URL. We will fetch all song credits so you can review and edit before uploading.
+          <form onSubmit={handleFetchInfo} className="flex flex-col gap-3">
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Paste any Tamil / YouTube song URL. We will extract song credits so you can review before uploading to your vault.
             </p>
 
-            <div className="form-group">
-              <label className="form-label">YouTube Song URL *</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                YouTube Song URL *
+              </label>
               <input 
                 type="url" 
-                className="form-input"
                 required
                 placeholder="https://www.youtube.com/watch?v=..."
                 value={ytUrl}
                 onChange={e => setYtUrl(e.target.value)}
                 disabled={isFetching}
+                className="w-full px-3 py-2.5 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 focus:ring-3 focus:ring-amber-400/10 outline-hidden transition-all"
               />
             </div>
 
-            <div className="vault-badge-banner">
-              <span className="vbb-label">Active Sound Vault</span>
-              <span className="vbb-val">muthuramalingam_a-vault (Master Collection)</span>
+            <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/60 text-xs">
+              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">Sound Vault Destination</span>
+              <span className="text-amber-900 font-semibold">{projectIdentifier}</span>
             </div>
 
-            <button type="submit" className="btn-primary" disabled={isFetching} style={{ marginTop: 8 }}>
+            <button 
+              type="submit" 
+              disabled={isFetching}
+              className="mt-1 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+            >
               {isFetching ? (
                 <>
-                  <RefreshCw size={15} className="spin" style={{ display: 'inline', marginRight: 6 }} />
-                  Fetching Details...
+                  <RefreshCw size={14} className="animate-spin" />
+                  <span>Fetching Details...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles size={15} style={{ display: 'inline', marginRight: 6 }} />
-                  Fetch Song Details & Preview
+                  <Sparkles size={14} />
+                  <span>Fetch Song Details & Preview</span>
                 </>
               )}
             </button>
@@ -194,96 +209,96 @@ export default function AdminModal({
 
         {/* STAGE 2: Review & Edit Metadata Before Storing */}
         {stage === 'preview_edit' && (
-          <form onSubmit={handleConfirmUpload}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <Edit3 size={15} color="var(--accent-gold)" />
-              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
+          <form onSubmit={handleConfirmUpload} className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Edit3 size={15} className="text-amber-500" />
+              <span className="text-xs font-bold text-slate-900">
                 Review & Edit Before Uploading
               </span>
             </div>
 
             {/* Thumbnail Preview */}
             {editMeta.thumbnailUrl && (
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: '#f8fafc', padding: 8, borderRadius: 10, marginBottom: 12 }}>
-                <img src={editMeta.thumbnailUrl} alt="Thumb" style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover' }} />
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  <div><strong>Folder destination:</strong></div>
-                  <code>{projectIdentifier}/{editMeta.movie || 'Movie'}/{editMeta.title || 'Song'}/</code>
+              <div className="flex gap-3 items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                <img src={editMeta.thumbnailUrl} alt="Thumb" className="w-14 h-14 rounded-lg object-cover shadow-2xs shrink-0" />
+                <div className="text-[11px] text-slate-500 min-w-0">
+                  <div className="font-bold text-slate-700">Folder destination:</div>
+                  <code className="text-[10px] text-amber-700 block truncate">{projectIdentifier}/{editMeta.movie || 'Movie'}/{editMeta.title || 'Song'}/</code>
                 </div>
               </div>
             )}
 
-            <div className="form-group">
-              <label className="form-label">Movie / Film / Album Name *</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-bold text-slate-600">Movie / Album *</label>
               <input 
                 type="text" 
-                className="form-input"
                 required
                 placeholder="e.g. Unnai Ninaithu or Yaaradi Nee Mohini"
                 value={editMeta.movie}
                 onChange={e => setEditMeta({ ...editMeta, movie: e.target.value })}
                 disabled={isUploading}
+                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Song Title *</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-bold text-slate-600">Song Title *</label>
               <input 
                 type="text" 
-                className="form-input"
                 required
                 placeholder="e.g. Ennai Thalaatiya Varuvala"
                 value={editMeta.title}
                 onChange={e => setEditMeta({ ...editMeta, title: e.target.value })}
                 disabled={isUploading}
+                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Starring / Actors</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-bold text-slate-600">Starring / Actors</label>
               <input 
                 type="text" 
-                className="form-input"
-                placeholder="e.g. Suriya, Laila, Sneha or Dhanush, Nayanthara"
+                placeholder="e.g. Suriya, Laila or Dhanush, Nayanthara"
                 value={editMeta.actors}
                 onChange={e => setEditMeta({ ...editMeta, actors: e.target.value })}
                 disabled={isUploading}
+                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div className="form-group">
-                <label className="form-label">Music Director</label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-bold text-slate-600">Music Director</label>
                 <input 
                   type="text" 
-                  className="form-input"
                   placeholder="e.g. Sirpy, Yuvan"
                   value={editMeta.composer}
                   onChange={e => setEditMeta({ ...editMeta, composer: e.target.value })}
                   disabled={isUploading}
+                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Singers</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-bold text-slate-600">Singers</label>
                 <input 
                   type="text" 
-                  className="form-input"
                   placeholder="e.g. Hariharan"
                   value={editMeta.artist}
                   onChange={e => setEditMeta({ ...editMeta, artist: e.target.value })}
                   disabled={isUploading}
+                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Mood / Category</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-bold text-slate-600">Mood / Category</label>
               <select 
-                className="form-input"
                 value={editMeta.mood}
                 onChange={e => setEditMeta({ ...editMeta, mood: e.target.value })}
                 disabled={isUploading}
+                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden cursor-pointer"
               >
                 <option value="Love Failure">💔 Love Failure</option>
                 <option value="Melody Hits">🎵 Melody Hits</option>
@@ -292,32 +307,30 @@ export default function AdminModal({
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <div className="flex gap-2 mt-2">
               <button 
                 type="button" 
-                className="ctrl-btn" 
                 onClick={() => setStage('input')}
                 disabled={isUploading}
-                style={{ padding: '8px 12px', border: '1px solid var(--border-subtle)', borderRadius: 8, fontSize: '0.78rem' }}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all active:scale-95"
               >
                 Back
               </button>
 
               <button 
                 type="submit" 
-                className="btn-primary" 
                 disabled={isUploading}
-                style={{ flex: 1 }}
+                className="flex-1 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
               >
                 {isUploading ? (
                   <>
-                    <RefreshCw size={15} className="spin" style={{ display: 'inline', marginRight: 6 }} />
-                    Uploading to Archive.org...
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span>Uploading...</span>
                   </>
                 ) : (
                   <>
-                    <Upload size={15} style={{ display: 'inline', marginRight: 6 }} />
-                    Confirm & Upload to Archive.org & Save
+                    <Upload size={14} />
+                    <span>Confirm & Upload</span>
                   </>
                 )}
               </button>
@@ -327,31 +340,29 @@ export default function AdminModal({
 
         {/* STAGE 3: Done */}
         {stage === 'done' && uploadResult && (
-          <div style={{ textAlign: 'center', padding: '16px 8px' }}>
-            <CheckCircle2 size={42} color="var(--accent-emerald)" style={{ margin: '0 auto 10px' }} />
-            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 6 }}>
+          <div className="text-center py-4 flex flex-col gap-3">
+            <CheckCircle2 size={40} className="text-emerald-500 mx-auto" />
+            <h4 className="text-sm font-black text-slate-900 font-display">
               Song Uploaded Successfully!
             </h4>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 14 }}>
-              Uploaded to: <code>{uploadResult.remoteAudioPath}</code>
+            <p className="text-xs text-slate-500">
+              Uploaded to: <code className="text-slate-700 bg-slate-100 px-1 py-0.5 rounded text-[11px]">{uploadResult.remoteAudioPath}</code>
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2 mt-2">
               <a 
                 href={uploadResult.archiveDetailsUrl} 
                 target="_blank" 
                 rel="noreferrer"
-                className="btn-primary"
-                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs hover:bg-slate-800 transition-all active:scale-95"
               >
-                <span>Inspect in Archive.org UI</span>
-                <ExternalLink size={14} />
+                <span>Inspect in Archive.org</span>
+                <ExternalLink size={13} />
               </a>
 
               <button 
-                className="ctrl-btn"
                 onClick={resetAll}
-                style={{ padding: 10, fontSize: '0.8rem', color: 'var(--accent-gold)' }}
+                className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-all active:scale-95"
               >
                 + Add Another Song
               </button>
@@ -361,15 +372,11 @@ export default function AdminModal({
 
         {/* Status Message */}
         {statusMessage && (
-          <div style={{
-            marginTop: 14,
-            padding: 8,
-            borderRadius: 8,
-            fontSize: '0.72rem',
-            background: statusMessage.includes('Success') || statusMessage.includes('permanently') ? 'rgba(5, 150, 105, 0.1)' : '#f8fafc',
-            color: statusMessage.includes('Success') || statusMessage.includes('permanently') ? 'var(--accent-emerald)' : 'var(--text-muted)',
-            lineHeight: 1.4
-          }}>
+          <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${
+            statusMessage.includes('Success') || statusMessage.includes('permanently')
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/50'
+              : 'bg-slate-50 text-slate-600 border border-slate-100'
+          }`}>
             {statusMessage}
           </div>
         )}
