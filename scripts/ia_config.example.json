@@ -1,0 +1,5 @@
+{
+  "access_key": "YOUR_ARCHIVE_S3_ACCESS_KEY",
+  "secret_key": "YOUR_ARCHIVE_S3_SECRET_KEY",
+  "project_identifier": "muthuramalingam_a-vault"
+}
