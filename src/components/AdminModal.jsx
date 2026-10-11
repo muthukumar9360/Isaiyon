@@ -63,6 +63,7 @@ const executeArchiveUpload = (file, remotePath, onProgress) => {
     xhr.setRequestHeader('authorization', 'LOW sftYc6GkCtNMjk7H:lR6TOMtJUAnE7tZg');
     xhr.setRequestHeader('x-archive-size-hint', String(file.size));
     xhr.setRequestHeader('x-archive-ignore-preexisting-bucket', '1');
+    xhr.setRequestHeader('x-archive-interactive-priority', '1');
 
     const ext = cleanPath.split('.').pop()?.toLowerCase() || 'mp3';
     xhr.setRequestHeader('content-type', getAudioMimeType(ext));
@@ -103,7 +104,7 @@ const executeArchiveUpload = (file, remotePath, onProgress) => {
     xhr.ontimeout = () => {
       reject(new Error("Upload timed out. The file might be too large for your current network."));
     };
-    xhr.timeout = 240000; // 4 minutes
+    xhr.timeout = 360000; // 6 minutes for large mobile audio files
 
     xhr.send(file);
   });
@@ -277,13 +278,21 @@ export default function AdminModal({
     setUploadProgress(15);
     setStatusMessage('Preparing track for Vault...');
 
+    // Request Screen Wake Lock so mobile display does not sleep during upload
+    let wakeLockSentinel = null;
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+      }
+    } catch (_) {}
+
     try {
       let finalAudioUrl = directAudioUrl.trim();
 
       // 1. Upload audio file if chosen (Direct Archive.org S3 upload from browser without Python)
       if (directAudioType === 'file' && directAudioFile) {
         const sizeMb = (directAudioFile.size / (1024 * 1024)).toFixed(1);
-        setStatusMessage(`Uploading audio to Vault (${sizeMb} MB)...`);
+        setStatusMessage(`Uploading audio to Vault: 0.0 / ${sizeMb} MB (0%)...`);
         setUploadProgress(10);
 
         const validAudioExts = ['mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'mp4'];
@@ -302,8 +311,9 @@ export default function AdminModal({
             directAudioFile,
             remoteAudioPath,
             (pct) => {
+              const currentMb = ((directAudioFile.size * pct / 100) / (1024 * 1024)).toFixed(1);
               setUploadProgress(Math.round(10 + pct * 0.78));
-              setStatusMessage(`Uploading audio to Vault (${pct}% - ${sizeMb} MB)...`);
+              setStatusMessage(`Uploading audio to Vault: ${currentMb} / ${sizeMb} MB (${pct}%)...`);
             }
           );
           setUploadProgress(90);
@@ -350,6 +360,11 @@ export default function AdminModal({
       setUploadProgress(0);
       setStatusMessage('Error: ' + err.message);
     } finally {
+      if (wakeLockSentinel) {
+        try {
+          await wakeLockSentinel.release();
+        } catch (_) {}
+      }
       setIsSubmitting(false);
     }
   };
@@ -556,12 +571,9 @@ export default function AdminModal({
                   <h4 className="text-sm font-black text-slate-900 font-display">
                     Track Added to Vault!
                   </h4>
-                  <p className="text-xs text-slate-500 mt-1">
-                    "{successCreatedTrack.title}" from {successCreatedTrack.movie} is now live and streaming on all devices.
-                  </p>
                 </div>
 
-                <div className="flex gap-2.5 items-center p-2.5 bg-slate-50 rounded-2xl border border-slate-100 mx-auto max-w-xs text-left">
+                <div className="flex gap-2.5 items-center p-2.5 bg-slate-50 rounded-2xl border border-slate-100 max-w-lg text-left">
                   <img 
                     src={successCreatedTrack.coverUrl || '/logo.png'} 
                     alt="Cover" 
@@ -569,8 +581,7 @@ export default function AdminModal({
                   />
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 truncate">{successCreatedTrack.title}</p>
-                    <p className="text-[11px] text-slate-500 truncate">{successCreatedTrack.movie}</p>
-                    <span className="text-[10px] font-bold text-amber-600">{successCreatedTrack.composer || 'Sound Vault'}</span>
+                    <p className="text-[12px] mt-2  text-slate-500 truncate">{successCreatedTrack.movie}</p>
                   </div>
                 </div>
 
@@ -1046,6 +1057,11 @@ export default function AdminModal({
                 style={{ width: `${Math.max(uploadProgress, 5)}%` }}
               />
             </div>
+            {uploadProgress < 100 && (
+              <p className="text-[10px] text-amber-300/80 font-medium text-center tracking-wide">
+                Screen will stay awake. Please keep this app active while uploading.
+              </p>
+            )}
           </div>
         )}
 
