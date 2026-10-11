@@ -81,7 +81,7 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900 flex flex-col justify-between items-center px-4 py-7 select-none relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900 flex flex-col justify-between items-center px-4 py-7 pb-12 select-none relative overflow-hidden">
       {/* Soft Background Radial Black Lighting Shadows matching loading screen */}
       <div className="absolute top-1/4 -left-20 w-80 h-80 bg-black/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/3 -right-20 w-80 h-80 bg-slate-900/5 rounded-full blur-3xl pointer-events-none" />
@@ -89,17 +89,17 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
       {/* Top Header / Brand */}
       <header className="w-full max-w-sm flex items-center justify-between pt-1 z-10">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-white p-1.5 shadow-md shadow-black/10 border border-slate-200">
+          <div className="w-16 h-16 rounded-2xl bg-white p-1.5 shadow-md shadow-black/10 border border-slate-200">
             <img 
               src="/logo.png" 
               alt="Isaiyon" 
-              className="w-full h-full object-cover rounded-xl" 
+              className="w-full h-full object-fit rounded-xl" 
               onError={(e) => { e.target.style.display = 'none'; }} 
             />
           </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-black tracking-tight text-slate-900 font-display">Isaiyon</span>
-            <span className="text-[10px] font-extrabold text-slate-800 tracking-wider uppercase">Sound Vault</span>
+          <div className="flex flex-col gap-1">
+            <span className="text-4xl font-black tracking-tight text-slate-900 font-display">Isaiyon</span>
+            <span className="text-[12px] font-extrabold text-slate-800 tracking-wider uppercase">Sound Vault</span>
           </div>
         </div>
 
@@ -108,23 +108,23 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
           <button
             type="button"
             onClick={onInstallApp}
-            className="py-1.5 px-3 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+            className="py-2 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-[20px] font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
             title="Install App"
           >
-            <Download size={12} className="text-amber-400" />
+            <Download size={20} className="text-white" />
             <span>Install</span>
           </button>
         )}
       </header>
 
       {/* Center Hero: Vinyl record artwork centerpiece */}
-      <div className="w-full max-w-sm flex flex-col items-center text-center my-auto py-4 z-10">
-        <div className="relative w-40 h-40 mb-5">
+      <div className="w-full max-w-sm flex flex-col items-center text-center z-10">
+        <div className="relative w-55 h-55 mb-10">
           {/* Outer Black Shadow Aura Ring */}
           <div className="absolute -inset-2 rounded-full bg-slate-900/10 blur-xl opacity-50 animate-pulse" />
           
           {/* Vinyl Disc Outer Rim in Clean White & Black Shadow Theme */}
-          <div className="relative w-full h-full rounded-full bg-white p-2.5 shadow-2xl shadow-black/25 border border-slate-200 flex items-center justify-center">
+          <div className="relative w-full h-full rounded-full bg-white p-2 shadow-2xl shadow-black border border-slate-200 flex items-center justify-center">
             <div 
               className="w-full h-full rounded-full overflow-hidden relative border-2 border-slate-800 shadow-inner bg-slate-950"
               style={{ animation: 'spinDisc 18s linear infinite' }}
@@ -132,26 +132,54 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
               <img 
                 src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=400" 
                 alt="Vinyl Record" 
-                className="w-full h-full object-cover rounded-full opacity-90"
+                className="w-full h-full object-cover rounded-full opacity-100"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = FALLBACK_ARTWORK;
                 }}
               />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white border-4 border-slate-900 shadow-md" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-4 border-slate-900 shadow-md" />
             </div>
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight font-display">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight font-display mt-5">
           Your Personal <span className="text-slate-900">Music Vault</span>
         </h1>
-        <p className="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed font-medium">
-          Sign in to stream high-fidelity Tamil soundtracks, curate personal playlists, and sync listening history across devices.
+        <p className="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed font-medium mb-5">
+          Sign in to stream Tamil soundtracks, curate personal playlists, and sync listening history across devices.
         </p>
 
+         {/* Bottom Action Section: Google Sign In & Install App */}
+      <div className="w-full flex flex-col gap-2.5 pb-2 z-10">
+        <button
+          disabled={isSigningIn}
+          onClick={() => handleGoogleSignIn(false)}
+          className={`w-full rounded-2xl text-slate-900 font-extrabold text-lg flex items-center justify-center gap-2 cursor-pointer ${
+            isSigningIn ? 'opacity-80 cursor-wait' : ''
+          }`}
+        >
+          {isSigningIn ? (
+            <>
+              <Loader2 size={26} className="animate-spin text-amber-600" />
+              <span>Connecting to Google...</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+              <span>Continue with Google</span>
+            </>
+          )}
+        </button>
+      </div>
+
         {/* Feature Highlights Grid in Clean White Style */}
-        <div className="grid grid-cols-2 gap-2.5 w-full mt-5 text-left">
+        <div className="grid grid-cols-2 gap-3 w-full mt-5 text-left px-2">
           <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
             <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
               <Music2 size={14} />
@@ -192,48 +220,7 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Bottom Action Section: Google Sign In & Install App */}
-      <div className="w-full max-w-sm flex flex-col gap-2.5 pb-2 z-10">
-        <button
-          disabled={isSigningIn}
-          onClick={() => handleGoogleSignIn(false)}
-          className={`w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-sm flex items-center justify-center gap-3 border border-slate-200/90 shadow-md shadow-slate-900/5 transition-all active:scale-95 cursor-pointer ${
-            isSigningIn ? 'opacity-80 cursor-wait' : ''
-          }`}
-        >
-          {isSigningIn ? (
-            <>
-              <Loader2 size={18} className="animate-spin text-amber-600" />
-              <span>Connecting to Google...</span>
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-              </svg>
-              <span>Continue with Google</span>
-            </>
-          )}
-        </button>
-
-        {/* Install / Download App button (Only shown when opened in browser, NOT in installed PWA) */}
-        {!isStandalone && onInstallApp && (
-          <button
-            type="button"
-            onClick={onInstallApp}
-            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
-          >
-            <Download size={14} className="text-amber-400" />
-            <span>Install App on Mobile / Laptop</span>
-          </button>
-        )}
-
-        <p className="text-[10px] text-slate-400 text-center font-medium">
+          <p className="text-[10px] mt-5 text-black text-center font-medium">
           Sign-in securely syncs your favorites and playlists to Google Firebase.
         </p>
       </div>

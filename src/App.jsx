@@ -955,53 +955,37 @@ export default function App() {
         {/* Animated Glowing Logo Centerpiece */}
         <div className="relative flex items-center justify-center mb-6">
           {/* Outer Pulsing Black Aura Ring */}
-          <div className="absolute w-28 h-28 rounded-3xl bg-black/10 animate-ping opacity-60" />
-          <div className="absolute w-26 h-26 rounded-3xl bg-slate-900/10 blur-xl opacity-50 animate-pulse" />
+          <div className="absolute w-40 h-40 rounded-3xl bg-black/10 animate-ping opacity-60" />
+          <div className="absolute w-26 h-26 rounded-3xl bg-slate-900/10 blur-xl opacity-50" />
           
-          <div className="relative w-20 h-20 rounded-3xl bg-white p-2.5 shadow-2xl shadow-black/25 border border-slate-200 flex items-center justify-center transform hover:scale-105 transition-transform animate-[modalPop_0.6s_ease-out]">
+          <div className="relative w-40 h-40 rounded-3xl bg-white p-2.5 shadow-2xl shadow-black/25 border border-slate-200 flex items-center justify-center ">
             <img 
               src="/logo.png" 
               alt="Isaiyon" 
-              className="w-full h-full rounded-2xl object-cover animate-pulse" 
+              className="w-full h-full rounded-2xl object-cover " 
               onError={(e) => { e.target.style.display = 'none'; }} 
             />
           </div>
         </div>
 
         {/* Brand Title */}
-        <div className="flex flex-col items-center gap-1.5 z-10 text-center">
-          <h1 className="text-xl font-black tracking-tight text-slate-900 font-display">
+        <div className="flex flex-col items-center gap-1.5 z-10 text-center mt-10">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 font-display">
             ISAIYON
           </h1>
-          <p className="text-[15px] font-black tracking-widest text-slate-800 uppercase">
+          <p className="text-[14px] font-black tracking-widest text-slate-800 uppercase">
             Sound Vault
           </p>
         </div>
 
         {/* Dynamic Animated Equalizer Wave in Sleek Slate/Black */}
-        <div className="flex items-end justify-center gap-1.5 h-8 mt-5 mb-3">
-          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.6s_ease-in-out_infinite] h-4" />
-          <span className="w-1.5 bg-slate-700 rounded-full animate-[stemPulse_0.9s_ease-in-out_infinite] h-7 [animation-delay:150ms]" />
-          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.7s_ease-in-out_infinite] h-5 [animation-delay:300ms]" />
-          <span className="w-1.5 bg-slate-700 rounded-full animate-[stemPulse_1.1s_ease-in-out_infinite] h-8 [animation-delay:450ms]" />
-          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.8s_ease-in-out_infinite] h-3.5 [animation-delay:200ms]" />
+        <div className="flex items-end justify-center gap-1.5 h-15 mb-3 mt-20">
+          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.6s_ease-in-out_infinite] h-8" />
+          <span className="w-1.5 bg-slate-700 rounded-full animate-[stemPulse_0.9s_ease-in-out_infinite] h-15 [animation-delay:150ms]" />
+          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.7s_ease-in-out_infinite] h-8 [animation-delay:300ms]" />
+          <span className="w-1.5 bg-slate-700 rounded-full animate-[stemPulse_1.1s_ease-in-out_infinite] h-12 [animation-delay:450ms]" />
+          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.8s_ease-in-out_infinite] h-5 [animation-delay:200ms]" />
         </div>
-
-        <p className="text-xs font-semibold text-slate-400 animate-pulse tracking-wide">
-          Tuning audio stream...
-        </p>
-
-        {/* Install / Download App button (Only shown when opened in browser, NOT in installed PWA) */}
-        {!isStandalone && (
-          <button
-            type="button"
-            onClick={handleInstallApp}
-            className="mt-6 py-2 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95 transition-all cursor-pointer z-10"
-          >
-            <Download size={14} className="text-amber-400" />
-            <span>Install App on Device</span>
-          </button>
-        )}
       </div>
     );
   }
