@@ -47,7 +47,47 @@ const getAudioMimeType = (ext) => {
   }
 };
 
-const executeArchiveUpload = (file, remotePath, onProgress) => {
+const detectAudioFormat = async (file) => {
+  try {
+    const slice = file.slice(0, 16);
+    const buffer = await slice.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    // ID3v2 tag (MP3)
+    if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+      return { ext: 'mp3', mime: 'audio/mpeg' };
+    }
+    // MPEG Audio frame sync: 0xFF 0xFB, 0xFF 0xF3, 0xFF 0xF2, 0xFF 0xE3
+    if (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0) {
+      return { ext: 'mp3', mime: 'audio/mpeg' };
+    }
+    // MP4 / M4A (AAC / ALAC): "ftyp" at offset 4
+    if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+      return { ext: 'm4a', mime: 'audio/mp4' };
+    }
+    // RIFF WAV
+    if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+      return { ext: 'wav', mime: 'audio/wav' };
+    }
+    // Ogg container
+    if (bytes[0] === 0x4F && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) {
+      return { ext: 'ogg', mime: 'audio/ogg' };
+    }
+    // FLAC
+    if (bytes[0] === 0x66 && bytes[1] === 0x4C && bytes[2] === 0x61 && bytes[3] === 0x43) {
+      return { ext: 'flac', mime: 'audio/flac' };
+    }
+  } catch (_) {}
+
+  // Fallback to filename extension
+  const rawExt = (file.name.split('.').pop() || '').toLowerCase().trim();
+  if (['mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'mp4'].includes(rawExt)) {
+    return { ext: rawExt, mime: getAudioMimeType(rawExt) };
+  }
+  return { ext: 'mp3', mime: 'audio/mpeg' };
+};
+
+const executeArchiveUpload = (file, remotePath, onProgress, mimeTypeOverride) => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     // Normalize path to prevent double slashes or malformed encoding
@@ -64,9 +104,11 @@ const executeArchiveUpload = (file, remotePath, onProgress) => {
     xhr.setRequestHeader('x-archive-size-hint', String(file.size));
     xhr.setRequestHeader('x-archive-ignore-preexisting-bucket', '1');
     xhr.setRequestHeader('x-archive-interactive-priority', '1');
+    // Disable server derive validator that rejects non-standard mobile files
+    xhr.setRequestHeader('x-archive-queue-derive', '0');
 
     const ext = cleanPath.split('.').pop()?.toLowerCase() || 'mp3';
-    xhr.setRequestHeader('content-type', getAudioMimeType(ext));
+    xhr.setRequestHeader('content-type', mimeTypeOverride || getAudioMimeType(ext));
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {
@@ -110,15 +152,15 @@ const executeArchiveUpload = (file, remotePath, onProgress) => {
   });
 };
 
-const uploadFileToArchiveS3 = async (file, remotePath, onProgress) => {
+const uploadFileToArchiveS3 = async (file, remotePath, onProgress, mimeTypeOverride) => {
   try {
-    return await executeArchiveUpload(file, remotePath, onProgress);
+    return await executeArchiveUpload(file, remotePath, onProgress, mimeTypeOverride);
   } catch (err) {
     console.warn("Primary Vault S3 upload attempt failed, attempting fallback path...", err);
     // Retry once with a clean flat path to bypass any nested folder restrictions
     const ext = remotePath.split('.').pop()?.toLowerCase() || 'mp3';
     const fallbackPath = `audio_uploads/track_${Date.now().toString(36)}.${ext}`;
-    return await executeArchiveUpload(file, fallbackPath, onProgress);
+    return await executeArchiveUpload(file, fallbackPath, onProgress, mimeTypeOverride);
   }
 };
 
@@ -295,11 +337,10 @@ export default function AdminModal({
         setStatusMessage(`Uploading audio to Vault: 0.0 / ${sizeMb} MB (0%)...`);
         setUploadProgress(10);
 
-        const validAudioExts = ['mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'mp4'];
-        let fileExt = (directAudioFile.name.split('.').pop() || '').toLowerCase().trim();
-        if (!validAudioExts.includes(fileExt)) {
-          fileExt = 'mp3';
-        }
+        const detected = await detectAudioFormat(directAudioFile);
+        const fileExt = detected.ext;
+        const mimeType = detected.mime;
+
         const movieSlug = slugify(directForm.movie || 'Sound Vault', 'vault');
         const songSlug = slugify(directForm.title, 'song_' + Date.now().toString(36));
         const uniqueId = Date.now().toString(36);
@@ -312,9 +353,15 @@ export default function AdminModal({
             remoteAudioPath,
             (pct) => {
               const currentMb = ((directAudioFile.size * pct / 100) / (1024 * 1024)).toFixed(1);
-              setUploadProgress(Math.round(10 + pct * 0.78));
-              setStatusMessage(`Uploading audio to Vault: ${currentMb} / ${sizeMb} MB (${pct}%)...`);
-            }
+              if (pct >= 100) {
+                setUploadProgress(92);
+                setStatusMessage(`Audio uploaded (${sizeMb} MB). Verifying and securing in Vault...`);
+              } else {
+                setUploadProgress(Math.round(10 + pct * 0.78));
+                setStatusMessage(`Uploading audio to Vault: ${currentMb} / ${sizeMb} MB (${pct}%)...`);
+              }
+            },
+            mimeType
           );
           setUploadProgress(90);
         } catch (uploadErr) {
@@ -581,7 +628,7 @@ export default function AdminModal({
                   />
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 truncate">{successCreatedTrack.title}</p>
-                    <p className="text-[12px] mt-2  text-slate-500 truncate">{successCreatedTrack.movie}</p>
+                    <p className="text-[11px] mt-1 text-slate-500 truncate">{successCreatedTrack.movie}</p>
                   </div>
                 </div>
 
