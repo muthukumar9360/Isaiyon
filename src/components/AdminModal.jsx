@@ -183,59 +183,53 @@ export default function AdminModal({
     try {
       let finalAudioUrl = directAudioUrl.trim();
 
-      // 1. Upload audio file if chosen
+      // 1. Upload audio file if chosen (Single-stream fast upload with explicit MIME type)
       if (directAudioType === 'file' && directAudioFile) {
-        setStatusMessage('Uploading audio file to Cloud Storage...');
-        setUploadProgress(25);
+        const sizeMb = (directAudioFile.size / (1024 * 1024)).toFixed(1);
+        setStatusMessage(`Uploading audio to Cloud Storage (${sizeMb} MB)...`);
+        setUploadProgress(20);
+
+        let progressInterval = null;
         try {
-          const fileExt = directAudioFile.name.split('.').pop() || 'mp3';
+          const fileExt = directAudioFile.name.split('.').pop()?.toLowerCase() || 'mp3';
           const safeName = `tracks/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
           const audioRef = ref(storage, safeName);
-          const uploadTask = uploadBytesResumable(audioRef, directAudioFile);
+          const metadata = { 
+            contentType: directAudioFile.type || 'audio/mpeg',
+            cacheControl: 'public, max-age=31536000'
+          };
 
-          await new Promise((resolve, reject) => {
-            uploadTask.on(
-              'state_changed',
-              (snap) => {
-                if (snap.totalBytes > 0) {
-                  const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 55) + 25; // 25% to 80%
-                  setUploadProgress(pct);
-                }
-              },
-              (err) => reject(err),
-              () => resolve()
-            );
-          });
-          finalAudioUrl = await getDownloadURL(uploadTask.snapshot.ref);
-          setUploadProgress(80);
+          // Smooth progress ticker
+          progressInterval = setInterval(() => {
+            setUploadProgress(prev => (prev < 84 ? prev + 6 : prev));
+          }, 200);
+
+          // Fast single-connection upload with 35-second safety timeout
+          const uploadPromise = uploadBytes(audioRef, directAudioFile, metadata);
+          const uploadSnap = await Promise.race([
+            uploadPromise,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Upload timed out. Please check your network connection.")), 35000)
+            )
+          ]);
+
+          clearInterval(progressInterval);
+          setUploadProgress(88);
+          setStatusMessage('Retrieving cloud streaming URL...');
+          finalAudioUrl = await getDownloadURL(uploadSnap.ref);
+          setUploadProgress(92);
         } catch (uploadErr) {
+          if (progressInterval) clearInterval(progressInterval);
           console.warn("Storage upload error:", uploadErr);
-          throw new Error("Could not upload audio file directly to cloud storage. Ensure Firebase Storage is enabled, or switch to 'Paste Audio URL'.");
+          throw new Error("Could not upload audio file: " + uploadErr.message);
         }
       } else {
-        setUploadProgress(65);
+        setUploadProgress(85);
       }
 
-      // 2. Upload cover artwork if provided
-      let finalCoverUrl = directCoverUrl.trim() || '/logo.png';
-      if (directCoverBase64) {
-        try {
-          setStatusMessage('Syncing cover artwork...');
-          setUploadProgress(prev => Math.max(prev, 82));
-          const coverRef = ref(storage, `covers/cover_${Date.now()}.jpg`);
-          const res = await fetch(directCoverBase64);
-          const blob = await res.blob();
-          const snap = await uploadBytes(coverRef, blob);
-          finalCoverUrl = await getDownloadURL(snap.ref);
-          setUploadProgress(90);
-        } catch (_) {
-          // Fallback: client-compressed base64 (~35KB) is safe to store directly
-          finalCoverUrl = directCoverBase64;
-          setUploadProgress(90);
-        }
-      } else {
-        setUploadProgress(90);
-      }
+      // 2. Cover artwork: use client-compressed base64 instantly to eliminate upload delay
+      const finalCoverUrl = directCoverBase64 || directCoverUrl.trim() || '/logo.png';
+      setUploadProgress(92);
 
       // 3. Match canonical movie
       const matchedMovie = existingMovies.find(
