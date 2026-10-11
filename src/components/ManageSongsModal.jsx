@@ -18,6 +18,7 @@ import {
   Upload
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
+import { compressImage } from '../utils/imageCompressor';
 
 export default function ManageSongsModal({
   isOpen,
@@ -107,48 +108,48 @@ export default function ManageSongsModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const b64 = reader.result;
-      setEditForm(prev => ({ ...prev, coverUrl: b64 }));
+    try {
       setIsUploadingPhoto(true);
+      const compressedB64 = await compressImage(file, 500, 500, 0.82);
+      setEditForm(prev => ({ ...prev, coverUrl: compressedB64 }));
+
+      let finalUrl = compressedB64;
+
+      // Try local Python bridge with a 1.2s timeout (if on laptop with bridge running)
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
         const res = await fetch('http://127.0.0.1:5001/api/update-cover', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             movie: editForm.movie,
             title: editForm.title,
-            imageBase64: b64,
+            imageBase64: compressedB64,
             projectIdentifier: 'muthuramalingam_a-vault'
-          })
+          }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const data = await res.json();
         if (data.success && data.coverUrl) {
-          setEditForm(prev => ({ ...prev, coverUrl: data.coverUrl }));
-          if (editingTrackId) {
-            await onUpdateTrack(editingTrackId, { coverUrl: data.coverUrl });
-          }
-          setSuccessMsg('Thumbnail updated in Archive.org & Vault successfully!');
-          setTimeout(() => setSuccessMsg(''), 3000);
-        } else {
-          if (editingTrackId) {
-            await onUpdateTrack(editingTrackId, { coverUrl: b64 });
-          }
-          setSuccessMsg('Thumbnail updated in Vault!');
-          setTimeout(() => setSuccessMsg(''), 3000);
+          finalUrl = data.coverUrl;
         }
-      } catch (err) {
-        if (editingTrackId) {
-          await onUpdateTrack(editingTrackId, { coverUrl: b64 });
-        }
-        setSuccessMsg('Thumbnail updated in Vault!');
-        setTimeout(() => setSuccessMsg(''), 3000);
-      } finally {
-        setIsUploadingPhoto(false);
+      } catch {
+        // Python bridge offline (normal on mobile) — use compressed cover directly
       }
-    };
-    reader.readAsDataURL(file);
+
+      setEditForm(prev => ({ ...prev, coverUrl: finalUrl }));
+      if (editingTrackId) {
+        await onUpdateTrack(editingTrackId, { coverUrl: finalUrl });
+      }
+      setSuccessMsg('Cover photo updated in Vault!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      alert('Error processing photo: ' + err.message);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   const handleDeleteConfirmed = async (trackId) => {

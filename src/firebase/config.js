@@ -34,12 +34,16 @@ const firebaseConfig = {
   appId: "1:167959878686:web:199f75f091d0e3d59ca20f"
 };
 
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 export const db = getFirestore(app);
+export const storage = getStorage(app);
+export { ref, uploadBytes, getDownloadURL };
 
 // Secret Admin Email - no public badge is shown to users
 export const ADMIN_EMAIL = "perumpatayans@gmail.com";

@@ -1,5 +1,21 @@
-import React, { useState, useMemo } from 'react';
-import { X, RefreshCw, Upload, CheckCircle2, ExternalLink, Sparkles, Edit3, FolderCheck } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { 
+  X, 
+  RefreshCw, 
+  Upload, 
+  CheckCircle2, 
+  ExternalLink, 
+  Edit3, 
+  Smartphone, 
+  Monitor, 
+  Music, 
+  Image as ImageIcon, 
+  Link as LinkIcon, 
+  FileAudio,
+  AlertCircle
+} from 'lucide-react';
+import { storage, ref, uploadBytes, getDownloadURL } from '../firebase/config';
+import { compressImage } from '../utils/imageCompressor';
 
 const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className="inline mr-1.5 shrink-0">
@@ -13,10 +29,13 @@ export default function AdminModal({
   onSaveTrack,
   tracks = []
 }) {
-  const [ytUrl, setYtUrl] = useState('');
-  const [projectIdentifier] = useState('muthuramalingam_a-vault');
+  // Mode: 'direct' (Mobile friendly direct MP3/URL) | 'youtube' (PC Python bridge)
+  const [activeTab, setActiveTab] = useState('direct');
+  const [isBridgeOnline, setIsBridgeOnline] = useState(false);
+  const audioInputRef = useRef(null);
+  const coverInputRef = useRef(null);
 
-  // Existing movies for folder reuse
+  // Existing movies for quick autocomplete
   const existingMovies = useMemo(() => {
     const movieSet = new Set();
     tracks.forEach(t => {
@@ -27,14 +46,60 @@ export default function AdminModal({
     return Array.from(movieSet).sort((a, b) => a.localeCompare(b));
   }, [tracks]);
 
-  // Two-step flow: 'input' -> 'preview_edit' -> 'uploading' -> 'done'
-  const [stage, setStage] = useState('input');
-  const [isFetching, setIsFetching] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
+  // Check Python bridge connectivity on open
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    const checkBridge = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 900);
+        const res = await fetch('http://127.0.0.1:5001/api/status', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        const data = await res.json();
+        if (isMounted && data.status === 'online') {
+          setIsBridgeOnline(true);
+        }
+      } catch {
+        if (isMounted) {
+          setIsBridgeOnline(false);
+          setActiveTab('direct'); // Default to direct upload if bridge offline
+        }
+      }
+    };
+    checkBridge();
+    return () => { isMounted = false; };
+  }, [isOpen]);
 
-  // Editable fields
-  const [editMeta, setEditMeta] = useState({
+  // -------------------------------------------------------------
+  // DIRECT UPLOAD STATE (Mobile / Standalone)
+  // -------------------------------------------------------------
+  const [directAudioType, setDirectAudioType] = useState('file'); // 'file' | 'url'
+  const [directAudioFile, setDirectAudioFile] = useState(null);
+  const [directAudioDuration, setDirectAudioDuration] = useState(250);
+  const [directAudioUrl, setDirectAudioUrl] = useState('');
+
+  const [directCoverBase64, setDirectCoverBase64] = useState('');
+  const [directCoverUrl, setDirectCoverUrl] = useState('');
+
+  const [directForm, setDirectForm] = useState({
+    title: '',
+    movie: '',
+    composer: '',
+    artist: '',
+    actors: '',
+    genre: 'Soundtrack',
+    mood: 'Melody Hits'
+  });
+
+  // -------------------------------------------------------------
+  // YOUTUBE BRIDGE STATE (Laptop Python)
+  // -------------------------------------------------------------
+  const [ytUrl, setYtUrl] = useState('');
+  const [ytStage, setYtStage] = useState('input'); // 'input' | 'preview_edit' | 'done'
+  const [ytIsFetching, setYtIsFetching] = useState(false);
+  const [ytIsUploading, setYtIsUploading] = useState(false);
+  const [ytEditMeta, setYtEditMeta] = useState({
     title: '',
     movie: '',
     actors: '',
@@ -43,25 +108,170 @@ export default function AdminModal({
     genre: 'Soundtrack',
     mood: 'Melody Hits',
     thumbnailUrl: '',
-    duration: 250,
-    id: ''
+    duration: 250
   });
+  const [ytUploadResult, setYtUploadResult] = useState(null);
 
-  const [uploadResult, setUploadResult] = useState(null);
+  // Common UI states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [successCreatedTrack, setSuccessCreatedTrack] = useState(null);
 
   if (!isOpen) return null;
 
-  // Step 1: Fetch metadata from YouTube without downloading yet
-  const handleFetchInfo = async (e) => {
+  // -------------------------------------------------------------
+  // DIRECT UPLOAD HANDLERS
+  // -------------------------------------------------------------
+  const handleDirectAudioPick = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDirectAudioFile(file);
+
+    // Auto-fill title if empty
+    if (!directForm.title) {
+      const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
+      setDirectForm(prev => ({ ...prev, title: baseName }));
+    }
+
+    // Try calculating exact duration in browser memory
+    try {
+      const tempAudio = new Audio();
+      tempAudio.src = URL.createObjectURL(file);
+      tempAudio.onloadedmetadata = () => {
+        if (tempAudio.duration && !isNaN(tempAudio.duration)) {
+          setDirectAudioDuration(Math.round(tempAudio.duration));
+        }
+      };
+    } catch (_) {}
+  };
+
+  const handleDirectCoverPick = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setStatusMessage('Compressing cover artwork...');
+      const compressed = await compressImage(file, 500, 500, 0.82);
+      setDirectCoverBase64(compressed);
+      setStatusMessage('');
+    } catch (err) {
+      alert('Failed to process image: ' + err.message);
+    }
+  };
+
+  const handleDirectSubmit = async (e) => {
+    e.preventDefault();
+    if (!directForm.title.trim()) {
+      alert('Please enter a Song Title.');
+      return;
+    }
+
+    if (directAudioType === 'file' && !directAudioFile) {
+      alert('Please select an audio file from your device.');
+      return;
+    }
+    if (directAudioType === 'url' && !directAudioUrl.trim()) {
+      alert('Please enter a direct audio streaming URL.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage('Preparing track for Vault...');
+
+    try {
+      let finalAudioUrl = directAudioUrl.trim();
+
+      // 1. Upload audio file if chosen
+      if (directAudioType === 'file' && directAudioFile) {
+        setStatusMessage('Uploading audio file to Cloud Storage...');
+        try {
+          const fileExt = directAudioFile.name.split('.').pop() || 'mp3';
+          const safeName = `tracks/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+          const audioRef = ref(storage, safeName);
+          const uploadSnap = await uploadBytes(audioRef, directAudioFile);
+          finalAudioUrl = await getDownloadURL(uploadSnap.ref);
+        } catch (uploadErr) {
+          console.warn("Storage upload error:", uploadErr);
+          throw new Error("Could not upload audio file directly to cloud storage. Ensure Firebase Storage is enabled, or switch to 'Paste Audio URL'.");
+        }
+      }
+
+      // 2. Upload cover artwork if provided
+      let finalCoverUrl = directCoverUrl.trim() || '/logo.png';
+      if (directCoverBase64) {
+        try {
+          setStatusMessage('Syncing cover artwork...');
+          const coverRef = ref(storage, `covers/cover_${Date.now()}.jpg`);
+          const res = await fetch(directCoverBase64);
+          const blob = await res.blob();
+          const snap = await uploadBytes(coverRef, blob);
+          finalCoverUrl = await getDownloadURL(snap.ref);
+        } catch (_) {
+          // Fallback: client-compressed base64 (~35KB) is safe to store directly
+          finalCoverUrl = directCoverBase64;
+        }
+      }
+
+      // 3. Match canonical movie
+      const matchedMovie = existingMovies.find(
+        m => m.toLowerCase() === (directForm.movie || '').trim().toLowerCase()
+      );
+      const canonicalMovie = matchedMovie || (directForm.movie || '').trim() || 'Sound Vault';
+
+      // 4. Save track to Firestore
+      setStatusMessage('Saving track to Vault database...');
+      const trackToSave = {
+        title: directForm.title.trim(),
+        movie: canonicalMovie,
+        actors: directForm.actors.trim(),
+        composer: directForm.composer.trim(),
+        artist: directForm.artist.trim(),
+        genre: directForm.genre || 'Soundtrack',
+        mood: directForm.mood || 'Melody Hits',
+        duration: directAudioDuration || 240,
+        audioUrl: finalAudioUrl,
+        coverUrl: finalCoverUrl,
+        source: directAudioType === 'file' ? 'cloud_storage' : 'direct_url'
+      };
+
+      await onSaveTrack(trackToSave);
+      setSuccessCreatedTrack(trackToSave);
+      setStatusMessage('Song successfully saved to Vault!');
+    } catch (err) {
+      setStatusMessage('Error: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetDirectForm = () => {
+    setDirectAudioFile(null);
+    setDirectAudioUrl('');
+    setDirectCoverBase64('');
+    setDirectCoverUrl('');
+    setDirectForm({
+      title: '',
+      movie: '',
+      composer: '',
+      artist: '',
+      actors: '',
+      genre: 'Soundtrack',
+      mood: 'Melody Hits'
+    });
+    setSuccessCreatedTrack(null);
+    setStatusMessage('');
+  };
+
+  // -------------------------------------------------------------
+  // YOUTUBE BRIDGE HANDLERS
+  // -------------------------------------------------------------
+  const handleYtFetchInfo = async (e) => {
     e.preventDefault();
     if (!ytUrl) {
       alert('Please enter a YouTube video URL.');
       return;
     }
-
-    setIsFetching(true);
-    setStatusMessage('Fetching song credits & parsing Movie, Cast, Composer...');
-
+    setYtIsFetching(true);
+    setStatusMessage('Fetching song credits from YouTube...');
     try {
       const res = await fetch('http://127.0.0.1:5001/api/extract-info', {
         method: 'POST',
@@ -69,42 +279,38 @@ export default function AdminModal({
         body: JSON.stringify({ url: ytUrl })
       });
       const data = await res.json();
-
       if (data.success && data.data) {
-        setEditMeta({
+        setYtEditMeta({
           ...data.data,
-          projectIdentifier
+          projectIdentifier: 'muthuramalingam_a-vault'
         });
-        setStage('preview_edit');
+        setYtStage('preview_edit');
         setStatusMessage('Review or edit details below before uploading.');
       } else {
         setStatusMessage('Fetch error: ' + (data.error || 'Could not extract metadata'));
       }
     } catch (err) {
-      setStatusMessage('Error contacting local bridge: ' + err.message);
+      setStatusMessage('Error contacting local Python bridge: ' + err.message);
     } finally {
-      setIsFetching(false);
+      setYtIsFetching(false);
     }
   };
 
-  // Step 2: Confirm & Upload with edited fields
-  const handleConfirmUpload = async (e) => {
+  const handleYtConfirmUpload = async (e) => {
     e.preventDefault();
-    setIsUploading(true);
-    setStatusMessage('1/2 Downloading audio & uploading to Archive.org folders ({Movie}/{Song}/)...');
-
+    setYtIsUploading(true);
+    setStatusMessage('1/2 Downloading audio & uploading to Archive.org folders...');
     try {
-      // Reuse existing movie folder name if matched
       const matchedMovie = existingMovies.find(
-        m => m.toLowerCase() === (editMeta.movie || '').trim().toLowerCase()
+        m => m.toLowerCase() === (ytEditMeta.movie || '').trim().toLowerCase()
       );
-      const canonicalMovie = matchedMovie || (editMeta.movie || '').trim();
+      const canonicalMovie = matchedMovie || (ytEditMeta.movie || '').trim();
 
       const payload = {
-        ...editMeta,
+        ...ytEditMeta,
         movie: canonicalMovie,
         url: ytUrl,
-        projectIdentifier
+        projectIdentifier: 'muthuramalingam_a-vault'
       };
 
       const res = await fetch('http://127.0.0.1:5001/api/upload-track', {
@@ -116,26 +322,25 @@ export default function AdminModal({
 
       if (result.success && result.audioUrl) {
         setStatusMessage('2/2 Saving track to your Firebase database...');
-
         const trackToSave = {
-          title: editMeta.title.trim(),
+          title: ytEditMeta.title.trim(),
           movie: canonicalMovie,
-          actors: editMeta.actors,
-          composer: editMeta.composer,
-          artist: editMeta.artist,
-          genre: editMeta.genre,
-          mood: editMeta.mood,
-          duration: editMeta.duration || 260,
+          actors: ytEditMeta.actors,
+          composer: ytEditMeta.composer,
+          artist: ytEditMeta.artist,
+          genre: ytEditMeta.genre,
+          mood: ytEditMeta.mood,
+          duration: ytEditMeta.duration || 260,
           audioUrl: result.audioUrl,
-          coverUrl: result.coverUrl || editMeta.thumbnailUrl,
+          coverUrl: result.coverUrl || ytEditMeta.thumbnailUrl,
           archiveDetailsUrl: result.archiveDetailsUrl,
           archivePath: result.remoteAudioPath,
           source: 'archive.org'
         };
 
         await onSaveTrack(trackToSave);
-        setUploadResult(result);
-        setStage('done');
+        setYtUploadResult(result);
+        setYtStage('done');
         setStatusMessage('Song uploaded to Archive.org and permanently saved to Vault!');
       } else {
         setStatusMessage('Upload error: ' + (result.error || 'Failed to complete upload'));
@@ -143,325 +348,570 @@ export default function AdminModal({
     } catch (err) {
       setStatusMessage('Error during upload: ' + err.message);
     } finally {
-      setIsUploading(false);
+      setYtIsUploading(false);
     }
   };
 
-  const resetAll = () => {
-    setStage('input');
+  const resetYtAll = () => {
+    setYtStage('input');
     setYtUrl('');
-    setUploadResult(null);
+    setYtUploadResult(null);
     setStatusMessage('');
   };
 
-  const handleCustomImagePick = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const b64 = reader.result;
-      setEditMeta(prev => ({
-        ...prev,
-        thumbnailUrl: b64,
-        customCoverBase64: b64
-      }));
-      setStatusMessage('Custom photo selected! It will be uploaded into Archive.org.');
-    };
-    reader.readAsDataURL(file);
-  };
-
   return (
-    <div
-      className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
-    >
-      <div
-        className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto relative"
+    <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3.5 z-50 select-none animate-[modalPop_0.2s_ease-out]">
+      <div 
+        className="w-full max-w-md bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto relative"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header - Only closes when clicking the X button */}
+        {/* Header with Close */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
           <div className="flex items-center gap-2">
-            <YoutubeIcon size={20} />
-            <h3 className="text-sm font-extrabold text-slate-900 font-display">
-              YouTube Song Importer
-            </h3>
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+              <Music size={16} />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 font-display">
+                Add New Track to Vault
+              </h3>
+              <p className="text-[10px] text-slate-500 font-medium">
+                Admin Sound Library Management
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
-            title="Close Importer"
+            title="Close"
           >
             <X size={15} />
           </button>
         </div>
 
-        {/* STAGE 1: Paste Link & Fetch */}
-        {stage === 'input' && (
-          <form onSubmit={handleFetchInfo} className="flex flex-col gap-3">
+        {/* Tab Switcher: Direct Mobile Upload vs YouTube Importer */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl mb-3.5">
+          <button
+            type="button"
+            onClick={() => { setActiveTab('direct'); setStatusMessage(''); }}
+            className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === 'direct'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Smartphone size={14} className={activeTab === 'direct' ? 'text-amber-500' : ''} />
+            <span>Direct Upload</span>
+            <span className="text-[9px] px-1 py-0.2 rounded-full bg-amber-100 text-amber-700 font-black">
+              Mobile
+            </span>
+          </button>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                * Paste YouTube Song URL
-              </label>
-              <input
-                type="url"
-                required
-                placeholder="https://www.youtube.com/watch?v=..."
-                value={ytUrl}
-                onChange={e => setYtUrl(e.target.value)}
-                disabled={isFetching}
-                className="w-full px-3 py-2.5 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 focus:ring-3 focus:ring-amber-400/10 outline-hidden transition-all"
-              />
-            </div>
+          <button
+            type="button"
+            onClick={() => { setActiveTab('youtube'); setStatusMessage(''); }}
+            className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === 'youtube'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <YoutubeIcon size={14} />
+            <span>YouTube Bridge</span>
+            <span className={`text-[9px] px-1 py-0.2 rounded-full font-black ${
+              isBridgeOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+            }`}>
+              {isBridgeOnline ? 'Online' : 'PC'}
+            </span>
+          </button>
+        </div>
 
-            <button
-              type="submit"
-              disabled={isFetching}
-              className="mt-1 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
-            >
-              {isFetching ? (
-                <>
-                  <RefreshCw size={14} className="animate-spin" />
-                  <span>Fetching Details...</span>
-                </>
-              ) : (
-                <>
-                  <span>Fetch Song Details & Preview</span>
-                </>
-              )}
-            </button>
-          </form>
-        )}
+        {/* ========================================================================= */}
+        {/* TAB 1: DIRECT UPLOAD (MOBILE & STANDALONE - NO PYTHON NEEDED)             */}
+        {/* ========================================================================= */}
+        {activeTab === 'direct' && (
+          <div>
+            {successCreatedTrack ? (
+              /* Success Screen */
+              <div className="text-center py-4 flex flex-col gap-3">
+                <CheckCircle2 size={44} className="text-emerald-500 mx-auto animate-[modalPop_0.3s_ease-out]" />
+                <div>
+                  <h4 className="text-sm font-black text-slate-900 font-display">
+                    Track Added to Vault!
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1">
+                    "{successCreatedTrack.title}" from {successCreatedTrack.movie} is now live and streaming on all devices.
+                  </p>
+                </div>
 
-        {/* STAGE 2: Review & Edit Metadata Before Storing */}
-        {stage === 'preview_edit' && (
-          <form onSubmit={handleConfirmUpload} className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <Edit3 size={15} className="text-amber-500" />
-              <span className="text-xs font-bold text-slate-900">
-                Review & Edit Before Uploading
-              </span>
-            </div>
-
-            {/* Full Destination Path Preview & Change Thumbnail */}
-            <div className="flex flex-col gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200/80">
-              <div className="flex gap-2.5 items-center">
-                <div className="relative group shrink-0">
+                <div className="flex gap-2.5 items-center p-2.5 bg-slate-50 rounded-2xl border border-slate-100 mx-auto max-w-xs text-left">
                   <img 
-                    src={editMeta.thumbnailUrl || '/logo.png'} 
-                    alt="Thumb" 
-                    className="w-14 h-14 rounded-xl object-cover shadow-2xs border border-slate-200" 
+                    src={successCreatedTrack.coverUrl || '/logo.png'} 
+                    alt="Cover" 
+                    className="w-12 h-12 rounded-xl object-cover shrink-0" 
                   />
-                  <label 
-                    className="absolute inset-0 bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[9px] font-bold cursor-pointer"
-                    title="Change thumbnail photo"
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 truncate">{successCreatedTrack.title}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{successCreatedTrack.movie}</p>
+                    <span className="text-[10px] font-bold text-amber-600">{successCreatedTrack.composer || 'Sound Vault'}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={resetDirectForm}
+                    className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
                   >
-                    <Upload size={12} />
-                    <span>Change</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      onChange={handleCustomImagePick}
-                    />
-                  </label>
+                    + Add Another Song
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                  >
+                    Done & Close
+                  </button>
                 </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-bold text-slate-700">Destination:</span>
-                    <label className="text-[10px] font-bold text-amber-600 hover:text-amber-700 cursor-pointer flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/60 transition-all hover:bg-amber-100">
-                      <Upload size={10} />
-                      <span>{editMeta.customCoverBase64 ? 'Photo Selected' : 'Change Photo'}</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleCustomImagePick}
-                      />
+              </div>
+            ) : (
+              /* Direct Input Form */
+              <form onSubmit={handleDirectSubmit} className="flex flex-col gap-3">
+                
+                {/* 1. Audio Source Selector */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                      * 1. Audio Source
                     </label>
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                      <button
+                        type="button"
+                        onClick={() => setDirectAudioType('file')}
+                        className={`px-2 py-0.5 rounded-md cursor-pointer transition-colors ${
+                          directAudioType === 'file' ? 'bg-amber-100 text-amber-800 font-bold' : 'hover:bg-slate-100'
+                        }`}
+                      >
+                        MP3 File
+                      </button>
+                      <span>|</span>
+                      <button
+                        type="button"
+                        onClick={() => setDirectAudioType('url')}
+                        className={`px-2 py-0.5 rounded-md cursor-pointer transition-colors ${
+                          directAudioType === 'url' ? 'bg-amber-100 text-amber-800 font-bold' : 'hover:bg-slate-100'
+                        }`}
+                      >
+                        Audio URL
+                      </button>
+                    </div>
                   </div>
-                  <div className="bg-amber-50/90 border border-amber-200/70 p-1.5 rounded-xl">
-                    <code className="text-[11px] text-amber-900 font-mono font-bold break-all whitespace-normal select-all block leading-tight">
-                      {projectIdentifier}/{(existingMovies.find(m => m.toLowerCase() === (editMeta.movie || '').trim().toLowerCase()) || editMeta.movie || 'Movie')}/{(editMeta.title || 'Song')}/
-                    </code>
+
+                  {directAudioType === 'file' ? (
+                    <div>
+                      <input
+                        type="file"
+                        ref={audioInputRef}
+                        accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg"
+                        onChange={handleDirectAudioPick}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => audioInputRef.current?.click()}
+                        disabled={isSubmitting}
+                        className="w-full p-3 rounded-2xl border-2 border-dashed border-amber-300 hover:border-amber-400 bg-amber-50/40 hover:bg-amber-50 text-slate-700 flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.99] cursor-pointer"
+                      >
+                        <FileAudio size={22} className="text-amber-500" />
+                        <span className="text-xs font-bold text-slate-900">
+                          {directAudioFile ? directAudioFile.name : 'Choose Audio File from Mobile'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          {directAudioFile 
+                            ? `${(directAudioFile.size / (1024 * 1024)).toFixed(2)} MB • ~${directAudioDuration}s` 
+                            : 'Supports MP3, M4A, WAV, AAC'}
+                        </span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <input
+                        type="url"
+                        placeholder="https://archive.org/download/.../song.mp3"
+                        value={directAudioUrl}
+                        onChange={e => setDirectAudioUrl(e.target.value)}
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2.5 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden transition-all"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Cover Artwork */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                    2. Cover Artwork
+                  </label>
+                  <div className="flex gap-2.5 items-center bg-slate-50 p-2 rounded-2xl border border-slate-200/80">
+                    <img 
+                      src={directCoverBase64 || directCoverUrl || '/logo.png'} 
+                      alt="Cover Preview" 
+                      className="w-13 h-13 rounded-xl object-cover shrink-0 border border-slate-200 bg-white shadow-2xs" 
+                    />
+                    <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                      <input
+                        type="file"
+                        ref={coverInputRef}
+                        accept="image/*"
+                        onChange={handleDirectCoverPick}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => coverInputRef.current?.click()}
+                        disabled={isSubmitting}
+                        className="py-1.5 px-3 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                      >
+                        <ImageIcon size={13} className="text-amber-500" />
+                        <span>Pick Photo from Mobile</span>
+                      </button>
+                      <input
+                        type="url"
+                        placeholder="Or paste image URL"
+                        value={directCoverUrl}
+                        onChange={e => { setDirectCoverUrl(e.target.value); setDirectCoverBase64(''); }}
+                        disabled={isSubmitting}
+                        className="w-full px-2 py-1 bg-white text-[11px] rounded-lg border border-slate-200 focus:border-amber-400 outline-hidden"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Existing Movies Datalist */}
-            <datalist id="admin-existing-movies">
-              {existingMovies.map(m => (
-                <option key={m} value={m} />
-              ))}
-            </datalist>
+                {/* 3. Track Details */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">* Song Title</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Kadhale Kadhale"
+                      value={directForm.title}
+                      onChange={e => setDirectForm({ ...directForm, title: e.target.value })}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
+                    />
+                  </div>
 
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold text-slate-600">Movie / Album *</label>
-                {existingMovies.find(m => m.toLowerCase() === (editMeta.movie || '').trim().toLowerCase()) && (
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
-                    <FolderCheck size={11} />
-                    Reusing folder: {existingMovies.find(m => m.toLowerCase() === (editMeta.movie || '').trim().toLowerCase())}
-                  </span>
-                )}
-              </div>
-              <input
-                type="text"
-                required
-                list="admin-existing-movies"
-                placeholder="e.g. Kandukondain Kandukondain or Yaaradi Nee Mohini"
-                value={editMeta.movie}
-                onChange={e => setEditMeta({ ...editMeta, movie: e.target.value })}
-                disabled={isUploading}
-                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
-              />
-            </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Movie / Album</label>
+                      <input
+                        type="text"
+                        list="existing-movies-list"
+                        placeholder="e.g. 96"
+                        value={directForm.movie}
+                        onChange={e => setDirectForm({ ...directForm, movie: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
+                      />
+                      <datalist id="existing-movies-list">
+                        {existingMovies.map(m => (
+                          <option key={m} value={m} />
+                        ))}
+                      </datalist>
+                    </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-bold text-slate-600">Song Title *</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Ennai Thalaatiya Varuvala"
-                value={editMeta.title}
-                onChange={e => setEditMeta({ ...editMeta, title: e.target.value })}
-                disabled={isUploading}
-                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
-              />
-            </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Music Director</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Govind Vasantha"
+                        value={directForm.composer}
+                        onChange={e => setDirectForm({ ...directForm, composer: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
+                      />
+                    </div>
+                  </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-bold text-slate-600">Starring / Actors</label>
-              <input
-                type="text"
-                placeholder="e.g. Suriya, Laila or Dhanush, Nayanthara"
-                value={editMeta.actors}
-                onChange={e => setEditMeta({ ...editMeta, actors: e.target.value })}
-                disabled={isUploading}
-                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
-              />
-            </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Actors / Cast</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Vijay Sethupathi, Trisha"
+                        value={directForm.actors}
+                        onChange={e => setDirectForm({ ...directForm, actors: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
+                      />
+                    </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-600">Music Director</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Sirpy, Yuvan"
-                  value={editMeta.composer}
-                  onChange={e => setEditMeta({ ...editMeta, composer: e.target.value })}
-                  disabled={isUploading}
-                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
-                />
-              </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Singers</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Chinmayi, Govind"
+                        value={directForm.artist}
+                        onChange={e => setDirectForm({ ...directForm, artist: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
+                      />
+                    </div>
+                  </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-600">Singers</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Hariharan"
-                  value={editMeta.artist}
-                  onChange={e => setEditMeta({ ...editMeta, artist: e.target.value })}
-                  disabled={isUploading}
-                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
-                />
-              </div>
-            </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Genre</label>
+                      <select
+                        value={directForm.genre}
+                        onChange={e => setDirectForm({ ...directForm, genre: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden cursor-pointer"
+                      >
+                        <option value="Soundtrack">Soundtrack</option>
+                        <option value="Melody">Melody</option>
+                        <option value="Folk">Folk</option>
+                        <option value="Classical">Classical</option>
+                        <option value="Pop">Pop</option>
+                        <option value="Rock">Rock</option>
+                      </select>
+                    </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-bold text-slate-600">Mood / Category</label>
-              <select
-                value={editMeta.mood}
-                onChange={e => setEditMeta({ ...editMeta, mood: e.target.value })}
-                disabled={isUploading}
-                className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden cursor-pointer"
-              >
-                <option value="Love Failure">💔 Love Failure</option>
-                <option value="Melody Hits">🎵 Melody Hits</option>
-                <option value="Energetic">⚡ Energetic / Kuthu</option>
-                <option value="Midnight Chill">🌙 Midnight Chill</option>
-              </select>
-            </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Mood / Category</label>
+                      <select
+                        value={directForm.mood}
+                        onChange={e => setDirectForm({ ...directForm, mood: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden cursor-pointer"
+                      >
+                        <option value="Melody Hits">🎵 Melody Hits</option>
+                        <option value="Love Failure">💔 Love Failure</option>
+                        <option value="Energetic">⚡ Energetic / Kuthu</option>
+                        <option value="Midnight Chill">🌙 Midnight Chill</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
 
-            <div className="flex gap-2 mt-2">
-              <button
-                type="button"
-                onClick={() => setStage('input')}
-                disabled={isUploading}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all active:scale-95"
-              >
-                Back
-              </button>
-
-              <button
-                type="submit"
-                disabled={isUploading}
-                className="flex-1 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
-              >
-                {isUploading ? (
-                  <>
-                    <RefreshCw size={14} className="animate-spin" />
-                    <span>Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload size={14} />
-                    <span>Confirm & Upload</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="mt-1 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>Saving Track to Vault...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={14} />
+                      <span>Save Track to Vault</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
         )}
 
-        {/* STAGE 3: Done */}
-        {stage === 'done' && uploadResult && (
-          <div className="text-center py-4 flex flex-col gap-3">
-            <CheckCircle2 size={40} className="text-emerald-500 mx-auto" />
-            <h4 className="text-sm font-black text-slate-900 font-display">
-              Song Uploaded Successfully!
-            </h4>
-            <p className="text-xs text-slate-500">
-              Uploaded to: <code className="text-slate-700 bg-slate-100 px-1 py-0.5 rounded text-[11px]">{uploadResult.remoteAudioPath}</code>
-            </p>
+        {/* ========================================================================= */}
+        {/* TAB 2: YOUTUBE IMPORTER (REQUIRES LAPTOP PYTHON BRIDGE)                   */}
+        {/* ========================================================================= */}
+        {activeTab === 'youtube' && (
+          <div>
+            {!isBridgeOnline && (
+              <div className="mb-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] leading-relaxed flex items-start gap-2">
+                <AlertCircle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Python Bridge is offline on this device.</p>
+                  <p className="text-slate-600 mt-0.5">
+                    If you are on your laptop, run: <code className="bg-amber-100 px-1 py-0.2 rounded font-mono">py scripts/yt_archive_bridge.py</code>. If you are on your phone, use the <strong>Direct Upload</strong> tab above.
+                  </p>
+                </div>
+              </div>
+            )}
 
-            <div className="flex flex-col gap-2 mt-2">
-              <a
-                href={uploadResult.archiveDetailsUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs hover:bg-slate-800 transition-all active:scale-95"
-              >
-                <span>Inspect in Archive.org</span>
-                <ExternalLink size={13} />
-              </a>
+            {/* STAGE 1: Paste Link & Fetch */}
+            {ytStage === 'input' && (
+              <form onSubmit={handleYtFetchInfo} className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                    * Paste YouTube Song URL
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={ytUrl}
+                    onChange={e => setYtUrl(e.target.value)}
+                    disabled={ytIsFetching}
+                    className="w-full px-3 py-2.5 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden transition-all"
+                  />
+                </div>
 
-              <button
-                onClick={resetAll}
-                className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-all active:scale-95 cursor-pointer"
-              >
-                + Add Another Song
-              </button>
+                <button
+                  type="submit"
+                  disabled={ytIsFetching}
+                  className="mt-1 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  {ytIsFetching ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>Fetching Details...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Fetch Song Details & Preview</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
 
-              <button
-                onClick={onClose}
-                className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold hover:bg-slate-200 transition-all active:scale-95 cursor-pointer"
-              >
-                Done & Close
-              </button>
-            </div>
+            {/* STAGE 2: Review & Edit Metadata */}
+            {ytStage === 'preview_edit' && (
+              <form onSubmit={handleYtConfirmUpload} className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <Edit3 size={15} className="text-amber-500" />
+                  <span className="text-xs font-bold text-slate-900">
+                    Review & Edit Before Uploading
+                  </span>
+                </div>
+
+                <div className="flex gap-2.5 items-center bg-slate-50 p-2 rounded-2xl border border-slate-200">
+                  <img 
+                    src={ytEditMeta.thumbnailUrl || '/logo.png'} 
+                    alt="Thumb" 
+                    className="w-13 h-13 rounded-xl object-cover shrink-0 border border-slate-200 bg-white" 
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 truncate">{ytEditMeta.title || 'Untitled'}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{ytEditMeta.movie || 'Sound Vault'}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">Song Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={ytEditMeta.title}
+                      onChange={e => setYtEditMeta({ ...ytEditMeta, title: e.target.value })}
+                      disabled={ytIsUploading}
+                      className="w-full px-3 py-2 bg-slate-100 text-xs font-semibold rounded-xl outline-hidden"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Movie</label>
+                      <input
+                        type="text"
+                        value={ytEditMeta.movie}
+                        onChange={e => setYtEditMeta({ ...ytEditMeta, movie: e.target.value })}
+                        disabled={ytIsUploading}
+                        className="w-full px-3 py-2 bg-slate-100 text-xs font-semibold rounded-xl outline-hidden"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Composer</label>
+                      <input
+                        type="text"
+                        value={ytEditMeta.composer}
+                        onChange={e => setYtEditMeta({ ...ytEditMeta, composer: e.target.value })}
+                        disabled={ytIsUploading}
+                        className="w-full px-3 py-2 bg-slate-100 text-xs font-semibold rounded-xl outline-hidden"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setYtStage('input')}
+                    disabled={ytIsUploading}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all active:scale-95"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={ytIsUploading}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  >
+                    {ytIsUploading ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        <span>Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} />
+                        <span>Confirm & Upload</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STAGE 3: Done */}
+            {ytStage === 'done' && ytUploadResult && (
+              <div className="text-center py-4 flex flex-col gap-3">
+                <CheckCircle2 size={40} className="text-emerald-500 mx-auto" />
+                <h4 className="text-sm font-black text-slate-900 font-display">
+                  Song Uploaded Successfully!
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Uploaded to: <code className="text-slate-700 bg-slate-100 px-1 py-0.5 rounded text-[11px]">{ytUploadResult.remoteAudioPath}</code>
+                </p>
+
+                <div className="flex flex-col gap-2 mt-2">
+                  <a
+                    href={ytUploadResult.archiveDetailsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs hover:bg-slate-800 transition-all active:scale-95"
+                  >
+                    <span>Inspect in Archive.org</span>
+                    <ExternalLink size={13} />
+                  </a>
+
+                  <button
+                    onClick={resetYtAll}
+                    className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-all active:scale-95 cursor-pointer"
+                  >
+                    + Add Another Song
+                  </button>
+
+                  <button
+                    onClick={onClose}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold hover:bg-slate-200 transition-all active:scale-95 cursor-pointer"
+                  >
+                    Done & Close
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Status Message */}
         {statusMessage && (
-          <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${statusMessage.includes('Success') || statusMessage.includes('permanently')
+          <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${
+            statusMessage.includes('Success') || statusMessage.includes('successfully') || statusMessage.includes('saved to Vault')
               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/50'
+              : statusMessage.includes('Error')
+              ? 'bg-rose-50 text-rose-800 border border-rose-200/50'
               : 'bg-slate-50 text-slate-600 border border-slate-100'
-            }`}>
+          }`}>
             {statusMessage}
           </div>
         )}
