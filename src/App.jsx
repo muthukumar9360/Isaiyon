@@ -9,6 +9,7 @@ import BottomPlayer from './components/BottomPlayer';
 import MovieDetailModal from './components/MovieDetailModal';
 import AdminModal from './components/AdminModal';
 import { Home, Search, ListMusic, Library, Disc3 } from 'lucide-react';
+import { FALLBACK_ARTWORK } from './constants/fallbackArt';
 import { 
   auth, 
   db, 
@@ -191,12 +192,12 @@ export default function App() {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack.title,
         artist: `${currentTrack.artist}${currentTrack.movie ? ` (${currentTrack.movie})` : ''}`,
-        album: currentTrack.movie || 'Aetheria Sound Vault',
+        album: currentTrack.movie || 'Isaiyon Music',
         artwork: [
           { 
-            src: currentTrack.coverUrl || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=512', 
+            src: currentTrack.coverUrl || FALLBACK_ARTWORK, 
             sizes: '512x512', 
-            type: 'image/jpeg' 
+            type: 'image/png' 
           }
         ]
       });
@@ -379,7 +380,7 @@ export default function App() {
   // Share Track
   const handleShareTrack = (track) => {
     if (!track) return;
-    const shareText = `Listening to "${track.title}" from "${track.movie || 'Sound Vault'}" on Aetheria!`;
+    const shareText = `Listening to "${track.title}" from "${track.movie || 'Sound Vault'}" on Isaiyon!`;
     if (navigator.share) {
       navigator.share({
         title: track.title,

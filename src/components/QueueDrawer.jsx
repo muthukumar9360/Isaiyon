@@ -9,6 +9,7 @@ import {
   ArrowUp,
   ArrowDown
 } from 'lucide-react';
+import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
 export default function QueueDrawer({
   currentTrack,
@@ -62,7 +63,15 @@ export default function QueueDrawer({
         <h4 className="queue-section-title">Now Playing</h4>
         {currentTrack ? (
           <div className="queue-now-playing-card">
-            <img src={currentTrack.coverUrl} alt={currentTrack.title} className="queue-thumb" />
+            <img 
+              src={currentTrack.coverUrl || FALLBACK_ARTWORK} 
+              alt={currentTrack.title} 
+              className="queue-thumb"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = FALLBACK_ARTWORK;
+              }}
+            />
             <div className="queue-meta">
               <span className="queue-title">{currentTrack.title}</span>
               <span className="queue-sub">{currentTrack.movie || currentTrack.artist}</span>
@@ -101,7 +110,15 @@ export default function QueueDrawer({
                   <GripVertical size={16} color="var(--text-faint)" />
                 </div>
 
-                <img src={track.coverUrl} alt={track.title} className="queue-thumb-sm" />
+                <img 
+                  src={track.coverUrl || FALLBACK_ARTWORK} 
+                  alt={track.title} 
+                  className="queue-thumb-sm"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = FALLBACK_ARTWORK;
+                  }}
+                />
 
                 <div className="queue-meta" onClick={() => onPlayQueueTrack(idx)}>
                   <span className="queue-title">{track.title}</span>
@@ -153,7 +170,15 @@ export default function QueueDrawer({
         <div className="suggested-list">
           {suggestedTracks.slice(0, 5).map(track => (
             <div key={track.id} className="suggested-row">
-              <img src={track.coverUrl} alt={track.title} className="queue-thumb-sm" />
+              <img 
+                src={track.coverUrl || FALLBACK_ARTWORK} 
+                alt={track.title} 
+                className="queue-thumb-sm"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = FALLBACK_ARTWORK;
+                }}
+              />
               <div className="queue-meta">
                 <span className="queue-title">{track.title}</span>
                 <span className="queue-sub">{track.movie ? `[${track.movie}] ` : ''}{track.artist}</span>

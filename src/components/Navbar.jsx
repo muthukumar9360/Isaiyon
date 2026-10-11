@@ -53,13 +53,11 @@ export default function Navbar({ user, onOpenAdminModal }) {
   return (
     <header className="mobile-header">
       <div className="brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        <div className="brand-icon">
-          <Disc3 size={20} />
-        </div>
+        <img src="/logo.png" alt="Isaiyon Logo" className="brand-logo-img" />
         <div>
-          <span className="brand-title">Aetheria</span>
+          <span className="brand-title">Isaiyon</span>
         </div>
-        <span className="brand-badge">PWA</span>
+        <span className="brand-badge">PRO</span>
       </div>
 
       <div className="nav-actions">

@@ -216,7 +216,7 @@ def upload_to_archive_nested(audio_path, thumb_path, movie_name, song_title, met
     item = session.get_item(proj_id)
 
     archive_meta = {
-        'title': f"Aetheria Tamil Sound Vault - {movie_name}",
+        'title': f"Isaiyon Music Vault - {movie_name}",
         'mediatype': 'audio',
         'collection': 'opensource_audio',
         'creator': metadata_dict.get('composer') or metadata_dict.get('artist') or "Tamil Cinema",

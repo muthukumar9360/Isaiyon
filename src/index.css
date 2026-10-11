@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AETHERIA SOUND VAULT - PURE WHITE THEME & HOLOGRAPHIC DVD DISC
+   ISAIYON MUSIC - PURE WHITE THEME & HOLOGRAPHIC DVD DISC
    Ultra-Clean Porcelain Aesthetics + Dynamic Iridescent Laser Disc
    ========================================================================== */
 
@@ -141,6 +141,15 @@ body {
   justify-content: center;
   color: #ffffff;
   box-shadow: 0 4px 10px var(--accent-gold-glow);
+}
+
+.brand-logo-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  display: block;
 }
 
 .brand-title {

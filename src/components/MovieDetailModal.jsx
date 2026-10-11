@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Play, Heart, Film, Users, Music2, Volume2 } from 'lucide-react';
+import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
 export default function MovieDetailModal({
   movie,
@@ -30,7 +31,15 @@ export default function MovieDetailModal({
 
         {/* Hero Header */}
         <div className="movie-modal-hero">
-          <img src={movie.coverUrl} alt={movie.name} className="movie-modal-poster" />
+          <img 
+            src={movie.coverUrl || FALLBACK_ARTWORK} 
+            alt={movie.name} 
+            className="movie-modal-poster"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = FALLBACK_ARTWORK;
+            }} 
+          />
           <div className="movie-modal-hero-text">
             <span className="movie-badge">Soundtrack Album</span>
             <h2 className="movie-modal-title">{movie.name}</h2>

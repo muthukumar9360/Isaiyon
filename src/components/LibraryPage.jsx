@@ -9,6 +9,7 @@ import {
   Music2, 
   Volume2 
 } from 'lucide-react';
+import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
 export default function LibraryPage({
   tracks,
@@ -122,7 +123,15 @@ export default function LibraryPage({
                     onClick={() => onSelectTrack(track)}
                   >
                     <div className="track-left">
-                      <img src={track.coverUrl} alt={track.title} className="track-thumb" />
+                      <img 
+                        src={track.coverUrl || FALLBACK_ARTWORK} 
+                        alt={track.title} 
+                        className="track-thumb"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = FALLBACK_ARTWORK;
+                        }} 
+                      />
                       <div className="track-meta">
                         <span className="track-name">{track.title}</span>
                         <span className="track-sub">{track.movie || track.artist}</span>
@@ -216,7 +225,15 @@ export default function LibraryPage({
                 className="movie-grid-card"
                 onClick={() => onOpenMovieModal(movie)}
               >
-                <img src={movie.coverUrl} alt={movie.name} className="movie-grid-poster" />
+                <img 
+                  src={movie.coverUrl || FALLBACK_ARTWORK} 
+                  alt={movie.name} 
+                  className="movie-grid-poster"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = FALLBACK_ARTWORK;
+                  }} 
+                />
                 <div className="movie-grid-title">{movie.name}</div>
                 <div className="movie-grid-sub">{movie.tracks.length} tracks • {movie.composer}</div>
               </div>

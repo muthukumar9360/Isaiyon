@@ -10,25 +10,25 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons.svg', 'robots.txt'],
       manifest: {
-        name: 'Aetheria Music',
-        short_name: 'Aetheria',
-        description: 'Ad-free high-fidelity PWA music streaming with background playback',
-        theme_color: '#0d1117',
-        background_color: '#0d1117',
+        name: 'Isaiyon Music',
+        short_name: 'Isaiyon',
+        description: 'Ad-free high-fidelity PWA music streaming with background playback and personal sound vault',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
         icons: [
           {
-            src: '/favicon.svg',
+            src: '/logo.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/favicon.svg',
+            src: '/logo.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]
