@@ -318,7 +318,7 @@ export default function HomePage({
     if (onPlayUnheard) {
       onPlayUnheard(unheardTracks);
     } else {
-      onSelectTrack(unheardTracks[0]);
+      onSelectTrack(unheardTracks[0], false);
       if (onAddToQueue && unheardTracks.length > 1) {
         unheardTracks.slice(1).forEach(t => onAddToQueue(t));
       }
@@ -373,7 +373,7 @@ export default function HomePage({
             </button>
           ) : (
             <button
-              onClick={() => tracks[0] && onSelectTrack(tracks[0])}
+              onClick={() => tracks[0] && onSelectTrack(tracks[0], false)}
               className="w-full py-2.5 px-4 rounded-2xl bg-white/15 hover:bg-white/20 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-white/10 active:scale-[0.98] transition-all cursor-pointer"
             >
               <Sparkles size={14} className="text-amber-400" />
@@ -657,7 +657,7 @@ export default function HomePage({
       </div>
 
       {/* 6. Paginated Tracklist Section */}
-      <section className="flex-1 flex flex-col justify-between gap-3">
+      <section className="flex-1 flex flex-col justify-between gap-2">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display -mt-2">
@@ -676,7 +676,7 @@ export default function HomePage({
 
         <div className="flex flex-col gap-2">
           {paginatedTracks.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <div className="p-8 mb-3 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
               <Sparkles size={32} className="mx-auto mb-2 opacity-30 text-amber-500" />
               <p className="text-xs sm:text-sm font-bold text-slate-700">
                 {selectedFilter === 'unheard' 
@@ -700,7 +700,7 @@ export default function HomePage({
               return (
                 <div 
                   key={track.id} 
-                  onClick={() => onSelectTrack(track)}
+                  onClick={() => onSelectTrack(track, true)}
                   className={`p-2.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
                     isPlayingCurrent 
                       ? 'bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-amber-500/10 border-amber-400/80 ring-2 ring-amber-400/30 shadow-md shadow-amber-500/10' 
@@ -795,8 +795,8 @@ export default function HomePage({
 
                      <button 
                       onClick={() => {
-                        if (isCurrent) onPlayPause();
-                        else onSelectTrack(track);
+                        if (isCurrent) onPlayPause('bar');
+                        else onSelectTrack(track, false, 'bar');
                       }}
                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
                         isPlayingCurrent
@@ -822,7 +822,7 @@ export default function HomePage({
 
         {/* Pagination Controls - Always display page number even if only 1 page */}
         {displayedTracks.length > 0 && (
-          <div className="flex flex-col items-center gap-2 pt-1 pb-8 mt-auto">
+          <div className="flex flex-col items-center gap-2 pt-1 pb-2 mt-auto">
             <div className="flex items-center justify-between w-full">
               <button
                 type="button"
@@ -835,7 +835,7 @@ export default function HomePage({
                 }`}
               >
                 <ChevronLeft size={15} />
-                <span>Previous</span>
+                <span>Prev</span>
               </button>
 
               {/* Numbered Page Buttons & Badge */}

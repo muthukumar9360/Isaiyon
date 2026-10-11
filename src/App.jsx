@@ -57,8 +57,18 @@ export default function App() {
   const [isBottomPlayerDismissed, setIsBottomPlayerDismissed] = useState(false);
   const [playerViewMode, setPlayerViewMode] = useState('mini'); // 'mini' | 'bar'
 
-  // Queue state (Up Next)
+  // Queue state (Up Next) and history stack
   const [queue, setQueue] = useState([]);
+  const [queueHistory, setQueueHistory] = useState([]);
+  const [miniPosition, setMiniPosition] = useState({ x: 0, y: 0 });
+
+  // Track previous active page so minimizing VinylPlayer returns back to where user was
+  const lastActivePageRef = useRef('home');
+  useEffect(() => {
+    if (activePage !== 'nowplaying') {
+      lastActivePageRef.current = activePage;
+    }
+  }, [activePage]);
 
   // Modals & Toasts
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -186,6 +196,18 @@ export default function App() {
       if (!snapshot.empty) {
         const loadedTracks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         setTracks(loadedTracks);
+
+        // Restore last played song when user hasn't clicked the X button
+        try {
+          const lastSavedId = localStorage.getItem('isaiyon_last_track_id');
+          if (lastSavedId) {
+            const idx = loadedTracks.findIndex(t => t.id === lastSavedId);
+            if (idx !== -1) {
+              setCurrentTrackIndex((prev) => (prev === null ? idx : prev));
+              setIsBottomPlayerDismissed(false);
+            }
+          }
+        } catch (_) {}
       } else {
         // If firestore is initially empty, we keep an empty catalog until first song is saved
         setTracks([]);
@@ -428,17 +450,20 @@ export default function App() {
         if (queue.length > 0) {
           const nextTrack = queue[0];
           setQueue(prev => prev.slice(1));
-          handleSelectTrack(nextTrack);
+          if (currentTrack) {
+            setQueueHistory(prev => [currentTrack, ...prev.filter(t => t.id !== currentTrack.id)].slice(0, 50));
+          }
+          handleSelectTrack(nextTrack, false);
         } else {
-          // Intimation toast: queue is empty!
-          showToast("Queue is empty! Playing random song from vault.");
+          // Warning/intimation toast: queue is empty!
+          showToast("⚠️ Queue is empty!");
           const randomTrack = getRandomTrack();
-          if (randomTrack) handleSelectTrack(randomTrack);
+          if (randomTrack) handleSelectTrack(randomTrack, false);
         }
       } else {
         // Queue mode disabled -> auto-play random songs from DB
         const randomTrack = getRandomTrack();
-        if (randomTrack) handleSelectTrack(randomTrack);
+        if (randomTrack) handleSelectTrack(randomTrack, false);
       }
     };
     const handleError = () => setIsPlaying(false);
@@ -523,7 +548,7 @@ export default function App() {
   }, [sleepTimer]);
 
   // Playback Control Handlers
-  const handlePlayPause = () => {
+  const handlePlayPause = (targetViewMode = 'bar') => {
     const audio = audioRef.current;
     if (isPlaying) {
       audio.pause();
@@ -533,6 +558,9 @@ export default function App() {
       }
       audio.play().catch(() => {});
       setIsBottomPlayerDismissed(false);
+      if (targetViewMode) {
+        setPlayerViewMode(targetViewMode);
+      }
     }
   };
 
@@ -554,7 +582,7 @@ export default function App() {
     audioRef.current.playbackRate = rate;
   };
 
-  const handleSelectTrack = (track) => {
+  const handleSelectTrack = (track, openBig = false, targetViewMode = null) => {
     if (!track) return;
     const index = tracks.findIndex(t => t.id === track.id);
     if (index !== -1) {
@@ -566,27 +594,43 @@ export default function App() {
     }
     handleRecordHeardTrack(track);
     setIsBottomPlayerDismissed(false);
+    try {
+      localStorage.setItem('isaiyon_last_track_id', track.id);
+    } catch (_) {}
+    if (openBig) {
+      setActivePage('nowplaying');
+    } else if (targetViewMode) {
+      setPlayerViewMode(targetViewMode);
+    }
   };
 
   const handleNext = () => {
-    if (isQueueMode && queue.length > 0) {
-      const nextTrack = queue[0];
-      setQueue(prev => prev.slice(1));
-      handleSelectTrack(nextTrack);
-      return;
+    if (isQueueMode) {
+      if (queue.length > 0) {
+        const nextTrack = queue[0];
+        setQueue(prev => prev.slice(1));
+        if (currentTrack) {
+          setQueueHistory(prev => [currentTrack, ...prev.filter(t => t.id !== currentTrack.id)].slice(0, 50));
+        }
+        handleSelectTrack(nextTrack, false);
+        return;
+      } else {
+        showToast("⚠️ Queue is empty!");
+        const randomTrack = getRandomTrack();
+        if (randomTrack) {
+          handleSelectTrack(randomTrack, false);
+        }
+        return;
+      }
     }
-    if (isQueueMode && queue.length === 0) {
-      showToast("Queue is empty! Playing a random song from vault.");
-    }
+
+    // Queue mode is OFF: only then random
     const randomTrack = getRandomTrack();
     if (randomTrack) {
-      handleSelectTrack(randomTrack);
+      handleSelectTrack(randomTrack, false);
     } else if (tracks.length > 0) {
-      setCurrentTrackIndex((prev) => ((prev !== null && prev !== undefined ? prev : -1) + 1) % tracks.length);
-      const audio = audioRef.current;
-      setTimeout(() => {
-        audio.play().then(() => setIsPlaying(true)).catch(() => {});
-      }, 50);
+      const nextIndex = ((currentTrackIndex !== null && currentTrackIndex !== undefined ? currentTrackIndex : -1) + 1) % tracks.length;
+      handleSelectTrack(tracks[nextIndex], false);
     }
   };
 
@@ -603,7 +647,7 @@ export default function App() {
 
   const handlePlayUnheard = (unheardList) => {
     if (!unheardList || unheardList.length === 0) return;
-    handleSelectTrack(unheardList[0]);
+    handleSelectTrack(unheardList[0], false);
     if (unheardList.length > 1) {
       setQueue(unheardList.slice(1));
       setIsQueueMode(true);
@@ -612,16 +656,39 @@ export default function App() {
   };
 
   const handlePrev = () => {
-    if (tracks.length === 0) return;
     const audio = audioRef.current;
-    if (audio.currentTime > 3) {
+    if (audio && audio.currentTime > 3) {
       audio.currentTime = 0;
       return;
     }
-    setCurrentTrackIndex((prev) => (((prev !== null && prev !== undefined ? prev : 0) - 1 + tracks.length) % tracks.length));
-    setTimeout(() => {
-      audio.play().then(() => setIsPlaying(true)).catch(() => {});
-    }, 50);
+
+    if (isQueueMode) {
+      if (queueHistory.length > 0) {
+        const prevTrack = queueHistory[0];
+        setQueueHistory(prev => prev.slice(1));
+        if (currentTrack) {
+          setQueue(prev => [currentTrack, ...prev]);
+        }
+        handleSelectTrack(prevTrack, false);
+        return;
+      } else {
+        showToast("⚠️ Queue is empty!");
+        const randomTrack = getRandomTrack();
+        if (randomTrack) {
+          handleSelectTrack(randomTrack, false);
+        }
+        return;
+      }
+    }
+
+    // Queue mode is OFF: only then random
+    const randomTrack = getRandomTrack();
+    if (randomTrack) {
+      handleSelectTrack(randomTrack, false);
+    } else if (tracks.length > 0) {
+      const prevIndex = ((currentTrackIndex !== null && currentTrackIndex !== undefined ? currentTrackIndex : 0) - 1 + tracks.length) % tracks.length;
+      handleSelectTrack(tracks[prevIndex], false);
+    }
   };
 
   // Queue Operations
@@ -630,7 +697,10 @@ export default function App() {
     const selected = queue[index];
     const newQueue = queue.filter((_, i) => i !== index);
     setQueue(newQueue);
-    handleSelectTrack(selected);
+    if (currentTrack) {
+      setQueueHistory(prev => [currentTrack, ...prev.filter(t => t.id !== currentTrack.id)].slice(0, 50));
+    }
+    handleSelectTrack(selected, false);
   };
   const handleRemoveFromQueue = (index) => {
     setQueue(prev => prev.filter((_, i) => i !== index));
@@ -831,19 +901,52 @@ export default function App() {
     t.id !== currentTrack?.id && !queue.some(q => q.id === t.id)
   );
 
-  // Splash loading screen while checking auth state
+  // Splash loading screen while checking auth state (White / Amber Theme with Rich Animations)
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black flex flex-col items-center justify-center p-4 select-none">
-        <div className="relative w-16 h-16 mb-4">
-          <img 
-            src="/logo.png" 
-            alt="Isaiyon" 
-            className="w-16 h-16 rounded-2xl shadow-xl shadow-amber-500/20 animate-pulse object-cover" 
-            onError={(e) => { e.target.style.display = 'none'; }} 
-          />
+      <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-amber-50/40 flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
+        {/* Soft Background Radial Lighting */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-400/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Animated Glowing Logo Centerpiece */}
+        <div className="relative flex items-center justify-center mb-6">
+          {/* Outer Pulsing Aura Ring */}
+          <div className="absolute w-28 h-28 rounded-3xl bg-amber-400/25 animate-ping opacity-75" />
+          <div className="absolute w-26 h-26 rounded-3xl bg-gradient-to-tr from-amber-400 to-amber-200 blur-xl opacity-60 animate-pulse" />
+          
+          <div className="relative w-20 h-20 rounded-3xl bg-white p-2.5 shadow-2xl shadow-amber-500/25 border border-amber-200/80 flex items-center justify-center transform hover:scale-105 transition-transform animate-[modalPop_0.6s_ease-out]">
+            <img 
+              src="/logo.png" 
+              alt="Isaiyon" 
+              className="w-full h-full rounded-2xl object-cover animate-pulse" 
+              onError={(e) => { e.target.style.display = 'none'; }} 
+            />
+          </div>
         </div>
-        <p className="text-xs font-black tracking-widest text-amber-400 uppercase animate-pulse">Isaiyon Sound Vault</p>
+
+        {/* Brand Title */}
+        <div className="flex flex-col items-center gap-1.5 z-10 text-center">
+          <h1 className="text-xl font-black tracking-tight text-slate-900 font-display">
+            ISAIYON
+          </h1>
+          <p className="text-[11px] font-black tracking-widest text-amber-600 uppercase">
+            Sound Vault
+          </p>
+        </div>
+
+        {/* Dynamic Animated Equalizer Wave */}
+        <div className="flex items-end justify-center gap-1.5 h-8 mt-5 mb-3">
+          <span className="w-1.5 bg-amber-500 rounded-full animate-[stemPulse_0.6s_ease-in-out_infinite] h-4" />
+          <span className="w-1.5 bg-slate-800 rounded-full animate-[stemPulse_0.9s_ease-in-out_infinite] h-7 [animation-delay:150ms]" />
+          <span className="w-1.5 bg-amber-500 rounded-full animate-[stemPulse_0.7s_ease-in-out_infinite] h-5 [animation-delay:300ms]" />
+          <span className="w-1.5 bg-slate-800 rounded-full animate-[stemPulse_1.1s_ease-in-out_infinite] h-8 [animation-delay:450ms]" />
+          <span className="w-1.5 bg-amber-500 rounded-full animate-[stemPulse_0.8s_ease-in-out_infinite] h-3.5 [animation-delay:200ms]" />
+        </div>
+
+        <p className="text-xs font-semibold text-slate-400 animate-pulse tracking-wide">
+          Tuning audio stream...
+        </p>
       </div>
     );
   }
@@ -867,10 +970,10 @@ export default function App() {
         <main className={`w-full pt-16 ${
           activePage === 'nowplaying' 
             ? 'flex-1 min-h-screen pb-20 px-3 flex flex-col justify-between' 
-            : `flex-1 flex flex-col ${
+            : `flex-1 flex flex-col px-4 ${
                 currentTrack && !isBottomPlayerDismissed && playerViewMode === 'bar'
-                  ? 'pb-28 px-4' 
-                  : 'pb-16 px-4'
+                  ? 'pb-40' 
+                  : 'pb-20'
               }`
         }`}>
           {activePage === 'home' && (
@@ -986,7 +1089,10 @@ export default function App() {
               isQueueMode={isQueueMode}
               onToggleQueueMode={handleToggleQueueMode}
               queueCount={queue.length}
-              onCollapsePlayer={() => setActivePage('home')}
+              onCollapsePlayer={() => {
+                setPlayerViewMode('mini');
+                setActivePage(lastActivePageRef.current || 'home');
+              }}
               user={user}
             />
           )}
@@ -1006,6 +1112,8 @@ export default function App() {
             onOpenFullPlayer={() => setActivePage('nowplaying')}
             playerViewMode={playerViewMode}
             onSetPlayerViewMode={setPlayerViewMode}
+            position={miniPosition}
+            onPositionChange={setMiniPosition}
             onClose={() => {
               if (audioRef.current) {
                 audioRef.current.pause();
@@ -1022,6 +1130,9 @@ export default function App() {
               setIsPlaying(false);
               setCurrentTrackIndex(null);
               setIsBottomPlayerDismissed(true);
+              try {
+                localStorage.removeItem('isaiyon_last_track_id');
+              } catch (_) {}
             }}
           />
         )}

@@ -140,3 +140,86 @@ input::-webkit-calendar-picker-indicator {
 .custom-slider-track::-webkit-scrollbar-thumb:hover {
   background: #d97706 !important;
 }
+
+/* Smooth, Relaxed Player Transitions */
+@keyframes bigPlayerOpen {
+  0% {
+    opacity: 0;
+    transform: translateY(44px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bigPlayerClose {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(44px) scale(0.95);
+  }
+}
+
+@keyframes vinylDiscReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.76) rotate(-28deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes barSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(38px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes barSlideDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(38px) scale(0.96);
+  }
+}
+
+@keyframes miniBubblePop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes miniBubbleExit {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+

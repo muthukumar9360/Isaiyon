@@ -34,7 +34,7 @@ export default function MovieDetailModal({
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl max-h-[85vh] overflow-y-auto flex flex-col shadow-2xl relative border-t sm:border border-slate-100 pb-3" 
+        className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl max-h-[85vh] overflow-y-auto flex flex-col shadow-2xl relative border-t sm:border border-slate-100 pb-3 pt-3" 
         onClick={e => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -50,7 +50,7 @@ export default function MovieDetailModal({
           <img 
             src={movie.coverUrl || FALLBACK_ARTWORK} 
             alt={movie.name} 
-            className="w-42 h-25 rounded-2xl object-fit shadow-md shrink-0 border border-slate-200/60"
+            className="w-35 h-25 rounded-2xl object-fit shadow-md shrink-0 border border-slate-200/60"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = FALLBACK_ARTWORK;
@@ -78,7 +78,7 @@ export default function MovieDetailModal({
                 className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer"
               >
                 <Play size={13} fill="#ffffff" />
-                <span>Play All ({movieTracks.length})</span>
+                <span>Play ({movieTracks.length})</span>
               </button>
 
               {user && onToggleSaveAlbum && (
@@ -118,7 +118,10 @@ export default function MovieDetailModal({
                 return (
                   <div 
                     key={track.id || idx}
-                    onClick={() => onSelectTrack(track)}
+                    onClick={() => {
+                      onSelectTrack(track, true);
+                      onClose?.();
+                    }}
                     className={`p-2.5 rounded-2xl border transition-all duration-150 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
                       isCurrent 
                         ? 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-400/40 shadow-xs' 
@@ -142,8 +145,8 @@ export default function MovieDetailModal({
                     <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
                       <button 
                         onClick={() => {
-                          if (isCurrent) onPlayPause();
-                          else onSelectTrack(track);
+                          if (isCurrent) onPlayPause('bar');
+                          else onSelectTrack(track, false, 'bar');
                         }}
                         className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
                           isCurrent && isPlaying

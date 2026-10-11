@@ -75,7 +75,7 @@ export default function SongList({
             return (
               <div 
                 key={track.id || idx}
-                onClick={() => onSelectTrack(track)}
+                onClick={() => onSelectTrack(track, true)}
                 className={`p-2.5 rounded-2xl border transition-all duration-150 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
                   isCurrent 
                     ? 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-400/40 shadow-xs' 
@@ -112,8 +112,8 @@ export default function SongList({
                   {/* Play Indicator */}
                   <button 
                     onClick={() => {
-                      if (isCurrent) onPlayPause();
-                      else onSelectTrack(track);
+                      if (isCurrent) onPlayPause('bar');
+                      else onSelectTrack(track, false, 'bar');
                     }}
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
                       isCurrent && isPlaying

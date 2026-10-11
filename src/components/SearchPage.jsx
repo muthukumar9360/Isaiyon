@@ -285,7 +285,7 @@ export default function SearchPage({
                         key={track.id}
                         onClick={() => {
                           if (query.trim()) onAddSearchHistory?.(query.trim());
-                          onSelectTrack(track);
+                          onSelectTrack(track, true);
                         }}
                         className={`p-2.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
                           isPlayingCurrent 
@@ -346,8 +346,8 @@ export default function SearchPage({
                         <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
                           <button 
                             onClick={() => {
-                              if (isCurrent) onPlayPause();
-                              else onSelectTrack(track);
+                              if (isCurrent) onPlayPause('bar');
+                              else onSelectTrack(track, false, 'bar');
                             }}
                             className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
                               isPlayingCurrent

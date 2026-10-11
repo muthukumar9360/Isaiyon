@@ -51,6 +51,10 @@ export default function VinylPlayer({
   const waveformTrackRef = useRef(null);
   const isDraggingRef = useRef(false);
 
+  const handleCollapse = () => {
+    onCollapsePlayer?.();
+  };
+
   const seekFromClientX = (clientX) => {
     if (!waveformTrackRef.current || !duration) return;
     const rect = waveformTrackRef.current.getBoundingClientRect();
@@ -80,21 +84,21 @@ export default function VinylPlayer({
   };
 
   return (
-    <div className="w-full flex-1 mt-5 flex flex-col justify-between items-center py-1 px-1 select-none">
+    <div className="w-full flex-1 mt-5 flex flex-col justify-between items-center py-1 px-1 select-none animate-[bigPlayerOpen_0.36s_cubic-bezier(0.16,1,0.3,1)]">
 
       {/* 1. Top Bar with Dropdown / Collapse Button on Top Left */}
       <div className="w-full flex items-center justify-between px-2 pt-0 pb-1 shrink-0">
         <button
-          onClick={onCollapsePlayer}
-          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200/80"
+          onClick={handleCollapse}
+          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-black flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200/80"
           title="Minimize player"
         >
-          <ChevronDown size={22} />
+          <ChevronDown size={30} />
         </button>
 
         <div className="flex flex-col items-center">
           <span className="text-[12px] font-black uppercase tracking-widest text-slate-400 leading-none">Playing From</span>
-          <span className="text-md font-bold text-slate-800 truncate max-w-[190px] mt-0.5">
+          <span className="text-lg font-bold text-slate-800 truncate max-w-[190px] mt-0.5">
             {currentTrack?.movie || 'Sound Vault'}
           </span>
         </div>
@@ -105,7 +109,7 @@ export default function VinylPlayer({
       {/* 2. Realistic Vinyl Record Centerpiece */}
       <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0">
         {/* Outer Halo & Vinyl Body */}
-        <div className="relative w-[min(84vw,35vh,320px)] h-[min(84vw,35vh,320px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 shadow-[0px_0px_45px_rgba(15,23,42,1)] ring-8 ring-white flex items-center justify-center shrink-0">
+        <div className="relative w-[min(84vw,35vh,320px)] h-[min(84vw,35vh,320px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 shadow-[0px_0px_45px_rgba(15,23,42,1)] ring-8 ring-white flex items-center justify-center shrink-0 animate-[vinylDiscReveal_0.55s_cubic-bezier(0.22,1,0.36,1)]">
           
           {/* Subtle Vinyl Grooves Rings */}
           <div className="absolute inset-4 rounded-full border border-white/5 pointer-events-none" />
