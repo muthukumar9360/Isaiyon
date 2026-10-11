@@ -24,26 +24,48 @@ const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
   </svg>
 );
 
-const slugify = (text) => {
-  if (!text) return "soundtrack";
-  const clean = text.replace(/[^\w\s-]/g, '').trim().replace(/[-\s]+/g, '_');
-  return clean.substring(0, 45) || "soundtrack";
+const slugify = (text, fallback = 'soundtrack') => {
+  if (!text || typeof text !== 'string') return fallback;
+  const clean = text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return clean.substring(0, 36) || fallback;
 };
 
-const uploadFileToArchiveS3 = (file, remotePath, onProgress) => {
+const getAudioMimeType = (ext) => {
+  switch (ext) {
+    case 'mp3': return 'audio/mpeg';
+    case 'm4a': return 'audio/mp4';
+    case 'wav': return 'audio/wav';
+    case 'aac': return 'audio/aac';
+    case 'ogg': return 'audio/ogg';
+    case 'flac': return 'audio/flac';
+    case 'mp4': return 'audio/mp4';
+    default: return 'audio/mpeg';
+  }
+};
+
+const executeArchiveUpload = (file, remotePath, onProgress) => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    const cleanPath = remotePath.split('/').map(encodeURIComponent).join('/');
+    // Normalize path to prevent double slashes or malformed encoding
+    const cleanPath = remotePath
+      .split('/')
+      .filter(Boolean)
+      .map(part => encodeURIComponent(part))
+      .join('/');
     const url = `https://s3.us.archive.org/muthuramalingam_a-vault/${cleanPath}`;
 
     xhr.open('PUT', url, true);
+    // Standard Internet Archive S3 REST upload headers
     xhr.setRequestHeader('authorization', 'LOW sftYc6GkCtNMjk7H:lR6TOMtJUAnE7tZg');
-    xhr.setRequestHeader('x-amz-auto-make-bucket', '1');
-    if (file.type) {
-      xhr.setRequestHeader('content-type', file.type);
-    } else if (remotePath.endsWith('.mp3')) {
-      xhr.setRequestHeader('content-type', 'audio/mpeg');
-    }
+    xhr.setRequestHeader('x-archive-size-hint', String(file.size));
+    xhr.setRequestHeader('x-archive-ignore-preexisting-bucket', '1');
+
+    const ext = cleanPath.split('.').pop()?.toLowerCase() || 'mp3';
+    xhr.setRequestHeader('content-type', getAudioMimeType(ext));
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {
@@ -54,9 +76,23 @@ const uploadFileToArchiveS3 = (file, remotePath, onProgress) => {
 
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(`https://archive.org/download/muthuramalingam_a-vault/${remotePath}`);
+        resolve(`https://archive.org/download/muthuramalingam_a-vault/${cleanPath}`);
       } else {
-        reject(new Error(`Vault upload error (${xhr.status} ${xhr.statusText})`));
+        let errorDetail = xhr.statusText || 'Upload rejected';
+        try {
+          if (xhr.responseText) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(xhr.responseText, 'application/xml');
+            const msg = xml.querySelector('Message')?.textContent || xml.querySelector('Code')?.textContent;
+            if (msg) {
+              errorDetail = msg;
+            } else {
+              const textClean = xhr.responseText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 150);
+              if (textClean) errorDetail = textClean;
+            }
+          }
+        } catch (_) {}
+        reject(new Error(`Vault upload error: ${errorDetail} (${xhr.status})`));
       }
     };
 
@@ -67,10 +103,22 @@ const uploadFileToArchiveS3 = (file, remotePath, onProgress) => {
     xhr.ontimeout = () => {
       reject(new Error("Upload timed out. The file might be too large for your current network."));
     };
-    xhr.timeout = 180000; // 3 minutes
+    xhr.timeout = 240000; // 4 minutes
 
     xhr.send(file);
   });
+};
+
+const uploadFileToArchiveS3 = async (file, remotePath, onProgress) => {
+  try {
+    return await executeArchiveUpload(file, remotePath, onProgress);
+  } catch (err) {
+    console.warn("Primary Vault S3 upload attempt failed, attempting fallback path...", err);
+    // Retry once with a clean flat path to bypass any nested folder restrictions
+    const ext = remotePath.split('.').pop()?.toLowerCase() || 'mp3';
+    const fallbackPath = `audio_uploads/track_${Date.now().toString(36)}.${ext}`;
+    return await executeArchiveUpload(file, fallbackPath, onProgress);
+  }
 };
 
 export default function AdminModal({
@@ -238,10 +286,16 @@ export default function AdminModal({
         setStatusMessage(`Uploading audio to Vault (${sizeMb} MB)...`);
         setUploadProgress(10);
 
-        const fileExt = directAudioFile.name.split('.').pop()?.toLowerCase() || 'mp3';
-        const movieSlug = slugify(directForm.movie || 'Sound Vault');
-        const songSlug = slugify(directForm.title);
-        const remoteAudioPath = `${movieSlug}/${songSlug}/${songSlug}_${Date.now()}.${fileExt}`;
+        const validAudioExts = ['mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'mp4'];
+        let fileExt = (directAudioFile.name.split('.').pop() || '').toLowerCase().trim();
+        if (!validAudioExts.includes(fileExt)) {
+          fileExt = 'mp3';
+        }
+        const movieSlug = slugify(directForm.movie || 'Sound Vault', 'vault');
+        const songSlug = slugify(directForm.title, 'song_' + Date.now().toString(36));
+        const uniqueId = Date.now().toString(36);
+        // Clean 2-level path: "movie_slug/song_slug_uniqueid.ext"
+        const remoteAudioPath = `${movieSlug}/${songSlug}_${uniqueId}.${fileExt}`;
 
         try {
           finalAudioUrl = await uploadFileToArchiveS3(
