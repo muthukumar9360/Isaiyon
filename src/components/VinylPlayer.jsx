@@ -73,8 +73,8 @@ export default function VinylPlayer({
   };
 
   return (
-    /* Centered, Bordered Player Card (Precision Aligned for All Mobile Devices) */
-    <div className="w-full max-w-[390px] h-full max-h-[calc(100dvh-130px)] mx-auto flex flex-col justify-between items-center p-4 sm:p-5 bg-white rounded-[32px] sm:rounded-[36px] border-2 border-slate-200/90 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
+    /* Centered, Bordered Player Card (Fills Full Available Height) */
+    <div className="w-full max-w-[420px] h-[calc(100dvh-124px)] flex-1 mx-auto flex flex-col justify-between items-center p-4 sm:p-5 bg-white rounded-[32px] sm:rounded-[36px] border-2 border-slate-200/90 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
       
       {/* 1. Header Row: "Now Playing" and action pills */}
       <div className="w-full flex items-center justify-between mb-1 sm:mb-2 shrink-0">
@@ -98,8 +98,8 @@ export default function VinylPlayer({
       </div>
 
       {/* 2. Centerpiece: Full-bleed Rotating Vinyl Disc with Halo Ring */}
-      <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0 py-1">
-        <div className="w-[min(56vw,26vh,215px)] h-[min(56vw,26vh,215px)] aspect-square rounded-full p-2 bg-gradient-to-tr from-amber-500/15 via-amber-400/5 to-amber-600/20 border-2 border-amber-500/25 shadow-[0_12px_32px_rgba(217,119,6,0.18)] flex items-center justify-center shrink-0">
+      <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0 py-2">
+        <div className="w-[min(65vw,34vh,240px)] h-[min(65vw,34vh,240px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-amber-500/15 via-amber-400/5 to-amber-600/20 border-2 border-amber-500/25 shadow-[0_14px_36px_rgba(217,119,6,0.18)] flex items-center justify-center shrink-0">
           <div className={`w-full h-full rounded-full overflow-hidden relative shadow-[0_10px_25px_rgba(15,23,42,0.22)] border-[3px] border-white ref-disc ${isPlaying ? 'rotating' : ''}`}>
             {/* Full 100% cover image filling entire 360 circle */}
             <img 
@@ -113,7 +113,7 @@ export default function VinylPlayer({
               }}
             />
             {/* Center vinyl spindle dot */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-4 border-amber-600 shadow-[0_2px_8px_rgba(0,0,0,0.3)] z-10" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-4 border-amber-900 shadow-[0_2px_8px_rgba(0,0,0,0.3)] z-10" />
           </div>
         </div>
       </div>
