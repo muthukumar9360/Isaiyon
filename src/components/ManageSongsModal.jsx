@@ -1,18 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  X, 
-  Search, 
-  Edit3, 
-  Trash2, 
-  Save, 
-  CheckCircle2, 
-  SlidersHorizontal, 
-  Music, 
-  Film, 
-  User, 
-  Users, 
-  Tag, 
-  Sparkles, 
+import {
+  X,
+  Search,
+  Edit3,
+  Trash2,
+  Save,
+  CheckCircle2,
+  SlidersHorizontal,
+  Music,
+  Film,
+  User,
+  Users,
+  Tag,
+  Sparkles,
   ExternalLink,
   ChevronLeft,
   Upload
@@ -49,7 +49,7 @@ export default function ManageSongsModal({
   const filteredTracks = useMemo(() => {
     if (!searchQuery.trim()) return tracks;
     const q = searchQuery.toLowerCase();
-    return tracks.filter(t => 
+    return tracks.filter(t =>
       (t.title && t.title.toLowerCase().includes(q)) ||
       (t.movie && t.movie.toLowerCase().includes(q)) ||
       (t.artist && t.artist.toLowerCase().includes(q)) ||
@@ -164,12 +164,12 @@ export default function ManageSongsModal({
   };
 
   return (
-    <div 
-      className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]" 
+    <div
+      className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
       onClick={onClose}
     >
-      <div 
-        className="w-full max-w-lg bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden relative border border-slate-200" 
+      <div
+        className="w-full max-w-lg bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden relative border border-slate-200"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -187,7 +187,7 @@ export default function ManageSongsModal({
               </h3>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
           >
@@ -225,30 +225,30 @@ export default function ManageSongsModal({
                     <span>Song Thumbnail</span>
                   </span>
                   <span className="text-[10px] font-semibold text-slate-400">
-                    JPG, PNG 
+                    JPG, PNG
                   </span>
                 </div>
 
                 <div className="flex gap-3 items-center">
                   {/* Thumbnail Preview with Quick Hover Change */}
                   <div className="relative group shrink-0">
-                    <img 
-                      src={editForm.coverUrl || FALLBACK_ARTWORK} 
-                      alt="Thumb" 
+                    <img
+                      src={editForm.coverUrl || FALLBACK_ARTWORK}
+                      alt="Thumb"
                       className="w-30 h-18 rounded-2xl object-cover shadow-sm border border-slate-200 ring-2 ring-amber-400/20"
                       onError={(e) => { e.currentTarget.src = FALLBACK_ARTWORK; }}
                     />
-                    <label 
+                    <label
                       className="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold cursor-pointer"
                       title="Upload new photo"
                     >
                       <Upload size={14} />
                       <span>Browse</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
+                      <input
+                        type="file"
+                        accept="image/*"
                         disabled={isUploadingPhoto}
-                        className="hidden" 
+                        className="hidden"
                         onChange={handleUploadNewPhoto}
                       />
                     </label>
@@ -260,19 +260,19 @@ export default function ManageSongsModal({
                     <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-98 text-white text-xs font-bold shadow-xs cursor-pointer transition-all">
                       <Upload size={13} strokeWidth={2.5} />
                       <span>{isUploadingPhoto ? 'Uploading to Archive.org...' : 'Upload Thumbnail'}</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
+                      <input
+                        type="file"
+                        accept="image/*"
                         disabled={isUploadingPhoto}
-                        className="hidden" 
+                        className="hidden"
                         onChange={handleUploadNewPhoto}
                       />
                     </label>
 
                     {/* Direct Cover Image URL field */}
                     <div className="relative flex items-center">
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="Or paste artwork image URL..."
                         value={editForm.coverUrl}
                         onChange={e => setEditForm({ ...editForm, coverUrl: e.target.value })}
@@ -284,9 +284,9 @@ export default function ManageSongsModal({
 
                 {/* Storage Target info banner */}
                 <div className="bg-amber-50/80 border border-amber-200/60 px-2.5 py-1 rounded-xl flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-amber-800 shrink-0">Storage Path:</span>
-                  <code className="text-amber-900 font-mono text-[10px] truncate ml-2 font-semibold select-all">
-                    muthuramalingam_a-vault/{(editForm.movie || 'Movie').trim()}/{(editForm.title || 'Song').trim()}/cover.jpg
+                  <span className="font-bold text-amber-800 shrink-0">Path:</span>
+                  <code className="text-amber-900 font-mono text-[10px] truncate font-semibold select-all">
+                    {(editForm.movie || 'Movie').trim()}/{(editForm.title || 'Song').trim()}/cover.jpg
                   </code>
                 </div>
               </div>
@@ -297,8 +297,8 @@ export default function ManageSongsModal({
                   <Music size={12} className="text-amber-500" />
                   <span>Song Title *</span>
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   value={editForm.title}
                   onChange={e => setEditForm({ ...editForm, title: e.target.value })}
@@ -312,8 +312,8 @@ export default function ManageSongsModal({
                   <Film size={12} className="text-amber-500" />
                   <span>Movie / Album * (Pick from list to reuse folder)</span>
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   list="manage-existing-movies"
                   placeholder="Select or enter movie name"
@@ -330,8 +330,8 @@ export default function ManageSongsModal({
                     <Sparkles size={12} className="text-amber-500" />
                     <span>Composer</span>
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="e.g. A. R. Rahman"
                     value={editForm.composer}
                     onChange={e => setEditForm({ ...editForm, composer: e.target.value })}
@@ -344,8 +344,8 @@ export default function ManageSongsModal({
                     <User size={12} className="text-amber-500" />
                     <span>Artist / Singers</span>
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="e.g. Hariharan, Shankar Mahadevan"
                     value={editForm.artist}
                     onChange={e => setEditForm({ ...editForm, artist: e.target.value })}
@@ -360,8 +360,8 @@ export default function ManageSongsModal({
                   <Users size={12} className="text-amber-500" />
                   <span>Featured Actors / Cast</span>
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="e.g. Ajith Kumar, Tabu, Aishwarya Rai"
                   value={editForm.actors}
                   onChange={e => setEditForm({ ...editForm, actors: e.target.value })}
@@ -376,8 +376,8 @@ export default function ManageSongsModal({
                     <Tag size={12} className="text-amber-500" />
                     <span>Genre</span>
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={editForm.genre}
                     onChange={e => setEditForm({ ...editForm, genre: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
@@ -386,8 +386,8 @@ export default function ManageSongsModal({
 
                 <div className="flex flex-col gap-1">
                   <label className="text-[11px] font-bold text-slate-700">Mood / Vibe</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={editForm.mood}
                     onChange={e => setEditForm({ ...editForm, mood: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
@@ -421,7 +421,7 @@ export default function ManageSongsModal({
             {/* Search Filter */}
             <div className="relative mb-3">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
+              <input
                 type="text"
                 placeholder="Search song, movie, artist, or composer..."
                 value={searchQuery}
@@ -446,14 +446,14 @@ export default function ManageSongsModal({
                 </div>
               ) : (
                 filteredTracks.map(track => (
-                  <div 
+                  <div
                     key={track.id}
                     className="p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200/80 flex items-center justify-between gap-3 transition-all"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <img 
-                        src={track.coverUrl || FALLBACK_ARTWORK} 
-                        alt="Art" 
+                      <img
+                        src={track.coverUrl || FALLBACK_ARTWORK}
+                        alt="Art"
                         className="w-11 h-11 rounded-xl object-cover shadow-2xs shrink-0"
                         onError={(e) => { e.currentTarget.src = FALLBACK_ARTWORK; }}
                       />
