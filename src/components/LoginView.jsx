@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, Loader2, AlertTriangle, X, Music2, Heart, ListMusic, History } from 'lucide-react';
+import { LogIn, Loader2, AlertTriangle, X, Music2, Heart, ListMusic, History, Download } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect } from '../firebase/config';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
@@ -47,7 +47,7 @@ function getAuthErrorMessage(err) {
   }
 }
 
-export default function LoginView() {
+export default function LoginView({ isStandalone = false, onInstallApp }) {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [authErrorInfo, setAuthErrorInfo] = useState(null);
 
@@ -81,102 +81,125 @@ export default function LoginView() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black text-white flex flex-col justify-between items-center px-4 py-8 select-none relative overflow-hidden">
-      {/* Background glow effects */}
-      <div className="absolute top-1/4 -left-20 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/3 -right-20 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-amber-50/40 text-slate-900 flex flex-col justify-between items-center px-4 py-7 select-none relative overflow-hidden">
+      {/* Soft Background Radial Lighting matching loading screen */}
+      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/3 -right-20 w-80 h-80 bg-rose-400/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Header / Brand */}
-      <header className="w-full max-w-sm flex items-center justify-center gap-2 pt-2">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 p-0.5 shadow-lg shadow-amber-500/20">
-          <img src="/logo.png" alt="Isaiyon" className="w-full h-full object-cover rounded-2xl" onError={(e) => { e.target.style.display = 'none'; }} />
+      <header className="w-full max-w-sm flex items-center justify-between pt-1 z-10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl bg-white p-1.5 shadow-md shadow-amber-500/15 border border-amber-200/80">
+            <img 
+              src="/logo.png" 
+              alt="Isaiyon" 
+              className="w-full h-full object-cover rounded-xl" 
+              onError={(e) => { e.target.style.display = 'none'; }} 
+            />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-black tracking-tight text-slate-900 font-display">Isaiyon</span>
+            <span className="text-[10px] font-extrabold text-amber-600 tracking-wider uppercase">Sound Vault</span>
+          </div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-xl font-black tracking-tight text-white font-display">Isaiyon</span>
-          <span className="text-[10px] font-bold text-amber-400 tracking-wider uppercase">Sound Vault</span>
-        </div>
+
+        {/* Header Install Button (if opened in browser, NOT in installed PWA) */}
+        {!isStandalone && onInstallApp && (
+          <button
+            type="button"
+            onClick={onInstallApp}
+            className="py-1.5 px-3 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+            title="Install App"
+          >
+            <Download size={12} className="text-amber-400" />
+            <span>Install</span>
+          </button>
+        )}
       </header>
 
       {/* Center Hero: Vinyl record artwork centerpiece */}
-      <div className="w-full max-w-sm flex flex-col items-center text-center my-auto py-6">
-        <div className="relative w-44 h-44 mb-6">
-          {/* Vinyl Disc Outer Rim */}
-          <div className="w-full h-full rounded-full bg-slate-900 p-3 shadow-[0_0_40px_rgba(245,158,11,0.2)] ring-4 ring-white/10 flex items-center justify-center">
+      <div className="w-full max-w-sm flex flex-col items-center text-center my-auto py-4 z-10">
+        <div className="relative w-40 h-40 mb-5">
+          {/* Outer Aura Ring */}
+          <div className="absolute -inset-2 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 blur-lg opacity-40 animate-pulse" />
+          
+          {/* Vinyl Disc Outer Rim in White & Amber Theme */}
+          <div className="relative w-full h-full rounded-full bg-white p-2.5 shadow-2xl shadow-amber-500/20 border border-amber-200/80 flex items-center justify-center">
             <div 
-              className="w-full h-full rounded-full overflow-hidden relative border-2 border-white/20 shadow-inner"
+              className="w-full h-full rounded-full overflow-hidden relative border-2 border-slate-800 shadow-inner bg-slate-950"
               style={{ animation: 'spinDisc 18s linear infinite' }}
             >
               <img 
                 src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=400" 
                 alt="Vinyl Record" 
-                className="w-full h-full object-cover rounded-full"
+                className="w-full h-full object-cover rounded-full opacity-90"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = FALLBACK_ARTWORK;
                 }}
               />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-950 border-4 border-amber-500/80 shadow-md" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white border-4 border-amber-500 shadow-md" />
             </div>
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-          Your Personal <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">Music Vault</span>
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight font-display">
+          Your Personal <span className="bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">Music Vault</span>
         </h1>
-        <p className="text-xs text-slate-400 mt-2 max-w-xs leading-relaxed font-medium">
-          Sign in to unlock full songs, stream in high-fidelity, build your own playlists, and save recent searches.
+        <p className="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed font-medium">
+          Sign in to stream high-fidelity Tamil soundtracks, curate personal playlists, and sync listening history across devices.
         </p>
 
-        {/* Feature Highlights Grid */}
-        <div className="grid grid-cols-2 gap-2 w-full mt-6 text-left">
-          <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+        {/* Feature Highlights Grid in Clean White Style */}
+        <div className="grid grid-cols-2 gap-2.5 w-full mt-5 text-left">
+          <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
               <Music2 size={14} />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-white truncate">Full Playback</div>
-              <div className="text-[9px] text-slate-400 truncate">High-fidelity tracks</div>
+              <div className="text-[11px] font-bold text-slate-900 truncate">Full Playback</div>
+              <div className="text-[9px] text-slate-500 truncate">High-fidelity audio</div>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+          <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
               <Heart size={14} />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-white truncate">Liked Songs</div>
-              <div className="text-[9px] text-slate-400 truncate">Cloud-synced list</div>
+              <div className="text-[11px] font-bold text-slate-900 truncate">Liked Songs</div>
+              <div className="text-[9px] text-slate-500 truncate">Cloud-synced list</div>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+          <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center shrink-0">
               <ListMusic size={14} />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-white truncate">Custom Playlists</div>
-              <div className="text-[9px] text-slate-400 truncate">Create & organize</div>
+              <div className="text-[11px] font-bold text-slate-900 truncate">Custom Playlists</div>
+              <div className="text-[9px] text-slate-500 truncate">Create & organize</div>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+          <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
               <History size={14} />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-white truncate">Search History</div>
-              <div className="text-[9px] text-slate-400 truncate">Instant recollection</div>
+              <div className="text-[11px] font-bold text-slate-900 truncate">History & Memory</div>
+              <div className="text-[9px] text-slate-500 truncate">Remembers last track</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Action Section: Google Sign In */}
-      <div className="w-full max-w-sm flex flex-col gap-3 pb-4">
+      {/* Bottom Action Section: Google Sign In & Install App */}
+      <div className="w-full max-w-sm flex flex-col gap-2.5 pb-2 z-10">
         <button
           disabled={isSigningIn}
           onClick={() => handleGoogleSignIn(false)}
-          className={`w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-sm flex items-center justify-center gap-3 shadow-xl shadow-white/10 transition-all active:scale-95 cursor-pointer ${
+          className={`w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-sm flex items-center justify-center gap-3 border border-slate-200/90 shadow-md shadow-slate-900/5 transition-all active:scale-95 cursor-pointer ${
             isSigningIn ? 'opacity-80 cursor-wait' : ''
           }`}
         >
@@ -198,15 +221,27 @@ export default function LoginView() {
           )}
         </button>
 
-        <p className="text-[10px] text-slate-500 text-center font-medium">
-          Sign-in keeps your playlists, favorites, and search history safely synced to your account.
+        {/* Install / Download App button (Only shown when opened in browser, NOT in installed PWA) */}
+        {!isStandalone && onInstallApp && (
+          <button
+            type="button"
+            onClick={onInstallApp}
+            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+          >
+            <Download size={14} className="text-amber-400" />
+            <span>Install App on Mobile / Laptop</span>
+          </button>
+        )}
+
+        <p className="text-[10px] text-slate-400 text-center font-medium">
+          Sign-in securely syncs your favorites and playlists to Google Firebase.
         </p>
       </div>
 
       {/* Auth Error Diagnostic Modal */}
       {authErrorInfo && (
         <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
           onClick={() => setAuthErrorInfo(null)}
         >
           <div 

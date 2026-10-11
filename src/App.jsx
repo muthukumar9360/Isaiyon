@@ -12,7 +12,7 @@ import ManageSongsModal from './components/ManageSongsModal';
 import AddToPlaylistModal from './components/AddToPlaylistModal';
 import LoginView from './components/LoginView';
 import HistoryPage from './components/HistoryPage';
-import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon } from 'lucide-react';
+import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon, Download } from 'lucide-react';
 import { FALLBACK_ARTWORK } from './constants/fallbackArt';
 import { 
   auth, 
@@ -87,6 +87,49 @@ export default function App() {
   // Audio element reference
   const audioRef = useRef(new Audio());
   const sleepTimerRef = useRef(null);
+
+  // 5-Second Splash Loading Screen Timer
+  const [isSplashDone, setIsSplashDone] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSplashDone(true);
+    }, 5000); // exactly 5 seconds
+    return () => clearTimeout(timer);
+  }, []);
+
+  // PWA Standalone Detection & Install Prompt
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches 
+        || window.navigator.standalone === true 
+        || document.referrer.includes('android-app://');
+      setIsStandalone(standalone);
+    };
+    checkStandalone();
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setIsStandalone(true);
+      }
+    } else {
+      alert("To install on mobile: Tap Chrome menu (⋮) -> 'Install app' (or 'Add to Home screen'). On iPhone: Tap Share -> 'Add to Home Screen'.");
+    }
+  };
 
   const currentTrack = (currentTrackIndex !== null && currentTrackIndex >= 0 && tracks[currentTrackIndex]) 
     ? tracks[currentTrackIndex] 
@@ -901,8 +944,8 @@ export default function App() {
     t.id !== currentTrack?.id && !queue.some(q => q.id === t.id)
   );
 
-  // Splash loading screen while checking auth state (White / Amber Theme with Rich Animations)
-  if (authLoading) {
+  // Splash loading screen while checking auth state or completing 5-sec intro
+  if (authLoading || !isSplashDone) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-amber-50/40 flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
         {/* Soft Background Radial Lighting */}
@@ -930,7 +973,7 @@ export default function App() {
           <h1 className="text-xl font-black tracking-tight text-slate-900 font-display">
             ISAIYON
           </h1>
-          <p className="text-[11px] font-black tracking-widest text-amber-600 uppercase">
+          <p className="text-[15px] font-black tracking-widest text-amber-600 uppercase">
             Sound Vault
           </p>
         </div>
@@ -947,13 +990,25 @@ export default function App() {
         <p className="text-xs font-semibold text-slate-400 animate-pulse tracking-wide">
           Tuning audio stream...
         </p>
+
+        {/* Install / Download App button (Only shown when opened in browser, NOT in installed PWA) */}
+        {!isStandalone && (
+          <button
+            type="button"
+            onClick={handleInstallApp}
+            className="mt-6 py-2 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95 transition-all cursor-pointer z-10"
+          >
+            <Download size={14} className="text-amber-400" />
+            <span>Install App on Device</span>
+          </button>
+        )}
       </div>
     );
   }
 
   // Not logged in -> gate entire app with LoginView
   if (!user) {
-    return <LoginView />;
+    return <LoginView isStandalone={isStandalone} onInstallApp={handleInstallApp} />;
   }
 
   return (
