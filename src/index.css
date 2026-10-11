@@ -297,10 +297,10 @@ img {
 
 /* Specific Dedicated Non-Scrolling Viewport for Full Player on All Mobiles */
 .mobile-content.nowplaying-content {
-  padding: 56px 0 58px 0 !important; /* Precise clearance for 56px top header & 58px bottom nav */
+  padding: 60px 12px 64px 12px !important; /* Precise clearance for 56px top header & 58px bottom nav */
   display: flex;
   flex-direction: column;
-  justify-content: stretch;
+  justify-content: center;
   align-items: center;
   min-height: 100dvh;
   height: 100dvh;

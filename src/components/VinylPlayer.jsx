@@ -73,33 +73,33 @@ export default function VinylPlayer({
   };
 
   return (
-    /* Full-Screen Immersive Mobile Player (Aligns perfectly to all mobile sizes) */
-    <div className="w-full max-w-[440px] flex-1 flex flex-col justify-between items-center py-2 sm:py-3 px-3 sm:px-4 select-none">
+    /* Centered, Bordered Player Card (Precision Aligned for All Mobile Devices) */
+    <div className="w-full max-w-[390px] h-full max-h-[calc(100dvh-130px)] mx-auto flex flex-col justify-between items-center p-4 sm:p-5 bg-white rounded-[32px] sm:rounded-[36px] border-2 border-slate-200/90 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
       
       {/* 1. Header Row: "Now Playing" and action pills */}
-      <div className="w-full flex items-center justify-between mb-2 shrink-0">
+      <div className="w-full flex items-center justify-between mb-1 sm:mb-2 shrink-0">
         <button 
-          className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-amber-600 transition-transform active:scale-95 shadow-sm"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-amber-600 transition-transform active:scale-95 shadow-2xs"
           title="Now Playing"
         >
-          <Music2 size={18} />
+          <Music2 size={16} />
         </button>
 
-        <h1 className="text-base sm:text-lg font-extrabold text-slate-800 tracking-tight">
+        <h1 className="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight">
           Now Playing
         </h1>
 
         <button 
-          className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-transform active:scale-95 shadow-sm"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-transform active:scale-95 shadow-2xs"
           title="More Options"
         >
-          <MoreHorizontal size={18} />
+          <MoreHorizontal size={16} />
         </button>
       </div>
 
       {/* 2. Centerpiece: Full-bleed Rotating Vinyl Disc with Halo Ring */}
-      <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0 py-2">
-        <div className="w-[min(68vw,35vh,250px)] h-[min(68vw,35vh,250px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-amber-500/15 via-amber-400/5 to-amber-600/20 border-2 border-amber-500/25 shadow-[0_16px_40px_rgba(217,119,6,0.18)] flex items-center justify-center shrink-0">
+      <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0 py-1">
+        <div className="w-[min(56vw,26vh,215px)] h-[min(56vw,26vh,215px)] aspect-square rounded-full p-2 bg-gradient-to-tr from-amber-500/15 via-amber-400/5 to-amber-600/20 border-2 border-amber-500/25 shadow-[0_12px_32px_rgba(217,119,6,0.18)] flex items-center justify-center shrink-0">
           <div className={`w-full h-full rounded-full overflow-hidden relative shadow-[0_10px_25px_rgba(15,23,42,0.22)] border-[3px] border-white ref-disc ${isPlaying ? 'rotating' : ''}`}>
             {/* Full 100% cover image filling entire 360 circle */}
             <img 
