@@ -35,7 +35,7 @@ export default function App() {
   
   // Dynamic tracks from Firestore only
   const [tracks, setTracks] = useState([]);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -78,7 +78,9 @@ export default function App() {
   const audioRef = useRef(new Audio());
   const sleepTimerRef = useRef(null);
 
-  const currentTrack = tracks[currentTrackIndex] || tracks[0] || null;
+  const currentTrack = (currentTrackIndex !== null && currentTrackIndex >= 0 && tracks[currentTrackIndex]) 
+    ? tracks[currentTrackIndex] 
+    : null;
 
   // 1. Auth Listener
   useEffect(() => {
@@ -103,6 +105,79 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Background Audio & Mobile Lock-Screen Notification Support via MediaSession
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    if (currentTrack) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: currentTrack.title || 'Untitled Track',
+          artist: currentTrack.artist || currentTrack.composer || 'Sound Vault',
+          album: currentTrack.movie || 'IsaiVault',
+          artwork: [
+            { src: currentTrack.coverUrl || '/logo.png', sizes: '96x96', type: 'image/jpeg' },
+            { src: currentTrack.coverUrl || '/logo.png', sizes: '128x128', type: 'image/jpeg' },
+            { src: currentTrack.coverUrl || '/logo.png', sizes: '192x192', type: 'image/jpeg' },
+            { src: currentTrack.coverUrl || '/logo.png', sizes: '512x512', type: 'image/jpeg' }
+          ]
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => {
+          audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+          audioRef.current?.pause();
+          setIsPlaying(false);
+        });
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+          handlePrev();
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+          handleNext();
+        });
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+          if (details.seekTime !== undefined && audioRef.current) {
+            audioRef.current.currentTime = details.seekTime;
+            setCurrentTime(details.seekTime);
+          }
+        });
+      } catch (err) {
+        console.warn("MediaSession error:", err);
+      }
+    } else {
+      try {
+        navigator.mediaSession.metadata = null;
+        navigator.mediaSession.playbackState = 'none';
+      } catch {}
+    }
+  }, [currentTrack]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    } catch {}
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !duration) return;
+    try {
+      navigator.mediaSession.setPositionState?.({
+        duration: duration || 0,
+        playbackRate: playbackRate || 1,
+        position: Math.min(currentTime, duration) || 0
+      });
+    } catch {}
+  }, [currentTime, duration, playbackRate]);
+
+  // If no track is playing and user is on nowplaying view, auto-return to home
+  useEffect(() => {
+    if (activePage === 'nowplaying' && !currentTrack) {
+      setActivePage('home');
+    }
+  }, [activePage, currentTrack]);
 
   // 2. Real-time Tracks from Firestore (100% Dynamic DB)
   useEffect(() => {
@@ -507,7 +582,7 @@ export default function App() {
     if (randomTrack) {
       handleSelectTrack(randomTrack);
     } else if (tracks.length > 0) {
-      setCurrentTrackIndex((prev) => (prev + 1) % tracks.length);
+      setCurrentTrackIndex((prev) => ((prev !== null && prev !== undefined ? prev : -1) + 1) % tracks.length);
       const audio = audioRef.current;
       setTimeout(() => {
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
@@ -543,7 +618,7 @@ export default function App() {
       audio.currentTime = 0;
       return;
     }
-    setCurrentTrackIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
+    setCurrentTrackIndex((prev) => (((prev !== null && prev !== undefined ? prev : 0) - 1 + tracks.length) % tracks.length));
     setTimeout(() => {
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }, 50);
@@ -938,7 +1013,14 @@ export default function App() {
                 audioRef.current.removeAttribute('src');
                 audioRef.current.load();
               }
+              if ('mediaSession' in navigator) {
+                try {
+                  navigator.mediaSession.metadata = null;
+                  navigator.mediaSession.playbackState = 'none';
+                } catch {}
+              }
               setIsPlaying(false);
+              setCurrentTrackIndex(null);
               setIsBottomPlayerDismissed(true);
             }}
           />
