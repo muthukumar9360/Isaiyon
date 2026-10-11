@@ -278,6 +278,7 @@ export default function SearchPage({
                   filteredSongs.map(track => {
                     const isCurrent = currentTrack?.id === track.id;
                     const isFav = favorites.includes(track.id);
+                    const isPlayingCurrent = isCurrent && isPlaying;
 
                     return (
                       <div 
@@ -286,26 +287,49 @@ export default function SearchPage({
                           if (query.trim()) onAddSearchHistory?.(query.trim());
                           onSelectTrack(track);
                         }}
-                        className={`p-2.5 rounded-2xl border transition-all duration-150 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
-                          isCurrent 
+                        className={`p-2.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
+                          isPlayingCurrent 
+                            ? 'bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-amber-500/10 border-amber-400/80 ring-2 ring-amber-400/30 shadow-md shadow-amber-500/10' 
+                            : isCurrent 
                             ? 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-400/40 shadow-xs' 
                             : 'bg-white hover:bg-slate-50 border-slate-100 shadow-2xs'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <img 
-                            src={track.coverUrl || FALLBACK_ARTWORK} 
-                            alt={track.title} 
-                            className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-2xs ring-1 ring-black/5"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = FALLBACK_ARTWORK;
-                            }}
-                          />
+                          <div className="relative w-12 h-12 shrink-0">
+                            <img 
+                              src={track.coverUrl || FALLBACK_ARTWORK} 
+                              alt={track.title} 
+                              className={`w-12 h-12 rounded-xl object-cover shrink-0 shadow-2xs ring-1 ring-black/5 transition-all ${
+                                isPlayingCurrent ? 'ring-2 ring-amber-500 rounded-2xl animate-[spinDisc_10s_linear_infinite]' : ''
+                              }`}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = FALLBACK_ARTWORK;
+                              }}
+                            />
+                            {/* Equalizer overlay */}
+                            {isPlayingCurrent && (
+                              <div className="absolute inset-0 bg-black/45 backdrop-blur-[0.5px] rounded-xl flex items-center justify-center gap-0.5">
+                                <span className="w-1 bg-amber-400 rounded-full animate-[stemPulse_0.6s_ease-in-out_infinite] h-3.5" />
+                                <span className="w-1 bg-amber-400 rounded-full animate-[stemPulse_0.9s_ease-in-out_infinite] h-5 [animation-delay:150ms]" />
+                                <span className="w-1 bg-amber-400 rounded-full animate-[stemPulse_0.7s_ease-in-out_infinite] h-3 [animation-delay:300ms]" />
+                                <span className="w-1 bg-amber-400 rounded-full animate-[stemPulse_1.1s_ease-in-out_infinite] h-4.5 [animation-delay:450ms]" />
+                              </div>
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1">
-                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate leading-snug">
-                              {track.title}
-                            </h4>
+                            <div className="flex items-center gap-1.5">
+                              <h4 className={`text-xs sm:text-sm font-bold truncate leading-snug ${isPlayingCurrent ? 'text-amber-900 font-black' : 'text-slate-900'}`}>
+                                {track.title}
+                              </h4>
+                              {isPlayingCurrent && (
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-black shrink-0 animate-pulse shadow-xs">
+                                  <Volume2 size={10} />
+                                  <span>Playing</span>
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] font-medium text-slate-500 truncate leading-tight mt-0.5">
                               {track.movie ? <span className="font-semibold text-amber-700">[{track.movie}] </span> : null}
                               {track.artist}
@@ -326,14 +350,16 @@ export default function SearchPage({
                               else onSelectTrack(track);
                             }}
                             className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
-                              isCurrent && isPlaying
-                                ? 'bg-amber-500 text-white shadow-xs'
+                              isPlayingCurrent
+                                ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 scale-105'
+                                : isCurrent
+                                ? 'bg-amber-100 text-amber-900'
                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                             }`}
-                            title={isCurrent && isPlaying ? "Pause" : "Play"}
+                            title={isPlayingCurrent ? "Pause" : "Play"}
                           >
-                            {isCurrent && isPlaying ? (
-                              <Volume2 size={14} />
+                            {isPlayingCurrent ? (
+                              <Volume2 size={14} className="animate-pulse" />
                             ) : (
                               <Play size={14} className="ml-0.5" />
                             )}

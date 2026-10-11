@@ -98,6 +98,24 @@ input::-webkit-calendar-picker-indicator {
   transform-origin: bottom;
 }
 
+@keyframes eqBounce1 {
+  0%, 100% { height: 4px; }
+  50% { height: 15px; }
+}
+@keyframes eqBounce2 {
+  0%, 100% { height: 14px; }
+  50% { height: 5px; }
+}
+@keyframes eqBounce3 {
+  0%, 100% { height: 8px; }
+  50% { height: 17px; }
+}
+
+@keyframes bubbleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
 /* Clearly visible horizontal slider track */
 .custom-slider-track {
   scrollbar-width: thin !important;

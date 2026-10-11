@@ -173,7 +173,7 @@ export default function ManageSongsModal({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
               <SlidersHorizontal size={16} />
@@ -181,9 +181,6 @@ export default function ManageSongsModal({
             <div>
               <h3 className="text-md font-black text-slate-900 font-display flex items-center gap-1.5">
                 <span>Manage Vault Songs</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                  {tracks.length} Songs
-                </span>
               </h3>
             </div>
           </div>
@@ -224,8 +221,8 @@ export default function ManageSongsModal({
                     <Upload size={13} className="text-amber-500" />
                     <span>Song Thumbnail</span>
                   </span>
-                  <span className="text-[10px] font-semibold text-slate-400">
-                    JPG, PNG
+                  <span className="text-[10px] font-semibold text-black">
+                    JPG, PNG, JPEG
                   </span>
                 </div>
 
@@ -283,8 +280,8 @@ export default function ManageSongsModal({
                 </div>
 
                 {/* Storage Target info banner */}
-                <div className="bg-amber-50/80 border border-amber-200/60 px-2.5 py-1 rounded-xl flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-amber-800 shrink-0">Path:</span>
+                <div className="bg-amber-50/80 border border-amber-200/60 px-2.5 py-1 rounded-xl flex items-center text-[10px]">
+                  <span className="font-bold text-amber-800 shrink-0 mr-1">Path :</span>
                   <code className="text-amber-900 font-mono text-[10px] truncate font-semibold select-all">
                     {(editForm.movie || 'Movie').trim()}/{(editForm.title || 'Song').trim()}/cover.jpg
                   </code>
@@ -402,7 +399,7 @@ export default function ManageSongsModal({
                   onClick={handleCancelEdit}
                   className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
                 >
-                  Cancel
+                  Back
                 </button>
                 <button
                   type="submit"

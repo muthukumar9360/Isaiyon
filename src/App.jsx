@@ -55,6 +55,7 @@ export default function App() {
   // Navigation: 'home' | 'search' | 'queue' | 'history' | 'library' | 'nowplaying'
   const [activePage, setActivePage] = useState('home');
   const [isBottomPlayerDismissed, setIsBottomPlayerDismissed] = useState(false);
+  const [playerViewMode, setPlayerViewMode] = useState('mini'); // 'mini' | 'bar'
 
   // Queue state (Up Next)
   const [queue, setQueue] = useState([]);
@@ -456,6 +457,7 @@ export default function App() {
         audio.src = currentTrack.audioUrl;
       }
       audio.play().catch(() => {});
+      setIsBottomPlayerDismissed(false);
     }
   };
 
@@ -790,7 +792,11 @@ export default function App() {
         <main className={`w-full pt-16 ${
           activePage === 'nowplaying' 
             ? 'flex-1 min-h-screen pb-20 px-3 flex flex-col justify-between' 
-            : `flex-1 flex flex-col ${currentTrack && !isBottomPlayerDismissed ? 'pb-24 px-4' : 'pb-16 px-4'}`
+            : `flex-1 flex flex-col ${
+                currentTrack && !isBottomPlayerDismissed && playerViewMode === 'bar'
+                  ? 'pb-28 px-4' 
+                  : 'pb-16 px-4'
+              }`
         }`}>
           {activePage === 'home' && (
             <HomePage 
@@ -911,7 +917,7 @@ export default function App() {
           )}
         </main>
 
-        {/* Floating Bottom Mini Player (when browsing other pages) */}
+        {/* Floating Bottom Mini Player / Draggable Widget */}
         {activePage !== 'nowplaying' && currentTrack && !isBottomPlayerDismissed && (
           <BottomPlayer 
             currentTrack={currentTrack}
@@ -923,6 +929,8 @@ export default function App() {
             onToggleFavorite={handleToggleFavorite}
             user={user}
             onOpenFullPlayer={() => setActivePage('nowplaying')}
+            playerViewMode={playerViewMode}
+            onSetPlayerViewMode={setPlayerViewMode}
             onClose={() => {
               if (audioRef.current) {
                 audioRef.current.pause();

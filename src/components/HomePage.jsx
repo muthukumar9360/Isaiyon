@@ -185,7 +185,7 @@ const GENRE_STATIONS = [
   }
 ];
 
-const SONGS_PER_PAGE = 7;
+const SONGS_PER_PAGE = 10;
 
 export default function HomePage({
   tracks = [],
@@ -695,33 +695,54 @@ export default function HomePage({
               const isCurrent = currentTrack?.id === track.id;
               const isFav = favorites.includes(track.id);
               const isHeard = heardTrackIds.has(track.id);
+              const isPlayingCurrent = isCurrent && isPlaying;
 
               return (
                 <div 
                   key={track.id} 
                   onClick={() => onSelectTrack(track)}
-                  className={`p-2.5 rounded-2xl border transition-all duration-150 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
-                    isCurrent 
-                      ? 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-400/40 shadow-xs' 
+                  className={`p-2.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
+                    isPlayingCurrent 
+                      ? 'bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-amber-500/10 border-amber-400/80 ring-2 ring-amber-400/30 shadow-md shadow-amber-500/10' 
+                      : isCurrent
+                      ? 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-400/40 shadow-xs'
                       : 'bg-white hover:bg-slate-50 border-slate-100 shadow-2xs'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <img 
-                      src={track.coverUrl || FALLBACK_ARTWORK} 
-                      alt={track.title} 
-                      className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-2xs ring-1 ring-black/5"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = FALLBACK_ARTWORK;
-                      }}
-                    />
+                    <div className="relative w-12 h-12 shrink-0">
+                      <img 
+                        src={track.coverUrl || FALLBACK_ARTWORK} 
+                        alt={track.title} 
+                        className={`w-12 h-12 rounded-xl object-cover shrink-0 shadow-2xs ring-1 ring-black/5 transition-all ${
+                          isPlayingCurrent ? 'ring-2 ring-amber-500 rounded-2xl animate-[spinDisc_10s_linear_infinite]' : ''
+                        }`}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = FALLBACK_ARTWORK;
+                        }}
+                      />
+                      {/* Dancing Equalizer Overlay while playing */}
+                      {isPlayingCurrent && (
+                        <div className="absolute inset-0 bg-black/45 backdrop-blur-[0.5px] rounded-xl flex items-center justify-center gap-0.5">
+                          <span className="w-1 bg-amber-400 rounded-full animate-[stemPulse_0.6s_ease-in-out_infinite] h-3.5" />
+                          <span className="w-1 bg-amber-400 rounded-full animate-[stemPulse_0.9s_ease-in-out_infinite] h-5 [animation-delay:150ms]" />
+                          <span className="w-1 bg-amber-400 rounded-full animate-[stemPulse_0.7s_ease-in-out_infinite] h-3 [animation-delay:300ms]" />
+                          <span className="w-1 bg-amber-400 rounded-full animate-[stemPulse_1.1s_ease-in-out_infinite] h-4.5 [animation-delay:450ms]" />
+                        </div>
+                      )}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <h4 className="text-sm font-bold text-slate-900 truncate leading-snug">
+                        <h4 className={`text-sm font-bold truncate leading-snug ${isPlayingCurrent ? 'text-amber-900 font-black' : 'text-slate-900'}`}>
                           {track.title}
                         </h4>
-                        {isHeard ? (
+                        {isPlayingCurrent ? (
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-black shrink-0 animate-pulse shadow-xs">
+                            <Volume2 size={10} />
+                            <span>Playing</span>
+                          </span>
+                        ) : isHeard ? (
                           <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200 shrink-0">
                             Heard ✓
                           </span>
@@ -778,14 +799,16 @@ export default function HomePage({
                         else onSelectTrack(track);
                       }}
                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
-                        isCurrent && isPlaying
-                          ? 'bg-amber-500 text-white shadow-xs'
+                        isPlayingCurrent
+                          ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 scale-105'
+                          : isCurrent
+                          ? 'bg-amber-100 text-amber-900'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                       }`}
-                      title={isCurrent && isPlaying ? "Pause" : "Play"}
+                      title={isPlayingCurrent ? "Pause" : "Play"}
                     >
-                      {isCurrent && isPlaying ? (
-                        <Volume2 size={15} />
+                      {isPlayingCurrent ? (
+                        <Volume2 size={15} className="animate-pulse" />
                       ) : (
                         <Play size={15} className="ml-0.5" />
                       )}
@@ -799,15 +822,15 @@ export default function HomePage({
 
         {/* Pagination Controls - Always display page number even if only 1 page */}
         {displayedTracks.length > 0 && (
-          <div className="flex flex-col items-center gap-2 pt-2 pb-0 mt-auto">
-            <div className="flex items-center justify-between w-full px-1">
+          <div className="flex flex-col items-center gap-2 pt-1 pb-8 mt-auto">
+            <div className="flex items-center justify-between w-full">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
                   currentPage === 1
-                    ? 'opacity-40 cursor-not-allowed text-slate-400 bg-slate-100'
+                    ? 'opacity-100 cursor-not-allowed text-black bg-slate-100'
                     : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
                 }`}
               >
@@ -845,7 +868,7 @@ export default function HomePage({
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
                   currentPage >= totalPages
-                    ? 'opacity-40 cursor-not-allowed text-slate-400 bg-slate-100'
+                    ? 'opacity-100 cursor-not-allowed text-black bg-slate-100'
                     : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
                 }`}
               >
