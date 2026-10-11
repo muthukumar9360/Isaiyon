@@ -10,6 +10,24 @@ if (import.meta.env.DEV && typeof window !== 'undefined' && 'serviceWorker' in n
       reg.unregister();
     }
   });
+} else if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  // Check for updates every time app is opened / brought to foreground
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.update();
+      }).catch(() => {});
+    }
+  });
+
+  // Automatically refresh with new version once the new Service Worker activates
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
 }
 
 createRoot(document.getElementById('root')).render(
