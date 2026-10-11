@@ -191,11 +191,13 @@ def extract_info_only(youtube_url):
 
 def download_audio_and_thumb(youtube_url, vid_id):
     out_template = os.path.join(DOWNLOADS_DIR, f"{vid_id}.%(ext)s")
+    ffmpeg_bin = os.path.join(BASE_DIR, "ffmpeg.exe")
     
     cmd = [
         sys.executable, "-m", "yt_dlp",
         "--extractor-args", "youtube:player_client=android,web",
-        "-f", "ba/b",
+        "-x", "--audio-format", "mp3", "--audio-quality", "192K",
+        "--ffmpeg-location", ffmpeg_bin,
         "--write-thumbnail",
         "-o", out_template,
         youtube_url

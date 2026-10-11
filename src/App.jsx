@@ -529,7 +529,7 @@ export default function App() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    audio.preload = 'auto';
+    audio.preload = 'metadata';
     audio.volume = volume;
     audio.playbackRate = playbackRate;
 
@@ -550,10 +550,12 @@ export default function App() {
       setIsPlaying(false);
       setIsAudioBuffering(false);
       console.warn("Audio playback error:", audio.error);
-      if (audio.error?.code === 2) {
-        showToast("⚠️ Network issue streaming audio.");
-      } else if (audio.error?.code === 4) {
-        showToast("⚠️ Stream unavailable or buffering timed out.");
+      if (isPlaying) {
+        if (audio.error?.code === 2) {
+          showToast("⚠️ Network issue");
+        } else if (audio.error?.code === 4) {
+          showToast("⚠️ Stream unavailable");
+        }
       }
     };
 

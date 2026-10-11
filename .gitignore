@@ -31,3 +31,6 @@ scripts/downloads/
 __pycache__/
 *.py[cod]
 .firebase/
+scripts/*.exe
+temp_test.mp4
+
