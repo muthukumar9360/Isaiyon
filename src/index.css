@@ -300,7 +300,7 @@ img {
   padding: 58px 10px 62px 10px !important; /* Precise clearance for 56px top header & 58px bottom nav */
   display: flex;
   flex-direction: column;
-  justify-content: stretch;
+  justify-content: center;
   align-items: center;
   height: 100dvh;
   max-height: 100dvh;

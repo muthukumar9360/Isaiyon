@@ -73,8 +73,8 @@ export default function VinylPlayer({
   };
 
   return (
-    /* Centered, Bordered Player Card (Fills Full Available Height) */
-    <div className="w-full max-w-[420px] h-[calc(100dvh-124px)] flex-1 mx-auto flex flex-col justify-between items-center p-4 sm:p-5 bg-white rounded-[32px] sm:rounded-[36px] border-2 border-slate-200/90 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
+    /* Centered, Bordered Player Card (Direct Height Control for Live Customization) */
+    <div className="w-full max-w-[420px] h-[calc(100dvh-136px)] mx-auto flex flex-col justify-between items-center p-4 sm:p-5 bg-white rounded-[32px] sm:rounded-[36px] border-2 border-slate-200/90 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
       
       {/* 1. Header Row: "Now Playing" and action pills */}
       <div className="w-full flex items-center justify-between mb-1 sm:mb-2 shrink-0">
