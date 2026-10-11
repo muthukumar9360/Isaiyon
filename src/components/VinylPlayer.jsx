@@ -6,7 +6,11 @@ import {
   SkipForward, 
   Heart, 
   Film, 
-  Disc3 
+  Disc3,
+  ListPlus,
+  FolderPlus,
+  ListMusic,
+  ChevronDown
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
@@ -35,6 +39,12 @@ export default function VinylPlayer({
   onNext,
   isFavorite,
   onToggleFavorite,
+  onAddToQueue,
+  onOpenPlaylistModal,
+  isQueueMode = true,
+  onToggleQueueMode,
+  queueCount = 0,
+  onCollapsePlayer,
   user
 }) {
   const progressRatio = duration > 0 ? currentTime / duration : 0;
@@ -70,7 +80,27 @@ export default function VinylPlayer({
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between items-center py-2 px-1 select-none">
+    <div className="w-full flex-1 mt-5 flex flex-col justify-between items-center py-1 px-1 select-none">
+
+      {/* 1. Top Bar with Dropdown / Collapse Button on Top Left */}
+      <div className="w-full flex items-center justify-between px-2 pt-0 pb-1 shrink-0">
+        <button
+          onClick={onCollapsePlayer}
+          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200/80"
+          title="Minimize player"
+        >
+          <ChevronDown size={22} />
+        </button>
+
+        <div className="flex flex-col items-center">
+          <span className="text-[12px] font-black uppercase tracking-widest text-slate-400 leading-none">Playing From</span>
+          <span className="text-md font-bold text-slate-800 truncate max-w-[190px] mt-0.5">
+            {currentTrack?.movie || 'Sound Vault'}
+          </span>
+        </div>
+
+        <div className="w-9 h-9" />
+      </div>
 
       {/* 2. Realistic Vinyl Record Centerpiece */}
       <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0">
@@ -108,7 +138,7 @@ export default function VinylPlayer({
       <div className="w-full px-2 my-2 shrink-0">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl sm:text-2xl font-black text-slate-900 tracking-tight truncate leading-tight">
+            <h2 className="text-xl sm:text-xl font-black text-slate-900 tracking-tight truncate leading-tight">
               {currentTrack?.title || 'No Song Selected'}
             </h2>
             <p className="text-xs sm:text-sm font-semibold text-slate-500 truncate mt-1">
@@ -117,15 +147,35 @@ export default function VinylPlayer({
             </p>
           </div>
 
-          {user && (
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Queue Mode Toggle Button */}
             <button 
-              className={`p-2.5 rounded-full transition-all active:scale-90 hover:scale-105 shrink-0 ${isFavorite ? 'text-rose-600' : 'text-black hover:text-rose-500'}`}
-              onClick={() => onToggleFavorite(currentTrack?.id)}
-              title={isFavorite ? "Remove from Liked" : "Like Song"}
+              className={`p-2.5 rounded-full flex items-center justify-center relative cursor-pointer ${
+                isQueueMode 
+                  ? 'text-red-500' 
+                  : 'text-black'
+              }`}
+              onClick={onToggleQueueMode}
+              title={isQueueMode ? `Queue Mode: ON (Playing from queue${queueCount > 0 ? ` • ${queueCount} songs` : ' • Empty'})` : "Queue Mode: OFF (Playing random songs from vault)"}
             >
-              <Heart size={40} fill={isFavorite ? '#e11d48' : 'none'} color={isFavorite ? '#e11d48' : 'currentColor'} />
+              <ListMusic size={36} />
+              {queueCount > 0 && isQueueMode && (
+                <span className="absolute top-0 -right-1 w-4 h-4 bg-amber-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-xs">
+                  {queueCount}
+                </span>
+              )}
             </button>
-          )}
+
+            {user && (
+              <button 
+                className={`p-2 rounded-full transition-all active:scale-90 hover:scale-105 shrink-0 cursor-pointer ${isFavorite ? 'text-rose-600' : 'text-black hover:text-rose-500'}`}
+                onClick={() => onToggleFavorite(currentTrack?.id)}
+                title={isFavorite ? "Remove from Liked" : "Like Song"}
+              >
+                <Heart size={36} fill={isFavorite ? '#e11d48' : 'none'} color={isFavorite ? '#e11d48' : 'currentColor'} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -170,9 +220,17 @@ export default function VinylPlayer({
       </div>
 
       {/* 5. Playback Controls */}
-      <div className="w-full mt-5 flex items-center justify-center gap-6 my-2 shrink-0 pb-2">
+      <div className="w-full mt-5 flex items-center justify-center gap-3 sm:gap-4.5 my-2 shrink-0 pb-2">
         <button 
-          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs" 
+          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer" 
+          onClick={() => currentTrack && onAddToQueue?.(currentTrack)} 
+          title="Add to Queue"
+        >
+          <ListPlus size={20} />
+        </button>
+
+        <button 
+          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer" 
           onClick={onPrev} 
           title="Previous Track"
         >
@@ -192,11 +250,19 @@ export default function VinylPlayer({
         </button>
 
         <button 
-          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs" 
+          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer" 
           onClick={onNext} 
           title="Next Track"
         >
           <SkipForward size={20} />
+        </button>
+
+        <button 
+          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer" 
+          onClick={() => currentTrack && onOpenPlaylistModal?.(currentTrack)} 
+          title="Add to Playlist"
+        >
+          <FolderPlus size={20} />
         </button>
       </div>
 

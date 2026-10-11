@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Heart } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Heart, X } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
 export default function BottomPlayer({
@@ -11,7 +11,8 @@ export default function BottomPlayer({
   isFavorite,
   onToggleFavorite,
   user,
-  onOpenFullPlayer
+  onOpenFullPlayer,
+  onClose
 }) {
   if (!currentTrack) return null;
 
@@ -97,6 +98,18 @@ export default function BottomPlayer({
             title="Next"
           >
             <SkipForward size={16} fill="#000000ff" color="#ffffffff"/>
+          </button>
+
+          {/* Close Player X Button */}
+          <button 
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white hover:text-white hover:bg-white/10 transition-all active:scale-90 ml-0.5 cursor-pointer" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose?.();
+            }} 
+            title="Close Player"
+          >
+            <X size={15} />
           </button>
         </div>
       </aside>

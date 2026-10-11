@@ -7,7 +7,9 @@ import {
   Volume2, 
   Sparkles,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  PauseCircle,
+  PlayCircle
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
@@ -35,15 +37,19 @@ export default function QueueDrawer({
     e.dataTransfer.dropEffect = 'move';
   };
 
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   const handleDrop = (e, targetIndex) => {
     e.preventDefault();
-    if (draggedIndex === null || draggedIndex === targetIndex) return;
-
-    const newQueue = [...queue];
-    const [movedItem] = newQueue.splice(draggedIndex, 1);
-    newQueue.splice(targetIndex, 0, movedItem);
-
-    onReorderQueue(newQueue);
+    if (draggedIndex === null) return;
+    if (draggedIndex !== targetIndex) {
+      const newQueue = [...queue];
+      const [movedItem] = newQueue.splice(draggedIndex, 1);
+      newQueue.splice(targetIndex, 0, movedItem);
+      onReorderQueue(newQueue);
+    }
     setDraggedIndex(null);
   };
 
@@ -59,7 +65,7 @@ export default function QueueDrawer({
   return (
     <div className="w-full flex flex-col gap-5 select-none">
       {/* 1. Currently Playing Card */}
-      <section className="flex flex-col gap-2.5">
+      <section className="flex flex-col gap-2.5 mt-5">
         <h4 className="text-sm font-extrabold text-slate-900 tracking-tight font-display">
           Now Playing
         </h4>
@@ -69,7 +75,7 @@ export default function QueueDrawer({
               <img 
                 src={currentTrack.coverUrl || FALLBACK_ARTWORK} 
                 alt={currentTrack.title} 
-                className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-2xs ring-1 ring-amber-400/40"
+                className="w-20 h-12 rounded-xl object-fit shrink-0 shadow-2xs ring-1 ring-amber-400/40"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = FALLBACK_ARTWORK;
@@ -80,15 +86,15 @@ export default function QueueDrawer({
                   {currentTrack.title}
                 </span>
                 <span className="text-[11px] font-medium text-slate-500 truncate block mt-0.5">
-                  {currentTrack.movie ? `${currentTrack.movie} • ` : ''}{currentTrack.artist}
+                  {currentTrack.movie ? `${currentTrack.movie}` : ''}
                 </span>
               </div>
             </div>
             <button 
               onClick={onPlayPause}
-              className="w-9 h-9 rounded-full bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center font-bold shadow-xs transition-all active:scale-95 shrink-0"
+              className="w-12 h-12 flex items-center justify-center font-bold"
             >
-              {isPlaying ? <Volume2 size={16} /> : <Play size={16} className="ml-0.5" />}
+              {isPlaying ? <PauseCircle size={30} /> : <PlayCircle size={30} />}
             </button>
           </div>
         ) : (
@@ -116,23 +122,24 @@ export default function QueueDrawer({
             {queue.map((track, idx) => (
               <div
                 key={`${track.id}-${idx}`}
-                className={`p-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-100 flex items-center gap-2.5 transition-all shadow-2xs ${
-                  draggedIndex === idx ? 'opacity-50 ring-2 ring-amber-400' : ''
+                className={`p-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-300 flex items-center gap-2 transition-all shadow-2xs ${
+                  draggedIndex === idx ? 'opacity-50' : ''
                 }`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, idx)}
                 onDragOver={(e) => handleDragOver(e, idx)}
                 onDrop={(e) => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
               >
                 {/* Drag Handle */}
-                <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 px-0.5" title="Drag to reorder">
-                  <GripVertical size={16} />
+                <div className="cursor-grab active:cursor-grabbing text-black" title="Drag to reorder">
+                  <GripVertical size={20} />
                 </div>
 
                 <img 
                   src={track.coverUrl || FALLBACK_ARTWORK} 
                   alt={track.title} 
-                  className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs"
+                  className="w-15 h-10 rounded-xl object-fit"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = FALLBACK_ARTWORK;
@@ -147,7 +154,7 @@ export default function QueueDrawer({
                     {track.title}
                   </span>
                   <span className="text-[11px] text-slate-500 truncate block mt-0.5 font-medium">
-                    {track.movie ? `${track.movie} • ` : ''}{track.artist}
+                    {track.movie ? `${track.movie}` : ''}
                   </span>
                 </div>
 
@@ -156,7 +163,7 @@ export default function QueueDrawer({
                   <button 
                     onClick={() => moveItem(idx, idx - 1)}
                     disabled={idx === 0}
-                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-all active:scale-90"
+                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-slate-100 text-black flex items-center justify-center transition-all active:scale-90"
                     title="Move up"
                   >
                     <ArrowUp size={13} />
@@ -164,14 +171,14 @@ export default function QueueDrawer({
                   <button 
                     onClick={() => moveItem(idx, idx + 1)}
                     disabled={idx === queue.length - 1}
-                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-all active:scale-90"
+                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-slate-100 text-black flex items-center justify-center transition-all active:scale-90"
                     title="Move down"
                   >
                     <ArrowDown size={13} />
                   </button>
                   <button 
                     onClick={() => onRemoveFromQueue(idx)}
-                    className="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-all active:scale-90 ml-0.5"
+                    className="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-black flex items-center justify-center transition-all active:scale-90 ml-0.5"
                     title="Remove from queue"
                   >
                     <Trash2 size={13} />
@@ -186,7 +193,6 @@ export default function QueueDrawer({
       {/* 3. Suggested Songs */}
       <section className="flex flex-col gap-2.5">
         <div className="flex items-center gap-1.5">
-          <Sparkles size={14} className="text-amber-500" />
           <h4 className="text-sm font-extrabold text-slate-900 tracking-tight font-display">
             Suggested For You
           </h4>
@@ -202,7 +208,7 @@ export default function QueueDrawer({
                 <img 
                   src={track.coverUrl || FALLBACK_ARTWORK} 
                   alt={track.title} 
-                  className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs"
+                  className="w-15 h-10 rounded-xl object-fit shrink-0 shadow-2xs"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = FALLBACK_ARTWORK;
@@ -213,7 +219,7 @@ export default function QueueDrawer({
                     {track.title}
                   </span>
                   <span className="text-[11px] text-slate-500 truncate block mt-0.5 font-medium">
-                    {track.movie ? `[${track.movie}] ` : ''}{track.artist}
+                    {track.movie ? `[${track.movie}] ` : ''}
                   </span>
                 </div>
               </div>

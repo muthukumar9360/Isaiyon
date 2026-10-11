@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Play, Heart, Users, Volume2, PauseCircle, Pause } from 'lucide-react';
+import { X, Play, Heart, Users, Volume2, PauseCircle, Pause, ListPlus, FolderPlus, Bookmark } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
 export default function MovieDetailModal({
@@ -12,18 +12,25 @@ export default function MovieDetailModal({
   onPlayPause,
   favorites,
   onToggleFavorite,
+  savedAlbums = [],
+  onToggleSaveAlbum,
   onPlayAlbum,
+  onAddToQueue,
+  onOpenPlaylistModal,
   user
 }) {
   if (!movie) return null;
 
+  const isSaved = (savedAlbums || []).some(
+    s => s?.trim().toLowerCase() === movie.name?.trim().toLowerCase()
+  );
   const movieTracks = tracks.filter(t => 
     t.movie?.toLowerCase().includes(movie.name.toLowerCase())
   );
 
   return (
     <div 
-      className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]" 
+      className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 z-[80] select-none animate-[modalPop_0.2s_ease-out]" 
       onClick={onClose}
     >
       <div 
@@ -65,13 +72,30 @@ export default function MovieDetailModal({
               )}
             </div>
 
-            <button 
-              onClick={() => onPlayAlbum(movieTracks)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer w-fit"
-            >
-              <Play size={14} fill="#ffffff" />
-              <span>Play All ({movieTracks.length})</span>
-            </button>
+            <div className="flex items-center gap-2 mt-2">
+              <button 
+                onClick={() => onPlayAlbum(movieTracks)}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer"
+              >
+                <Play size={13} fill="#ffffff" />
+                <span>Play All ({movieTracks.length})</span>
+              </button>
+
+              {user && onToggleSaveAlbum && (
+                <button 
+                  onClick={() => onToggleSaveAlbum(movie.name)}
+                  className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer border ${
+                    isSaved 
+                      ? 'bg-amber-50 text-amber-700 border-amber-300' 
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                  }`}
+                  title={isSaved ? "Remove from Library" : "Save Album to Library"}
+                >
+                  <Bookmark size={13} fill={isSaved ? "#b45309" : "none"} />
+                  <span>{isSaved ? 'Saved' : 'Save'}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -140,8 +164,29 @@ export default function MovieDetailModal({
                           className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
                             isFav ? 'text-rose-600 bg-rose-50' : 'text-black hover:bg-slate-200'
                           }`}
+                          title={isFav ? "Unlike" : "Like"}
                         >
                           <Heart size={16} fill={isFav ? '#e11d48' : 'none'} color={isFav ? '#e11d48' : 'currentColor'} />
+                        </button>
+                      )}
+
+                      {onAddToQueue && (
+                        <button 
+                          onClick={() => onAddToQueue(track)}
+                          className="w-8 h-8 rounded-full text-slate-500 hover:text-amber-600 hover:bg-amber-50 flex items-center justify-center transition-all active:scale-90"
+                          title="Add to queue"
+                        >
+                          <ListPlus size={16} />
+                        </button>
+                      )}
+
+                      {onOpenPlaylistModal && (
+                        <button 
+                          onClick={() => onOpenPlaylistModal(track)}
+                          className="w-8 h-8 rounded-full text-slate-500 hover:text-amber-600 hover:bg-amber-50 flex items-center justify-center transition-all active:scale-90"
+                          title="Add to playlist"
+                        >
+                          <FolderPlus size={16} />
                         </button>
                       )}
                     </div>

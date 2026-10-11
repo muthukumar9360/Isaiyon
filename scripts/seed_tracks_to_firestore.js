@@ -47,6 +47,24 @@ const initialTracks = [
     archiveAudioPath: "Unnai_Ninaithu/Ennai_Thaalattum/Ennai_Thaalattum.mp4",
     archiveThumbPath: "Unnai_Ninaithu/Ennai_Thaalattum/Ennai_Thaalattum.webp",
     vaultIdentifier: "muthuramalingam_a-vault"
+  },
+  {
+    id: "mudhalvan-kurukku-siruthavale",
+    title: "Kurukku Siruthavale",
+    movie: "Mudhalvan",
+    artist: "Hariharan, Swarnalatha",
+    composer: "A. R. Rahman",
+    actors: "Arjun, Manisha Koirala, Raghuvaran",
+    genre: "Melody / Classic",
+    mood: "Melody Hits",
+    duration: 382,
+    year: "1999",
+    audioUrl: "https://archive.org/download/MudhalvanKurukkuSiruthavale/Mudhalvan-Kurukku_Siruthavale.mp3",
+    coverUrl: "/covers/mudhalvan.jpg",
+    archiveAudioPath: "Mudhalvan/Kurukku_Siruthavale/Kurukku_Siruthavale.mp3",
+    archiveThumbPath: "Mudhalvan/Kurukku_Siruthavale/Kurukku_Siruthavale.jpg",
+    archiveDetailsUrl: "https://archive.org/details/MudhalvanKurukkuSiruthavale",
+    vaultIdentifier: "muthuramalingam_a-vault"
   }
 ];
 

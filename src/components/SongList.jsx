@@ -6,7 +6,9 @@ import {
   Music, 
   Trash2, 
   Volume2,
-  ExternalLink 
+  ExternalLink,
+  ListPlus,
+  FolderPlus
 } from 'lucide-react';
 import { isAdminUser } from '../firebase/config';
 
@@ -28,7 +30,9 @@ export default function SongList({
   searchQuery,
   onSearchChange,
   user,
-  onDeleteTrack
+  onDeleteTrack,
+  onAddToQueue,
+  onOpenPlaylistModal
 }) {
   const isAdmin = isAdminUser(user);
 
@@ -131,8 +135,31 @@ export default function SongList({
                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
                         isFav ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-500 hover:bg-slate-50'
                       }`}
+                      title={isFav ? "Unlike" : "Like"}
                     >
                       <Heart size={16} fill={isFav ? '#e11d48' : 'none'} color={isFav ? '#e11d48' : 'currentColor'} />
+                    </button>
+                  )}
+
+                  {/* Add to Queue */}
+                  {onAddToQueue && (
+                    <button 
+                      onClick={() => onAddToQueue(track)}
+                      className="w-8 h-8 rounded-full text-slate-400 hover:text-amber-600 hover:bg-amber-50 flex items-center justify-center transition-all active:scale-90"
+                      title="Add to queue"
+                    >
+                      <ListPlus size={16} />
+                    </button>
+                  )}
+
+                  {/* Add to Playlist */}
+                  {onOpenPlaylistModal && (
+                    <button 
+                      onClick={() => onOpenPlaylistModal(track)}
+                      className="w-8 h-8 rounded-full text-slate-400 hover:text-amber-600 hover:bg-amber-50 flex items-center justify-center transition-all active:scale-90"
+                      title="Add to playlist"
+                    >
+                      <FolderPlus size={16} />
                     </button>
                   )}
 

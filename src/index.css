@@ -89,3 +89,28 @@
   animation: stemPulse 1.2s ease-in-out infinite;
   transform-origin: bottom;
 }
+
+/* Clearly visible horizontal slider track */
+.custom-slider-track {
+  scrollbar-width: thin !important;
+  scrollbar-color: #f59e0b #e2e8f0 !important;
+  -webkit-overflow-scrolling: touch;
+}
+.custom-slider-track::-webkit-scrollbar {
+  height: 8px !important;
+  display: block !important;
+  background: transparent !important;
+}
+.custom-slider-track::-webkit-scrollbar-track {
+  background: #e2e8f0 !important;
+  border-radius: 9999px !important;
+  margin: 0 16px;
+}
+.custom-slider-track::-webkit-scrollbar-thumb {
+  background: #f59e0b !important;
+  border-radius: 9999px !important;
+  border: 1px solid #d97706;
+}
+.custom-slider-track::-webkit-scrollbar-thumb:hover {
+  background: #d97706 !important;
+}
