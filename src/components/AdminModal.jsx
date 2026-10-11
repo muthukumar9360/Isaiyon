@@ -12,9 +12,10 @@ import {
   Image as ImageIcon, 
   Link as LinkIcon, 
   FileAudio,
-  AlertCircle
+  AlertCircle,
+  ChevronDown
 } from 'lucide-react';
-import { storage, ref, uploadBytes, getDownloadURL } from '../firebase/config';
+import { storage, ref, uploadBytes, uploadBytesResumable, getDownloadURL } from '../firebase/config';
 import { compressImage } from '../utils/imageCompressor';
 
 const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
@@ -114,6 +115,7 @@ export default function AdminModal({
 
   // Common UI states
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
   const [successCreatedTrack, setSuccessCreatedTrack] = useState(null);
 
@@ -175,6 +177,7 @@ export default function AdminModal({
     }
 
     setIsSubmitting(true);
+    setUploadProgress(15);
     setStatusMessage('Preparing track for Vault...');
 
     try {
@@ -183,16 +186,34 @@ export default function AdminModal({
       // 1. Upload audio file if chosen
       if (directAudioType === 'file' && directAudioFile) {
         setStatusMessage('Uploading audio file to Cloud Storage...');
+        setUploadProgress(25);
         try {
           const fileExt = directAudioFile.name.split('.').pop() || 'mp3';
           const safeName = `tracks/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
           const audioRef = ref(storage, safeName);
-          const uploadSnap = await uploadBytes(audioRef, directAudioFile);
-          finalAudioUrl = await getDownloadURL(uploadSnap.ref);
+          const uploadTask = uploadBytesResumable(audioRef, directAudioFile);
+
+          await new Promise((resolve, reject) => {
+            uploadTask.on(
+              'state_changed',
+              (snap) => {
+                if (snap.totalBytes > 0) {
+                  const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 55) + 25; // 25% to 80%
+                  setUploadProgress(pct);
+                }
+              },
+              (err) => reject(err),
+              () => resolve()
+            );
+          });
+          finalAudioUrl = await getDownloadURL(uploadTask.snapshot.ref);
+          setUploadProgress(80);
         } catch (uploadErr) {
           console.warn("Storage upload error:", uploadErr);
           throw new Error("Could not upload audio file directly to cloud storage. Ensure Firebase Storage is enabled, or switch to 'Paste Audio URL'.");
         }
+      } else {
+        setUploadProgress(65);
       }
 
       // 2. Upload cover artwork if provided
@@ -200,15 +221,20 @@ export default function AdminModal({
       if (directCoverBase64) {
         try {
           setStatusMessage('Syncing cover artwork...');
+          setUploadProgress(prev => Math.max(prev, 82));
           const coverRef = ref(storage, `covers/cover_${Date.now()}.jpg`);
           const res = await fetch(directCoverBase64);
           const blob = await res.blob();
           const snap = await uploadBytes(coverRef, blob);
           finalCoverUrl = await getDownloadURL(snap.ref);
+          setUploadProgress(90);
         } catch (_) {
           // Fallback: client-compressed base64 (~35KB) is safe to store directly
           finalCoverUrl = directCoverBase64;
+          setUploadProgress(90);
         }
+      } else {
+        setUploadProgress(90);
       }
 
       // 3. Match canonical movie
@@ -219,6 +245,7 @@ export default function AdminModal({
 
       // 4. Save track to Firestore
       setStatusMessage('Saving track to Vault database...');
+      setUploadProgress(95);
       const trackToSave = {
         title: directForm.title.trim(),
         movie: canonicalMovie,
@@ -235,8 +262,10 @@ export default function AdminModal({
 
       await onSaveTrack(trackToSave);
       setSuccessCreatedTrack(trackToSave);
+      setUploadProgress(100);
       setStatusMessage('Song successfully saved to Vault!');
     } catch (err) {
+      setUploadProgress(0);
       setStatusMessage('Error: ' + err.message);
     } finally {
       setIsSubmitting(false);
@@ -258,6 +287,7 @@ export default function AdminModal({
       mood: 'Melody Hits'
     });
     setSuccessCreatedTrack(null);
+    setUploadProgress(0);
     setStatusMessage('');
   };
 
@@ -299,7 +329,13 @@ export default function AdminModal({
   const handleYtConfirmUpload = async (e) => {
     e.preventDefault();
     setYtIsUploading(true);
+    setUploadProgress(15);
     setStatusMessage('1/2 Downloading audio & uploading to Archive.org folders...');
+
+    const progressTimer = setInterval(() => {
+      setUploadProgress(prev => (prev < 80 ? prev + 5 : prev));
+    }, 600);
+
     try {
       const matchedMovie = existingMovies.find(
         m => m.toLowerCase() === (ytEditMeta.movie || '').trim().toLowerCase()
@@ -321,6 +357,8 @@ export default function AdminModal({
       const result = await res.json();
 
       if (result.success && result.audioUrl) {
+        clearInterval(progressTimer);
+        setUploadProgress(90);
         setStatusMessage('2/2 Saving track to your Firebase database...');
         const trackToSave = {
           title: ytEditMeta.title.trim(),
@@ -339,15 +377,21 @@ export default function AdminModal({
         };
 
         await onSaveTrack(trackToSave);
+        setUploadProgress(100);
         setYtUploadResult(result);
         setYtStage('done');
         setStatusMessage('Song uploaded to Archive.org and permanently saved to Vault!');
       } else {
+        clearInterval(progressTimer);
+        setUploadProgress(0);
         setStatusMessage('Upload error: ' + (result.error || 'Failed to complete upload'));
       }
     } catch (err) {
+      clearInterval(progressTimer);
+      setUploadProgress(0);
       setStatusMessage('Error during upload: ' + err.message);
     } finally {
+      clearInterval(progressTimer);
       setYtIsUploading(false);
     }
   };
@@ -356,6 +400,7 @@ export default function AdminModal({
     setYtStage('input');
     setYtUrl('');
     setYtUploadResult(null);
+    setUploadProgress(0);
     setStatusMessage('');
   };
 
@@ -653,34 +698,44 @@ export default function AdminModal({
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">Genre</label>
-                      <select
-                        value={directForm.genre}
-                        onChange={e => setDirectForm({ ...directForm, genre: e.target.value })}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden cursor-pointer"
-                      >
-                        <option value="Soundtrack">Soundtrack</option>
-                        <option value="Melody">Melody</option>
-                        <option value="Folk">Folk</option>
-                        <option value="Classical">Classical</option>
-                        <option value="Pop">Pop</option>
-                        <option value="Rock">Rock</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={directForm.genre}
+                          onChange={e => setDirectForm({ ...directForm, genre: e.target.value })}
+                          disabled={isSubmitting}
+                          className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
+                        >
+                          <option value="Soundtrack">Soundtrack</option>
+                          <option value="Melody">Melody</option>
+                          <option value="Folk">Folk</option>
+                          <option value="Classical">Classical</option>
+                          <option value="Pop">Pop</option>
+                          <option value="Rock">Rock</option>
+                        </select>
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                          <ChevronDown size={14} />
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex flex-col gap-1">
                       <label className="text-[11px] font-bold text-slate-600">Mood / Category</label>
-                      <select
-                        value={directForm.mood}
-                        onChange={e => setDirectForm({ ...directForm, mood: e.target.value })}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden cursor-pointer"
-                      >
-                        <option value="Melody Hits">🎵 Melody Hits</option>
-                        <option value="Love Failure">💔 Love Failure</option>
-                        <option value="Energetic">⚡ Energetic / Kuthu</option>
-                        <option value="Midnight Chill">🌙 Midnight Chill</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={directForm.mood}
+                          onChange={e => setDirectForm({ ...directForm, mood: e.target.value })}
+                          disabled={isSubmitting}
+                          className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
+                        >
+                          <option value="Melody Hits">🎵 Melody Hits</option>
+                          <option value="Love Failure">💔 Love Failure</option>
+                          <option value="Energetic">⚡ Energetic / Kuthu</option>
+                          <option value="Midnight Chill">🌙 Midnight Chill</option>
+                        </select>
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                          <ChevronDown size={14} />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -892,8 +947,28 @@ export default function AdminModal({
           </div>
         )}
 
-        {/* Status Message */}
-        {statusMessage && (
+        {/* Real-time Upload Progress Bar Section */}
+        {(isSubmitting || ytIsUploading || (uploadProgress > 0 && uploadProgress <= 100)) && (
+          <div className="mt-3.5 p-3.5 bg-slate-900 text-white rounded-2xl shadow-lg border border-slate-800 flex flex-col gap-2.5 animate-[modalPop_0.25s_ease-out]">
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="flex items-center gap-2 text-slate-200 truncate">
+                <Upload size={14} className={`text-amber-400 shrink-0 ${uploadProgress < 100 ? 'animate-bounce' : ''}`} />
+                <span className="truncate">{statusMessage || 'Uploading song to Vault...'}</span>
+              </span>
+              <span className="font-mono text-amber-400 ml-2 text-xs font-bold shrink-0">{uploadProgress}%</span>
+            </div>
+            
+            <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-700/60">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-emerald-400 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(251,191,36,0.6)]"
+                style={{ width: `${Math.max(uploadProgress, 5)}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Status Message (when not actively uploading) */}
+        {statusMessage && !isSubmitting && !ytIsUploading && uploadProgress === 0 && (
           <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${
             statusMessage.includes('Success') || statusMessage.includes('successfully') || statusMessage.includes('saved to Vault')
               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/50'
@@ -905,6 +980,16 @@ export default function AdminModal({
           </div>
         )}
       </div>
+
+      {/* Sticky Bottom Edge Progress Bar */}
+      {(isSubmitting || ytIsUploading || (uploadProgress > 0 && uploadProgress < 100)) && (
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-100 overflow-hidden z-20">
+          <div 
+            className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-indigo-500 transition-all duration-300"
+            style={{ width: `${Math.max(uploadProgress, 6)}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -88,24 +88,33 @@ export default function VinylPlayer({
   return (
     <div className="w-full flex-1 mt-5 flex flex-col justify-between items-center py-1 px-1 select-none animate-[bigPlayerOpen_0.36s_cubic-bezier(0.16,1,0.3,1)]">
 
-      {/* 1. Top Bar with Dropdown / Collapse Button on Top Left */}
-      <div className="w-full flex items-center justify-between px-2 pt-0 pb-1 shrink-0">
+      {/* 1. Pull-Down Grab Handle & Redesigned Header Bar */}
+      <button
+        onClick={handleCollapse}
+        className="w-full flex justify-center pt-0 pb-1 cursor-pointer group active:scale-95 transition-transform"
+        title="Minimize player"
+      >
+        <div className="w-12 h-1.5 rounded-full bg-slate-300 group-hover:bg-slate-400 group-active:bg-slate-500 transition-all shadow-2xs" />
+      </button>
+
+      <div className="w-full flex items-center justify-between px-3 pt-0 pb-1.5 shrink-0">
         <button
           onClick={handleCollapse}
-          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-black flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200/80"
+          className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/90 text-slate-800 flex items-center gap-1.5 text-xs font-bold transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200"
           title="Minimize player"
         >
-          <ChevronDown size={30} />
+          <ChevronDown size={16} className="text-slate-600" />
+          <span>Mini</span>
         </button>
 
         <div className="flex flex-col items-center">
-          <span className="text-[12px] font-black uppercase tracking-widest text-slate-400 leading-none">Playing From</span>
-          <span className="text-lg font-bold text-slate-800 truncate max-w-[190px] mt-0.5">
+          <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">Playing From</span>
+          <span className="text-base font-bold text-slate-800 truncate max-w-[190px] mt-0.5">
             {currentTrack?.movie || 'Sound Vault'}
           </span>
         </div>
 
-        <div className="w-9 h-9" />
+        <div className="w-16" />
       </div>
 
       {/* 2. Realistic Vinyl Record Centerpiece */}

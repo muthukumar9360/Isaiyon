@@ -114,7 +114,7 @@ export default function QueueDrawer({
         </div>
 
         {queue.length === 0 ? (
-          <div className="p-6 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <div className="my-3.5 p-6 text-center text-slate-400 bg-slate-50/90 rounded-2xl border border-dashed border-slate-200">
             <p className="text-xs font-medium">Queue is empty. Suggested tracks below will play automatically.</p>
           </div>
         ) : (
