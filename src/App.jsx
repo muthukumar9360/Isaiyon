@@ -947,18 +947,18 @@ export default function App() {
   // Splash loading screen while checking auth state or completing 5-sec intro
   if (authLoading || !isSplashDone) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-amber-50/40 flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
-        {/* Soft Background Radial Lighting */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
+        {/* Soft Background Radial Black Lighting Shadows */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-black/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-slate-900/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Animated Glowing Logo Centerpiece */}
         <div className="relative flex items-center justify-center mb-6">
-          {/* Outer Pulsing Aura Ring */}
-          <div className="absolute w-28 h-28 rounded-3xl bg-amber-400/25 animate-ping opacity-75" />
-          <div className="absolute w-26 h-26 rounded-3xl bg-gradient-to-tr from-amber-400 to-amber-200 blur-xl opacity-60 animate-pulse" />
+          {/* Outer Pulsing Black Aura Ring */}
+          <div className="absolute w-28 h-28 rounded-3xl bg-black/10 animate-ping opacity-60" />
+          <div className="absolute w-26 h-26 rounded-3xl bg-slate-900/10 blur-xl opacity-50 animate-pulse" />
           
-          <div className="relative w-20 h-20 rounded-3xl bg-white p-2.5 shadow-2xl shadow-amber-500/25 border border-amber-200/80 flex items-center justify-center transform hover:scale-105 transition-transform animate-[modalPop_0.6s_ease-out]">
+          <div className="relative w-20 h-20 rounded-3xl bg-white p-2.5 shadow-2xl shadow-black/25 border border-slate-200 flex items-center justify-center transform hover:scale-105 transition-transform animate-[modalPop_0.6s_ease-out]">
             <img 
               src="/logo.png" 
               alt="Isaiyon" 
@@ -973,18 +973,18 @@ export default function App() {
           <h1 className="text-xl font-black tracking-tight text-slate-900 font-display">
             ISAIYON
           </h1>
-          <p className="text-[15px] font-black tracking-widest text-amber-600 uppercase">
+          <p className="text-[15px] font-black tracking-widest text-slate-800 uppercase">
             Sound Vault
           </p>
         </div>
 
-        {/* Dynamic Animated Equalizer Wave */}
+        {/* Dynamic Animated Equalizer Wave in Sleek Slate/Black */}
         <div className="flex items-end justify-center gap-1.5 h-8 mt-5 mb-3">
-          <span className="w-1.5 bg-amber-500 rounded-full animate-[stemPulse_0.6s_ease-in-out_infinite] h-4" />
-          <span className="w-1.5 bg-slate-800 rounded-full animate-[stemPulse_0.9s_ease-in-out_infinite] h-7 [animation-delay:150ms]" />
-          <span className="w-1.5 bg-amber-500 rounded-full animate-[stemPulse_0.7s_ease-in-out_infinite] h-5 [animation-delay:300ms]" />
-          <span className="w-1.5 bg-slate-800 rounded-full animate-[stemPulse_1.1s_ease-in-out_infinite] h-8 [animation-delay:450ms]" />
-          <span className="w-1.5 bg-amber-500 rounded-full animate-[stemPulse_0.8s_ease-in-out_infinite] h-3.5 [animation-delay:200ms]" />
+          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.6s_ease-in-out_infinite] h-4" />
+          <span className="w-1.5 bg-slate-700 rounded-full animate-[stemPulse_0.9s_ease-in-out_infinite] h-7 [animation-delay:150ms]" />
+          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.7s_ease-in-out_infinite] h-5 [animation-delay:300ms]" />
+          <span className="w-1.5 bg-slate-700 rounded-full animate-[stemPulse_1.1s_ease-in-out_infinite] h-8 [animation-delay:450ms]" />
+          <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.8s_ease-in-out_infinite] h-3.5 [animation-delay:200ms]" />
         </div>
 
         <p className="text-xs font-semibold text-slate-400 animate-pulse tracking-wide">

@@ -81,15 +81,15 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-amber-50/40 text-slate-900 flex flex-col justify-between items-center px-4 py-7 select-none relative overflow-hidden">
-      {/* Soft Background Radial Lighting matching loading screen */}
-      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/3 -right-20 w-80 h-80 bg-rose-400/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900 flex flex-col justify-between items-center px-4 py-7 select-none relative overflow-hidden">
+      {/* Soft Background Radial Black Lighting Shadows matching loading screen */}
+      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-black/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/3 -right-20 w-80 h-80 bg-slate-900/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Header / Brand */}
       <header className="w-full max-w-sm flex items-center justify-between pt-1 z-10">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-white p-1.5 shadow-md shadow-amber-500/15 border border-amber-200/80">
+          <div className="w-10 h-10 rounded-2xl bg-white p-1.5 shadow-md shadow-black/10 border border-slate-200">
             <img 
               src="/logo.png" 
               alt="Isaiyon" 
@@ -99,7 +99,7 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
           </div>
           <div className="flex flex-col">
             <span className="text-lg font-black tracking-tight text-slate-900 font-display">Isaiyon</span>
-            <span className="text-[10px] font-extrabold text-amber-600 tracking-wider uppercase">Sound Vault</span>
+            <span className="text-[10px] font-extrabold text-slate-800 tracking-wider uppercase">Sound Vault</span>
           </div>
         </div>
 
@@ -120,11 +120,11 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
       {/* Center Hero: Vinyl record artwork centerpiece */}
       <div className="w-full max-w-sm flex flex-col items-center text-center my-auto py-4 z-10">
         <div className="relative w-40 h-40 mb-5">
-          {/* Outer Aura Ring */}
-          <div className="absolute -inset-2 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 blur-lg opacity-40 animate-pulse" />
+          {/* Outer Black Shadow Aura Ring */}
+          <div className="absolute -inset-2 rounded-full bg-slate-900/10 blur-xl opacity-50 animate-pulse" />
           
-          {/* Vinyl Disc Outer Rim in White & Amber Theme */}
-          <div className="relative w-full h-full rounded-full bg-white p-2.5 shadow-2xl shadow-amber-500/20 border border-amber-200/80 flex items-center justify-center">
+          {/* Vinyl Disc Outer Rim in Clean White & Black Shadow Theme */}
+          <div className="relative w-full h-full rounded-full bg-white p-2.5 shadow-2xl shadow-black/25 border border-slate-200 flex items-center justify-center">
             <div 
               className="w-full h-full rounded-full overflow-hidden relative border-2 border-slate-800 shadow-inner bg-slate-950"
               style={{ animation: 'spinDisc 18s linear infinite' }}
@@ -138,13 +138,13 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
                   e.target.src = FALLBACK_ARTWORK;
                 }}
               />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white border-4 border-amber-500 shadow-md" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white border-4 border-slate-900 shadow-md" />
             </div>
           </div>
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight font-display">
-          Your Personal <span className="bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">Music Vault</span>
+          Your Personal <span className="text-slate-900">Music Vault</span>
         </h1>
         <p className="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed font-medium">
           Sign in to stream high-fidelity Tamil soundtracks, curate personal playlists, and sync listening history across devices.
