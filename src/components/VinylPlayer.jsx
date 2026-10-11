@@ -73,8 +73,8 @@ export default function VinylPlayer({
   };
 
   return (
-    /* Centered, Bordered Player Card (Direct Height Control for Live Customization) */
-    <div className="w-full max-w-[380px] h-[calc(100dvh-150px)] mx-auto flex flex-col justify-between items-center px-6 py-6 sm:px-7 sm:py-7 bg-white rounded-[32px] sm:rounded-[36px] border-2 border-slate-900/40 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
+    /* Centered, Bordered Player Card (Direct Height & Padding Control) */
+    <div className="w-full max-w-[380px] h-[calc(100dvh-150px)] mx-auto flex flex-col justify-between items-center px-6 py-6 bg-white rounded-[32px] border-2 border-slate-900/40 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
       
       {/* 1. Header Row: "Now Playing" and action pills */}
       <div className="w-full flex items-center justify-between mb-2 shrink-0">
@@ -120,10 +120,10 @@ export default function VinylPlayer({
 
       {/* 3. Track Details: Title and Artist */}
       <div className="w-full text-center px-4 my-1.5 shrink-0">
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">
+        <h2 className="text-xl font-black text-slate-900 tracking-tight truncate">
           {currentTrack?.title || 'No Song Selected'}
         </h2>
-        <p className="text-xs sm:text-sm font-semibold text-slate-500 truncate mt-1">
+        <p className="text-sm font-semibold text-slate-500 truncate mt-1">
           {currentTrack?.artist || 'Various Artists'}
           {currentTrack?.composer ? ` • ${currentTrack.composer}` : ''}
         </p>
@@ -155,7 +155,7 @@ export default function VinylPlayer({
 
         <div 
           ref={waveformTrackRef}
-          className="flex-1 h-9 sm:h-10 flex items-center justify-between gap-[2px] sm:gap-[3px] px-1 py-1 cursor-pointer select-none touch-none" 
+          className="flex-1 h-9 flex items-center justify-between gap-[2.5px] px-1 py-1 cursor-pointer select-none touch-none" 
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -188,7 +188,7 @@ export default function VinylPlayer({
       </div>
 
       {/* 6. Media Playback Controls: Previous, Glowing Play/Pause, Next */}
-      <div className="w-full flex items-center justify-center gap-7 sm:gap-9 my-2 shrink-0">
+      <div className="w-full flex items-center justify-center gap-7 my-2 shrink-0">
         <button 
           className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-slate-700 transition-all active:scale-95 hover:scale-105 shadow-sm" 
           onClick={onPrev} 

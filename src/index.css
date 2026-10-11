@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../index.html";
+@source "./**/*.{js,ts,jsx,tsx}";
 
 /* ==========================================================================
    ISAIYON MUSIC - PURE WHITE THEME & HOLOGRAPHIC DVD DISC
