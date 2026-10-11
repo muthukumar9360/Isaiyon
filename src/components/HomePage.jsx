@@ -376,7 +376,6 @@ export default function HomePage({
               onClick={() => tracks[0] && onSelectTrack(tracks[0], false)}
               className="w-full py-2.5 px-4 rounded-2xl bg-white/15 hover:bg-white/20 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-white/10 active:scale-[0.98] transition-all cursor-pointer"
             >
-              <Sparkles size={14} className="text-amber-400" />
               <span>Replay Vault Catalog</span>
             </button>
           )}

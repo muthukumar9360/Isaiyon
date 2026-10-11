@@ -30,3 +30,4 @@ scripts/downloads/
 *.sw?
 __pycache__/
 *.py[cod]
+.firebase/

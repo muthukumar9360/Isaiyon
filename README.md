@@ -105,6 +105,12 @@ npx firebase login
 npx firebase deploy --only hosting
 ```
 
+### 🔄 Update Live App in 1 Command
+Whenever you make any changes to the code and want to deploy the update immediately to your live website and installed mobile PWA:
+```bash
+npm run build && npx firebase deploy --only hosting
+```
+
 ---
 
 ## 📱 How to Install on Mobile & Laptop
