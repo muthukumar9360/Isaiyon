@@ -297,16 +297,16 @@ img {
 
 /* Specific Dedicated Non-Scrolling Viewport for Full Player on All Mobiles */
 .mobile-content.nowplaying-content {
-  padding: 58px 10px 62px 10px; /* Precise clearance for 56px top header & 58px bottom nav */
+  padding: 56px 0 58px 0 !important; /* Precise clearance for 56px top header & 58px bottom nav */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: stretch;
   align-items: center;
   min-height: 100dvh;
   height: 100dvh;
   max-height: 100dvh;
   box-sizing: border-box;
-  overflow: hidden; /* Eliminates scrollbar/slider on all mobiles */
+  overflow: hidden !important; /* Eliminates scrollbar/slider on all mobiles */
 }
 
 /* ==========================================================================
@@ -424,12 +424,15 @@ img {
   }
 }
 
-.ref-disc-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 50%;
+.ref-disc-img,
+.ref-disc img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 50% !important;
 }
 
 .ref-disc-spindle {
