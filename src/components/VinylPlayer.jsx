@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Play, 
   Pause, 
@@ -6,11 +6,7 @@ import {
   SkipForward, 
   Heart,
   Film,
-  Users,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
-  Share2
+  Users
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
@@ -32,12 +28,8 @@ export default function VinylPlayer({
   onNext,
   isFavorite,
   onToggleFavorite,
-  user,
-  suggestedTracks = [],
-  onSelectTrack,
-  onShareTrack
+  user
 }) {
-  const [isMinimized, setIsMinimized] = useState(false);
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleProgressBarClick = (e) => {
@@ -49,30 +41,9 @@ export default function VinylPlayer({
 
   return (
     <div className="player-deck-mobile">
-      {/* Top Bar: Share & Minimize Toggle */}
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <button 
-          className="tool-pill-btn"
-          onClick={() => setIsMinimized(!isMinimized)}
-          title={isMinimized ? 'Expand Player' : 'Show Next Songs'}
-        >
-          {isMinimized ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-          <span>{isMinimized ? 'Expand Player' : 'Next Songs'}</span>
-        </button>
-
-        <button 
-          className="tool-pill-btn"
-          onClick={() => onShareTrack && onShareTrack(currentTrack)}
-          title="Share Song"
-        >
-          <Share2 size={13} />
-          <span>Share</span>
-        </button>
-      </div>
-
-      {/* Holographic Pearlescent Laser DVD Disc (Minimizes when Up Next is expanded) */}
-      <div className={`holographic-dvd-stage ${isMinimized ? 'minimized' : ''}`}>
-        <div className={`holographic-dvd ${isPlaying ? 'spinning' : ''} ${isMinimized ? 'mini-disc' : ''}`}>
+      {/* Holographic Pearlescent Laser DVD Centerpiece */}
+      <div className="holographic-dvd-stage">
+        <div className={`holographic-dvd ${isPlaying ? 'spinning' : ''}`}>
           <div className="dvd-laser-prism" />
           <div className="dvd-concentric-rings" />
           <div className="dvd-hub">
@@ -135,7 +106,7 @@ export default function VinylPlayer({
       </div>
 
       {/* Main Touch Controls: ONLY Previous, Play/Pause, Next & Favorite */}
-      <div className="control-row" style={{ gap: 24, marginBottom: 16 }}>
+      <div className="control-row" style={{ gap: 24 }}>
         <button className="ctrl-btn" onClick={onPrev} title="Previous Track">
           <SkipBack size={26} />
         </button>
@@ -162,49 +133,6 @@ export default function VinylPlayer({
           >
             <Heart size={22} fill={isFavorite ? '#e11d48' : 'none'} />
           </button>
-        )}
-      </div>
-
-      {/* Suggested Songs / Up Next Shelf Below Player */}
-      <div className="player-suggested-shelf">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-          <Sparkles size={14} color="var(--accent-gold)" />
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)' }}>
-            Up Next • Suggested Songs
-          </span>
-        </div>
-
-        {suggestedTracks.length === 0 ? (
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            No more songs in queue. Add more songs using the Vault button!
-          </p>
-        ) : (
-          <div className="suggested-rows-container">
-            {suggestedTracks.slice(0, 5).map(track => (
-              <div 
-                key={track.id} 
-                className="player-suggested-item"
-                onClick={() => onSelectTrack(track)}
-              >
-                <img 
-                  src={track.coverUrl || FALLBACK_ARTWORK} 
-                  alt={track.title} 
-                  className="psi-thumb"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = FALLBACK_ARTWORK;
-                  }}
-                />
-                <div className="psi-meta">
-                  <span className="psi-title">{track.title}</span>
-                  <span className="psi-sub">{track.movie ? `[${track.movie}] ` : ''}{track.artist}</span>
-                </div>
-                <button className="psi-play-btn" title="Play Now">
-                  <Play size={14} fill="#ffffff" style={{ marginLeft: 2 }} />
-                </button>
-              </div>
-            ))}
-          </div>
         )}
       </div>
     </div>

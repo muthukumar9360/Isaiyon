@@ -491,9 +491,6 @@ export default function App() {
             isFavorite={currentTrack ? favorites.includes(currentTrack.id) : false}
             onToggleFavorite={handleToggleFavorite}
             user={user}
-            suggestedTracks={suggestedTracks}
-            onSelectTrack={handleSelectTrack}
-            onShareTrack={handleShareTrack}
           />
         )}
       </main>
