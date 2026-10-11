@@ -74,12 +74,12 @@ export default function VinylPlayer({
 
   return (
     /* Centered, Bordered Player Card (Direct Height Control for Live Customization) */
-    <div className="w-full max-w-[420px] h-[calc(100dvh-136px)] mx-auto flex flex-col justify-between items-center p-4 sm:p-5 bg-white rounded-[32px] sm:rounded-[36px] border-2 border-slate-200/90 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
+    <div className="w-full max-w-[380px] h-[calc(100dvh-150px)] mx-auto flex flex-col justify-between items-center px-6 py-6 sm:px-7 sm:py-7 bg-white rounded-[32px] sm:rounded-[36px] border-2 border-slate-900/40 shadow-[0_16px_45px_rgba(15,23,42,0.08)] select-none relative overflow-hidden">
       
       {/* 1. Header Row: "Now Playing" and action pills */}
-      <div className="w-full flex items-center justify-between mb-1 sm:mb-2 shrink-0">
+      <div className="w-full flex items-center justify-between mb-2 shrink-0">
         <button 
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-amber-600 transition-transform active:scale-95 shadow-2xs"
+          className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-amber-600 transition-transform active:scale-95 shadow-2xs"
           title="Now Playing"
         >
           <Music2 size={16} />
@@ -90,7 +90,7 @@ export default function VinylPlayer({
         </h1>
 
         <button 
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-transform active:scale-95 shadow-2xs"
+          className="w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-transform active:scale-95 shadow-2xs"
           title="More Options"
         >
           <MoreHorizontal size={16} />
@@ -99,7 +99,7 @@ export default function VinylPlayer({
 
       {/* 2. Centerpiece: Full-bleed Rotating Vinyl Disc with Halo Ring */}
       <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0 py-2">
-        <div className="w-[min(65vw,34vh,240px)] h-[min(65vw,34vh,240px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-amber-500/15 via-amber-400/5 to-amber-600/20 border-2 border-amber-500/25 shadow-[0_14px_36px_rgba(217,119,6,0.18)] flex items-center justify-center shrink-0">
+        <div className="w-[min(58vw,28vh,220px)] h-[min(58vw,28vh,220px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-amber-500/15 via-amber-400/5 to-amber-600/20 border-2 border-amber-500/25 shadow-[0_14px_36px_rgba(217,119,6,0.18)] flex items-center justify-center shrink-0">
           <div className={`w-full h-full rounded-full overflow-hidden relative shadow-[0_10px_25px_rgba(15,23,42,0.22)] border-[3px] border-white ref-disc ${isPlaying ? 'rotating' : ''}`}>
             {/* Full 100% cover image filling entire 360 circle */}
             <img 
