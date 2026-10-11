@@ -602,7 +602,7 @@ export default function HomePage({
                   </p>
 
                   {/* Micro Visual Soundwave Indicator */}
-                  <div className="flex items-end gap-0.5 h-2 mt-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-end gap-0.5 h-2 mt-2 opacity-100 group-hover:opacity-100 transition-opacity">
                     <span className="w-0.5 h-1.5 bg-white/90 rounded-full animate-pulse" />
                     <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:150ms]" />
                     <span className="w-0.5 h-1 bg-white/90 rounded-full animate-pulse [animation-delay:300ms]" />

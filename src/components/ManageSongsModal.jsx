@@ -214,55 +214,97 @@ export default function ManageSongsModal({
         {editingTrackId && editForm ? (
           /* EDIT SINGLE TRACK FORM */
           <div className="flex-1 overflow-y-auto py-3 pr-1">
-            <button
-              onClick={handleCancelEdit}
-              className="mb-3 text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 transition-all"
-            >
-              <ChevronLeft size={16} />
-              <span>Back to Songs List</span>
-            </button>
+            {/* Top Navigation Row */}
+            <div className="flex items-center justify-between mb-3 bg-slate-50/80 p-2 rounded-2xl border border-slate-200/80">
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition-all cursor-pointer shadow-2xs active:scale-95"
+              >
+                <ChevronLeft size={15} />
+                <span>Back to Songs List</span>
+              </button>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-amber-800 bg-amber-100/90 border border-amber-300/60 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <Edit3 size={11} />
+                  <span>Editing Song Details</span>
+                </span>
+              </div>
+            </div>
 
             <form onSubmit={handleSaveEdit} className="flex flex-col gap-3">
-              <div className="flex items-center gap-3 p-2.5 bg-slate-50 rounded-2xl border border-slate-200/80">
-                <div className="relative group shrink-0">
-                  <img 
-                    src={editForm.coverUrl || FALLBACK_ARTWORK} 
-                    alt="Thumb" 
-                    className="w-14 h-14 rounded-xl object-cover shadow-2xs border border-slate-200"
-                    onError={(e) => { e.currentTarget.src = FALLBACK_ARTWORK; }}
-                  />
-                  <label 
-                    className="absolute inset-0 bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[9px] font-bold cursor-pointer"
-                    title="Change photo in Archive.org"
-                  >
-                    <Upload size={13} />
-                    <span>Change</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      onChange={handleUploadNewPhoto}
-                    />
-                  </label>
+              {/* Song Thumbnail & Upload Controls Card - Zero empty space, crystal-clear layout */}
+              <div className="p-3 bg-gradient-to-br from-slate-50 via-amber-50/25 to-slate-50 rounded-2xl border border-slate-200/90 flex flex-col gap-2.5 shadow-2xs">
+                {/* Header title for artwork section */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Upload size={13} className="text-amber-500" />
+                    <span>Song Thumbnail & Artwork</span>
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400">
+                    JPG, PNG • Square Recommended
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-black text-slate-800 truncate">
-                    Editing: {editForm.title || 'Untitled'}
-                  </div>
-                  <div className="text-[11px] text-amber-700 font-bold truncate">
-                    Movie: {editForm.movie || 'Not set'}
-                  </div>
-                  <label className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold text-amber-700 hover:text-amber-800 cursor-pointer bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-2xs hover:bg-slate-50 transition-all">
-                    <Upload size={11} />
-                    <span>{isUploadingPhoto ? 'Uploading to Archive.org...' : 'Change Photo in Archive.org'}</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      disabled={isUploadingPhoto}
-                      className="hidden" 
-                      onChange={handleUploadNewPhoto}
+
+                <div className="flex gap-3 items-center">
+                  {/* Thumbnail Preview with Quick Hover Change */}
+                  <div className="relative group shrink-0">
+                    <img 
+                      src={editForm.coverUrl || FALLBACK_ARTWORK} 
+                      alt="Thumb" 
+                      className="w-20 h-20 rounded-2xl object-cover shadow-sm border border-slate-200 ring-2 ring-amber-400/20"
+                      onError={(e) => { e.currentTarget.src = FALLBACK_ARTWORK; }}
                     />
-                  </label>
+                    <label 
+                      className="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold cursor-pointer"
+                      title="Upload new photo"
+                    >
+                      <Upload size={14} />
+                      <span>Browse</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        disabled={isUploadingPhoto}
+                        className="hidden" 
+                        onChange={handleUploadNewPhoto}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Upload Controls & URL input - occupying full width with purpose */}
+                  <div className="min-w-0 flex-1 flex flex-col gap-2">
+                    {/* Primary Upload Button */}
+                    <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-98 text-white text-xs font-bold shadow-xs cursor-pointer transition-all">
+                      <Upload size={13} strokeWidth={2.5} />
+                      <span>{isUploadingPhoto ? 'Uploading to Archive.org...' : 'Upload / Replace Thumbnail'}</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        disabled={isUploadingPhoto}
+                        className="hidden" 
+                        onChange={handleUploadNewPhoto}
+                      />
+                    </label>
+
+                    {/* Direct Cover Image URL field */}
+                    <div className="relative flex items-center">
+                      <input 
+                        type="text" 
+                        placeholder="Or paste artwork image URL..."
+                        value={editForm.coverUrl}
+                        onChange={e => setEditForm({ ...editForm, coverUrl: e.target.value })}
+                        className="w-full px-2.5 py-1.5 bg-white text-[11px] font-medium rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden text-slate-800 placeholder:text-slate-400 truncate shadow-2xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Storage Target info banner */}
+                <div className="bg-amber-50/80 border border-amber-200/60 px-2.5 py-1 rounded-xl flex items-center justify-between text-[10px]">
+                  <span className="font-bold text-amber-800 shrink-0">Storage Path:</span>
+                  <code className="text-amber-900 font-mono text-[10px] truncate ml-2 font-semibold select-all">
+                    muthuramalingam_a-vault/{(editForm.movie || 'Movie').trim()}/{(editForm.title || 'Song').trim()}/cover.jpg
+                  </code>
                 </div>
               </div>
 
@@ -370,27 +412,6 @@ export default function ManageSongsModal({
                 </div>
               </div>
 
-              {/* Cover URL */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-700">Cover Artwork URL</label>
-                <input 
-                  type="text" 
-                  value={editForm.coverUrl}
-                  onChange={e => setEditForm({ ...editForm, coverUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
-                />
-              </div>
-
-              {/* Audio URL */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-700">Direct Audio Stream URL</label>
-                <input 
-                  type="text" 
-                  value={editForm.audioUrl}
-                  onChange={e => setEditForm({ ...editForm, audioUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden font-mono text-[11px]"
-                />
-              </div>
 
               <div className="flex gap-2 pt-2">
                 <button
@@ -488,10 +509,11 @@ export default function ManageSongsModal({
                         <>
                           <button
                             onClick={() => handleStartEdit(track)}
-                            title="Edit Track"
-                            className="w-7 h-7 rounded-xl bg-white hover:bg-amber-500 hover:text-white text-slate-700 border border-slate-200 flex items-center justify-center transition-all active:scale-90 shadow-2xs cursor-pointer"
+                            title="Edit Song"
+                            className="px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-500 hover:text-white text-amber-800 border border-amber-200/80 flex items-center gap-1 text-[11px] font-bold transition-all active:scale-90 shadow-2xs cursor-pointer"
                           >
-                            <Edit3 size={13} />
+                            <Edit3 size={12} />
+                            <span>Edit</span>
                           </button>
                           <button
                             onClick={() => setDeleteConfirmId(track.id)}
