@@ -24,6 +24,55 @@ const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
   </svg>
 );
 
+const slugify = (text) => {
+  if (!text) return "soundtrack";
+  const clean = text.replace(/[^\w\s-]/g, '').trim().replace(/[-\s]+/g, '_');
+  return clean.substring(0, 45) || "soundtrack";
+};
+
+const uploadFileToArchiveS3 = (file, remotePath, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const cleanPath = remotePath.split('/').map(encodeURIComponent).join('/');
+    const url = `https://s3.us.archive.org/muthuramalingam_a-vault/${cleanPath}`;
+
+    xhr.open('PUT', url, true);
+    xhr.setRequestHeader('authorization', 'LOW sftYc6GkCtNMjk7H:lR6TOMtJUAnE7tZg');
+    xhr.setRequestHeader('x-amz-auto-make-bucket', '1');
+    if (file.type) {
+      xhr.setRequestHeader('content-type', file.type);
+    } else if (remotePath.endsWith('.mp3')) {
+      xhr.setRequestHeader('content-type', 'audio/mpeg');
+    }
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        onProgress(pct);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(`https://archive.org/download/muthuramalingam_a-vault/${remotePath}`);
+      } else {
+        reject(new Error(`Vault upload error (${xhr.status} ${xhr.statusText})`));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error("Network connection error. Please verify your internet connection."));
+    };
+
+    xhr.ontimeout = () => {
+      reject(new Error("Upload timed out. The file might be too large for your current network."));
+    };
+    xhr.timeout = 180000; // 3 minutes
+
+    xhr.send(file);
+  });
+};
+
 export default function AdminModal({
   isOpen,
   onClose,
@@ -183,51 +232,36 @@ export default function AdminModal({
     try {
       let finalAudioUrl = directAudioUrl.trim();
 
-      // 1. Upload audio file if chosen (Single-stream fast upload with explicit MIME type)
+      // 1. Upload audio file if chosen (Direct Archive.org S3 upload from browser without Python)
       if (directAudioType === 'file' && directAudioFile) {
         const sizeMb = (directAudioFile.size / (1024 * 1024)).toFixed(1);
-        setStatusMessage(`Uploading audio to Cloud Storage (${sizeMb} MB)...`);
-        setUploadProgress(20);
+        setStatusMessage(`Uploading audio to Vault (${sizeMb} MB)...`);
+        setUploadProgress(10);
 
-        let progressInterval = null;
+        const fileExt = directAudioFile.name.split('.').pop()?.toLowerCase() || 'mp3';
+        const movieSlug = slugify(directForm.movie || 'Sound Vault');
+        const songSlug = slugify(directForm.title);
+        const remoteAudioPath = `${movieSlug}/${songSlug}/${songSlug}_${Date.now()}.${fileExt}`;
+
         try {
-          const fileExt = directAudioFile.name.split('.').pop()?.toLowerCase() || 'mp3';
-          const safeName = `tracks/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-          const audioRef = ref(storage, safeName);
-          const metadata = { 
-            contentType: directAudioFile.type || 'audio/mpeg',
-            cacheControl: 'public, max-age=31536000'
-          };
-
-          // Smooth progress ticker
-          progressInterval = setInterval(() => {
-            setUploadProgress(prev => (prev < 84 ? prev + 6 : prev));
-          }, 200);
-
-          // Fast single-connection upload with 35-second safety timeout
-          const uploadPromise = uploadBytes(audioRef, directAudioFile, metadata);
-          const uploadSnap = await Promise.race([
-            uploadPromise,
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error("Upload timed out. Please check your network connection.")), 35000)
-            )
-          ]);
-
-          clearInterval(progressInterval);
-          setUploadProgress(88);
-          setStatusMessage('Retrieving cloud streaming URL...');
-          finalAudioUrl = await getDownloadURL(uploadSnap.ref);
-          setUploadProgress(92);
+          finalAudioUrl = await uploadFileToArchiveS3(
+            directAudioFile,
+            remoteAudioPath,
+            (pct) => {
+              setUploadProgress(Math.round(10 + pct * 0.78));
+              setStatusMessage(`Uploading audio to Vault (${pct}% - ${sizeMb} MB)...`);
+            }
+          );
+          setUploadProgress(90);
         } catch (uploadErr) {
-          if (progressInterval) clearInterval(progressInterval);
-          console.warn("Storage upload error:", uploadErr);
+          console.warn("Direct Vault S3 upload error:", uploadErr);
           throw new Error("Could not upload audio file: " + uploadErr.message);
         }
       } else {
         setUploadProgress(85);
       }
 
-      // 2. Cover artwork: use client-compressed base64 instantly to eliminate upload delay
+      // 2. Cover artwork: use client-compressed base64 instantly (0ms delay)
       const finalCoverUrl = directCoverBase64 || directCoverUrl.trim() || '/logo.png';
       setUploadProgress(92);
 
@@ -251,7 +285,7 @@ export default function AdminModal({
         duration: directAudioDuration || 240,
         audioUrl: finalAudioUrl,
         coverUrl: finalCoverUrl,
-        source: directAudioType === 'file' ? 'cloud_storage' : 'direct_url'
+        source: directAudioType === 'file' ? 'archive_direct' : 'direct_url'
       };
 
       await onSaveTrack(trackToSave);
@@ -974,16 +1008,6 @@ export default function AdminModal({
           </div>
         )}
       </div>
-
-      {/* Sticky Bottom Edge Progress Bar */}
-      {(isSubmitting || ytIsUploading || (uploadProgress > 0 && uploadProgress < 100)) && (
-        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-100 overflow-hidden z-20">
-          <div 
-            className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-indigo-500 transition-all duration-300"
-            style={{ width: `${Math.max(uploadProgress, 6)}%` }}
-          />
-        </div>
-      )}
     </div>
   );
 }
