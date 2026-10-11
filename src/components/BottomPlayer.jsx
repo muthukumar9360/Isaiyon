@@ -8,13 +8,15 @@ import {
   X, 
   Minimize2, 
   Volume2, 
-  Move
+  Move,
+  Loader2
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
 export default function BottomPlayer({
   currentTrack,
   isPlaying,
+  isBuffering = false,
   onPlayPause,
   onPrev,
   onNext,
@@ -263,7 +265,9 @@ export default function BottomPlayer({
                 }} 
                 title={isPlaying ? 'Pause' : 'Play'}
               >
-                {isPlaying ? (
+                {isBuffering ? (
+                  <Loader2 size={16} className="animate-spin text-white" />
+                ) : isPlaying ? (
                   <Pause size={17} fill="#ffffff" color="#ffffff" />
                 ) : (
                   <Play size={17} fill="#ffffff" color="#ffffff" className="ml-0.5" />

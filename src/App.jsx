@@ -84,9 +84,11 @@ export default function App() {
     setActivePage('search');
   };
 
-  // Audio element reference
+  // Audio element reference & track tracking
   const audioRef = useRef(new Audio());
+  const activeTrackIdRef = useRef(null);
   const sleepTimerRef = useRef(null);
+  const [isAudioBuffering, setIsAudioBuffering] = useState(false);
 
   // 5-Second Splash Loading Screen Timer
   const [isSplashDone, setIsSplashDone] = useState(false);
@@ -464,57 +466,43 @@ export default function App() {
   // 6. Audio Engine & Events
   useEffect(() => {
     const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.preload = 'auto';
     audio.volume = volume;
     audio.playbackRate = playbackRate;
 
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleLoadedMetadata = () => setDuration(audio.duration || currentTrack?.duration || 0);
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration || currentTrack?.duration || 0);
+      setIsAudioBuffering(false);
+    };
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
-    const handleEnded = () => {
-      // If user closed the bottom player, do not auto-advance or resurrect player
-      if (isBottomPlayerDismissed) {
-        setIsPlaying(false);
-        return;
-      }
-      if (sleepTimer === 'track') {
-        setIsPlaying(false);
-        setSleepTimer(0);
-        return;
-      }
-      if (repeatMode === 'one') {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-        return;
-      }
-
-      // If Queue Mode is active: play from queue and remove played track
-      if (isQueueMode) {
-        if (queue.length > 0) {
-          const nextTrack = queue[0];
-          setQueue(prev => prev.slice(1));
-          if (currentTrack) {
-            setQueueHistory(prev => [currentTrack, ...prev.filter(t => t.id !== currentTrack.id)].slice(0, 50));
-          }
-          handleSelectTrack(nextTrack, false);
-        } else {
-          // Warning/intimation toast: queue is empty!
-          showToast("⚠️ Queue is empty!");
-          const randomTrack = getRandomTrack();
-          if (randomTrack) handleSelectTrack(randomTrack, false);
-        }
-      } else {
-        // Queue mode disabled -> auto-play random songs from DB
-        const randomTrack = getRandomTrack();
-        if (randomTrack) handleSelectTrack(randomTrack, false);
+    const handleWaiting = () => setIsAudioBuffering(true);
+    const handlePlaying = () => {
+      setIsAudioBuffering(false);
+      setIsPlaying(true);
+    };
+    const handleCanPlay = () => setIsAudioBuffering(false);
+    const handleError = () => {
+      setIsPlaying(false);
+      setIsAudioBuffering(false);
+      console.warn("Audio playback error:", audio.error);
+      if (audio.error?.code === 2) {
+        showToast("⚠️ Network issue streaming audio.");
+      } else if (audio.error?.code === 4) {
+        showToast("⚠️ Stream unavailable or buffering timed out.");
       }
     };
-    const handleError = () => setIsPlaying(false);
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
+    audio.addEventListener('waiting', handleWaiting);
+    audio.addEventListener('playing', handlePlaying);
+    audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
@@ -523,19 +511,62 @@ export default function App() {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('waiting', handleWaiting);
+      audio.removeEventListener('playing', handlePlaying);
+      audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
   }, [currentTrack, queue, repeatMode, volume, playbackRate, sleepTimer, isQueueMode, tracks, listenedHistory, isBottomPlayerDismissed]);
+
+  const handleEnded = () => {
+    // If user closed the bottom player, do not auto-advance or resurrect player
+    if (isBottomPlayerDismissed) {
+      setIsPlaying(false);
+      return;
+    }
+    if (sleepTimer === 'track') {
+      setIsPlaying(false);
+      setSleepTimer(0);
+      return;
+    }
+    if (repeatMode === 'one') {
+      const audio = audioRef.current;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      return;
+    }
+
+    // If Queue Mode is active: play from queue and remove played track
+    if (isQueueMode) {
+      if (queue.length > 0) {
+        const nextTrack = queue[0];
+        setQueue(prev => prev.slice(1));
+        if (currentTrack) {
+          setQueueHistory(prev => [currentTrack, ...prev.filter(t => t.id !== currentTrack.id)].slice(0, 50));
+        }
+        handleSelectTrack(nextTrack, false);
+      } else {
+        showToast("⚠️ Queue is empty!");
+        const randomTrack = getRandomTrack();
+        if (randomTrack) handleSelectTrack(randomTrack, false);
+      }
+    } else {
+      const randomTrack = getRandomTrack();
+      if (randomTrack) handleSelectTrack(randomTrack, false);
+    }
+  };
 
   // 7. Track change & Lock-screen Media Session setup
   useEffect(() => {
     if (!currentTrack?.audioUrl) return;
 
     const audio = audioRef.current;
-    if (!audio.src.endsWith(currentTrack.audioUrl)) {
+    if (activeTrackIdRef.current !== currentTrack.id) {
+      activeTrackIdRef.current = currentTrack.id;
       audio.src = currentTrack.audioUrl;
       audio.playbackRate = playbackRate;
+      audio.load();
       if (isPlaying) {
         audio.play().catch(() => {});
       }
@@ -595,11 +626,26 @@ export default function App() {
     const audio = audioRef.current;
     if (isPlaying) {
       audio.pause();
+      setIsPlaying(false);
     } else {
-      if (!audio.src && currentTrack?.audioUrl) {
+      if ((!audio.src || activeTrackIdRef.current !== currentTrack?.id) && currentTrack?.audioUrl) {
+        activeTrackIdRef.current = currentTrack.id;
         audio.src = currentTrack.audioUrl;
+        audio.load();
       }
-      audio.play().catch(() => {});
+      setIsAudioBuffering(true);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            setIsAudioBuffering(false);
+          })
+          .catch((err) => {
+            console.warn("Play error:", err);
+            setIsAudioBuffering(false);
+          });
+      }
       setIsBottomPlayerDismissed(false);
       if (targetViewMode) {
         setPlayerViewMode(targetViewMode);
@@ -631,9 +677,26 @@ export default function App() {
     if (index !== -1) {
       setCurrentTrackIndex(index);
       const audio = audioRef.current;
-      audio.src = track.audioUrl;
-      audio.playbackRate = playbackRate;
-      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      if (audio && track.audioUrl) {
+        activeTrackIdRef.current = track.id;
+        audio.src = track.audioUrl;
+        audio.playbackRate = playbackRate;
+        audio.currentTime = 0;
+        setIsAudioBuffering(true);
+        audio.load();
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+              setIsAudioBuffering(false);
+            })
+            .catch((err) => {
+              console.warn("Mobile audio autoplay restriction:", err);
+              setIsAudioBuffering(false);
+            });
+        }
+      }
     }
     handleRecordHeardTrack(track);
     setIsBottomPlayerDismissed(false);
@@ -681,8 +744,8 @@ export default function App() {
     setIsQueueMode(prev => {
       const next = !prev;
       showToast(next 
-        ? `Queue Mode ON (${queue.length} songs in queue)` 
-        : "Queue Mode OFF (Auto-playing random songs from vault)"
+        ? `Queue Mode ON` 
+        : "Queue Mode OFF"
       );
       return next;
     });
@@ -1115,6 +1178,7 @@ export default function App() {
             <VinylPlayer 
               currentTrack={currentTrack}
               isPlaying={isPlaying}
+              isBuffering={isAudioBuffering}
               currentTime={currentTime}
               duration={duration}
               onPlayPause={handlePlayPause}
@@ -1142,6 +1206,7 @@ export default function App() {
           <BottomPlayer 
             currentTrack={currentTrack}
             isPlaying={isPlaying}
+            isBuffering={isAudioBuffering}
             onPlayPause={handlePlayPause}
             onPrev={handlePrev}
             onNext={handleNext}

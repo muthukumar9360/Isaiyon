@@ -10,7 +10,8 @@ import {
   ListPlus,
   FolderPlus,
   ListMusic,
-  ChevronDown
+  ChevronDown,
+  Loader2
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 
@@ -31,6 +32,7 @@ function formatTime(seconds) {
 export default function VinylPlayer({
   currentTrack,
   isPlaying,
+  isBuffering = false,
   currentTime,
   duration,
   onPlayPause,
@@ -160,7 +162,7 @@ export default function VinylPlayer({
                   : 'text-black'
               }`}
               onClick={onToggleQueueMode}
-              title={isQueueMode ? `Queue Mode: ON (Playing from queue${queueCount > 0 ? ` • ${queueCount} songs` : ' • Empty'})` : "Queue Mode: OFF (Playing random songs from vault)"}
+              title={isQueueMode ? `Queue Mode: ON` : "Queue Mode: OFF"}
             >
               <ListMusic size={36} />
               {queueCount > 0 && isQueueMode && (
@@ -246,7 +248,9 @@ export default function VinylPlayer({
           onClick={onPlayPause} 
           title={isPlaying ? 'Pause' : 'Play'}
         >
-          {isPlaying ? (
+          {isBuffering ? (
+            <Loader2 size={28} className="animate-spin text-black" />
+          ) : isPlaying ? (
             <Pause size={28} fill="#ffffffff" color="#000000" />
           ) : (
             <Play size={28} fill="#ffffffff" color="#000000" />

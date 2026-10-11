@@ -36,18 +36,16 @@ export default defineConfig({
         ]
       },
       workbox: {
+        navigateFallback: '/index.html',
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/archive\.org\/download\/.*/i,
-            handler: 'CacheFirst',
+            urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
+            handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'archive-audio-cache',
+              cacheName: 'unsplash-images',
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 14 // 14 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200, 206]
+                maxEntries: 40,
+                maxAgeSeconds: 60 * 60 * 24 * 7
               }
             }
           }
