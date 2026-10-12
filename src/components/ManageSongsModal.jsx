@@ -233,7 +233,7 @@ export default function ManageSongsModal({
 
         {/* Global Datalist for Movies */}
         <datalist id="manage-existing-movies">
-          {existingMovies.map(m => (
+          {suggestionData.movies.map(m => (
             <option key={m} value={m} />
           ))}
         </datalist>

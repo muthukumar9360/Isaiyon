@@ -12,7 +12,7 @@ import ManageSongsModal from './components/ManageSongsModal';
 import AddToPlaylistModal from './components/AddToPlaylistModal';
 import LoginView from './components/LoginView';
 import HistoryPage from './components/HistoryPage';
-import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon, Download } from 'lucide-react';
+import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon, Download, LogOut, AlertCircle } from 'lucide-react';
 import { FALLBACK_ARTWORK } from './constants/fallbackArt';
 import { 
   resolveDirectArchiveUrl, 
@@ -142,8 +142,110 @@ export default function App() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [playlistModalTrack, setPlaylistModalTrack] = useState(null);
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const toastTimeoutRef = useRef(null);
+
+  // Mobile Back Button / Edge Swipe Navigation & Exit Confirm
+  const activePageRef = useRef(activePage);
+  activePageRef.current = activePage;
+
+  const isAdminModalOpenRef = useRef(isAdminModalOpen);
+  isAdminModalOpenRef.current = isAdminModalOpen;
+
+  const isManageModalOpenRef = useRef(isManageModalOpen);
+  isManageModalOpenRef.current = isManageModalOpen;
+
+  const playlistModalTrackRef = useRef(playlistModalTrack);
+  playlistModalTrackRef.current = playlistModalTrack;
+
+  const selectedMovieRef = useRef(selectedMovie);
+  selectedMovieRef.current = selectedMovie;
+
+  const isExitModalOpenRef = useRef(isExitModalOpen);
+  isExitModalOpenRef.current = isExitModalOpen;
+
+  useEffect(() => {
+    // Prime initial history entry so back button/swipe back is intercepted cleanly
+    if (!window.history.state || !window.history.state.isaiyonApp) {
+      window.history.pushState({ isaiyonApp: true }, '');
+    }
+
+    const handlePopState = () => {
+      // Keep history trap alive so browser doesn't close abruptly
+      window.history.pushState({ isaiyonApp: true }, '');
+
+      // 1. If Exit Confirmation dialog is open -> close it
+      if (isExitModalOpenRef.current) {
+        setIsExitModalOpen(false);
+        return;
+      }
+
+      // 2. If any modal is open -> close it
+      if (isAdminModalOpenRef.current) {
+        setIsAdminModalOpen(false);
+        return;
+      }
+      if (isManageModalOpenRef.current) {
+        setIsManageModalOpen(false);
+        return;
+      }
+      if (playlistModalTrackRef.current) {
+        setPlaylistModalTrack(null);
+        return;
+      }
+      if (selectedMovieRef.current) {
+        setSelectedMovie(null);
+        return;
+      }
+
+      // 3. If expanded VinylPlayer is open -> minimize to previous view
+      if (activePageRef.current === 'nowplaying') {
+        setActivePage(lastActivePageRef.current || 'home');
+        return;
+      }
+
+      // 4. If on any other page (search, library, queue, history) -> return directly to home
+      if (activePageRef.current !== 'home') {
+        setActivePage('home');
+        return;
+      }
+
+      // 5. If on home page with nothing open -> prompt exit confirmation dialog
+      if (activePageRef.current === 'home') {
+        setIsExitModalOpen(true);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleConfirmExitApp = () => {
+    setIsExitModalOpen(false);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      try {
+        audioRef.current.currentTime = 0;
+      } catch (_) {}
+      audioRef.current.removeAttribute('src');
+      audioRef.current.load();
+    }
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.metadata = null;
+        navigator.mediaSession.playbackState = 'none';
+      } catch {}
+    }
+    try {
+      window.close();
+    } catch (_) {}
+    setTimeout(() => {
+      try {
+        window.history.go(-2);
+      } catch (_) {}
+    }, 120);
+  };
 
 
   const handleNavigateToSearch = (queryTerm) => {
@@ -1549,6 +1651,45 @@ export default function App() {
         />
 
 
+
+        {/* Mobile PWA Exit Confirmation Modal */}
+        {isExitModalOpen && (
+          <div 
+            className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 select-none animate-[modalPop_0.2s_ease-out]"
+            onClick={() => setIsExitModalOpen(false)}
+          >
+            <div 
+              className="w-full max-w-xs bg-white rounded-3xl p-5 shadow-2xl flex flex-col items-center text-center gap-3 border border-slate-100"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-xs">
+                <LogOut size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 font-display">Exit Isaiyon?</h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Are you sure you want to stop playback and exit the application?
+                </p>
+              </div>
+              <div className="flex gap-2 w-full mt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsExitModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                >
+                  Stay
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmExitApp}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                >
+                  Exit App
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Floating Quick Toast */}
         {toastMessage && (
