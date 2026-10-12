@@ -6,7 +6,6 @@ import {
   SkipForward, 
   Heart, 
   X, 
-  ExternalLink,
   Loader2
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
@@ -23,8 +22,6 @@ export default function BottomPlayer({
   onToggleFavorite,
   user,
   onOpenFullPlayer,
-  onTogglePiP,
-  isPiPActive = false,
   onClose
 }) {
   if (!currentTrack) return null;
@@ -128,21 +125,6 @@ export default function BottomPlayer({
             <SkipForward size={15} fill="#ffffff" color="#ffffff" />
           </button>
 
-          {/* Floating Picture-in-Picture Mini-Viewer over other apps */}
-          {onTogglePiP && (
-            <button 
-              className={`w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
-                isPiPActive ? 'text-amber-400 bg-white/15' : 'text-slate-400 hover:text-amber-400 hover:bg-white/10'
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTogglePiP();
-              }} 
-              title={isPiPActive ? "Exit Floating Mini Viewer" : "Float Mini Viewer over other apps (PiP)"}
-            >
-              <ExternalLink size={14} />
-            </button>
-          )}
 
           {/* Close Player X Button */}
           <button 

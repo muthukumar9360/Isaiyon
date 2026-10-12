@@ -6,7 +6,6 @@ import QueueDrawer from './components/QueueDrawer';
 import LibraryPage from './components/LibraryPage';
 import VinylPlayer from './components/VinylPlayer';
 import BottomPlayer from './components/BottomPlayer';
-import FloatingMiniViewer from './components/FloatingMiniViewer';
 import MovieDetailModal from './components/MovieDetailModal';
 import AdminModal from './components/AdminModal';
 import ManageSongsModal from './components/ManageSongsModal';
@@ -88,9 +87,7 @@ export default function App() {
     }
   });
   const [isBottomPlayerDismissed, setIsBottomPlayerDismissed] = useState(false);
-  const [isPiPActive, setIsPiPActive] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const floatingPipRef = useRef(null);
 
   // Sync activePage across refreshes
   useEffect(() => {
@@ -265,8 +262,11 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Completely close player and shut down application playback
+  // Completely close player and shut down application playback with user confirmation
   const handleCloseEntireApp = () => {
+    if (!window.confirm("Are you sure you want to stop playback and exit?")) {
+      return;
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       try {
@@ -291,10 +291,20 @@ export default function App() {
     try {
       localStorage.removeItem('isaiyon_last_track_id');
     } catch (_) {}
-    if (floatingPipRef.current?.exit) {
-      floatingPipRef.current.exit();
-    }
   };
+
+  // Ask confirmation before closing/reloading window when music is playing
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isPlaying) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isPlaying]);
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
@@ -850,9 +860,6 @@ export default function App() {
           });
       }
       setIsBottomPlayerDismissed(false);
-      if (targetViewMode) {
-        setPlayerViewMode(targetViewMode);
-      }
     }
   };
 
@@ -1428,8 +1435,6 @@ export default function App() {
             onToggleFavorite={handleToggleFavorite}
             user={user}
             onOpenFullPlayer={() => setActivePage('nowplaying')}
-            onTogglePiP={() => floatingPipRef.current?.toggle()}
-            isPiPActive={isPiPActive}
             onClose={handleCloseEntireApp}
           />
         )}
@@ -1543,19 +1548,7 @@ export default function App() {
           onCreatePlaylistWithTrack={handleCreatePlaylistWithTrack}
         />
 
-        {/* Floating Mini Viewer over other apps (OS-level Picture-in-Picture) */}
-        <FloatingMiniViewer 
-          ref={floatingPipRef}
-          currentTrack={currentTrack}
-          isPlaying={isPlaying}
-          currentTime={currentTime}
-          duration={duration}
-          onPlayPause={handlePlayPause}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          onPipStateChange={setIsPiPActive}
-          onCloseApp={handleCloseEntireApp}
-        />
+
 
         {/* Floating Quick Toast */}
         {toastMessage && (

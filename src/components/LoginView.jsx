@@ -140,15 +140,15 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900 flex flex-col justify-between items-center px-4 pt-5 select-none relative overflow-hidden">
+    <div className="h-screen h-[100dvh] max-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900 flex flex-col justify-between items-center px-4 py-2 sm:py-3 select-none relative overflow-hidden">
       {/* Soft Background Radial Lighting Shadows */}
       <div className="absolute top-1/4 -left-20 w-80 h-80 bg-black/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/3 -right-20 w-80 h-80 bg-slate-900/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Header / Brand + Smart Dynamic Right Action */}
-      <header className="w-full max-w-sm flex items-center justify-between pt-1 z-10">
-        <div className="flex items-center gap-2.5">
-          <div className="w-14 h-14 rounded-2xl bg-white p-1.5 shadow-md shadow-black/10 border border-slate-200">
+      <header className="w-full max-w-sm flex items-center justify-between pt-0.5 z-10 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white p-1.5 shadow-md shadow-black/10 border border-slate-200">
             <img 
               src="/logo.png" 
               alt="Isaiyon" 
@@ -157,8 +157,8 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-3xl font-black tracking-tight text-slate-900 font-display">Isaiyon</span>
-            <span className="text-[11px] font-extrabold text-slate-700 tracking-wider uppercase">Sound Vault</span>
+            <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 font-display">Isaiyon</span>
+            <span className="text-[10px] sm:text-[11px] font-extrabold text-slate-700 tracking-wider uppercase">Sound Vault</span>
           </div>
         </div>
 
@@ -167,40 +167,38 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
           <button
             type="button"
             onClick={handleInstallClick}
-            className="py-1.5 px-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-lg sm:text-sm font-bold flex items-center gap-1.5 shadow-md shadow-slate-900/10 active:scale-95 transition-all cursor-pointer border border-slate-700 hover:border-amber-400 group"
+            className="py-1.5 px-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold flex items-center gap-1.5 shadow-md shadow-slate-900/10 active:scale-95 transition-all cursor-pointer border border-slate-700 hover:border-amber-400 group"
             title="Install Isaiyon Web App"
           >
-            <Download size={22} className="text-amber-400 group-hover:translate-y-0.5 transition-transform" />
+            <Download size={18} className="text-amber-400 group-hover:translate-y-0.5 transition-transform" />
             <span>Install App</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={() => setShowPwaModal(true)}
-            className="py-1.5 px-3 rounded-full bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-300 text-emerald-900 flex items-center gap-2 shadow-2xs transition-all active:scale-95 cursor-pointer group"
+            className="flex items-center gap-2 text-slate-900 cursor-pointer active:scale-95 transition-transform group py-1"
             title="PWA App Mode is Active • Tap for details"
           >
-            <span className="relative flex h-2 w-2">
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
-            <div className="flex flex-col text-left leading-none">
-              <span className="text-[10px] font-black text-slate-900 flex items-center gap-1">
-                <span>App Mode</span>
-              </span>
-            </div>
+            <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 font-display whitespace-nowrap">
+              App Mode
+            </span>
           </button>
         )}
       </header>
 
       {/* Center Hero: Vinyl record artwork centerpiece */}
-      <div className="w-full max-w-sm flex flex-col items-center text-center z-10 my-auto py-2">
-        <div className="relative w-48 h-48 sm:w-52 sm:h-52 mb-6">
+      <div className="w-full max-w-sm flex-1 min-h-0 flex flex-col items-center justify-evenly text-center z-10 py-1">
+        <div className="relative w-[min(38vw,18vh,160px)] h-[min(38vw,18vh,160px)] aspect-square shrink-0">
           {/* Outer Black Shadow Aura Ring */}
           <div className="absolute -inset-2 rounded-full bg-slate-900/10 blur-xl opacity-50 animate-pulse" />
           
           {/* Vinyl Disc Outer Rim in Clean White & Black Shadow Theme */}
-          <div className="relative w-full h-full rounded-full bg-white p-2 shadow-2xl shadow-black border border-slate-200 flex items-center justify-center">
+          <div className="relative w-full h-full rounded-full bg-white p-1.5 shadow-2xl shadow-black border border-slate-200 flex items-center justify-center">
             <div 
               className="w-full h-full rounded-full overflow-hidden relative border-2 border-slate-800 shadow-inner bg-slate-950"
               style={{ animation: 'spinDisc 18s linear infinite' }}
@@ -214,30 +212,32 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
                   e.target.src = FALLBACK_ARTWORK;
                 }}
               />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-4 border-slate-900 shadow-md" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-4 border-slate-900 shadow-md" />
             </div>
           </div>
         </div>
 
-        <h1 className="mt-12 text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight font-display">
-          Your Personal <span className="text-slate-900">Music Vault</span>
-        </h1>
-        <p className="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed font-medium">
-          Sign in to stream Tamil soundtracks, curate personal playlists, and sync listening history across devices.
-        </p>
+        <div className="shrink-0 flex flex-col items-center">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight font-display">
+            Your Personal <span className="text-slate-900">Music Vault</span>
+          </h1>
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-1 max-w-xs leading-relaxed font-medium">
+            Sign in to stream Tamil soundtracks, curate personal playlists, and sync listening history.
+          </p>
+        </div>
 
         {/* Action Section: Google Sign In + Smart Dynamic Action Slot */}
-        <div className="w-full flex flex-col gap-2 pt-5 z-10">
+        <div className="w-full flex flex-col gap-1.5 shrink-0 px-1">
           <button
             disabled={isSigningIn}
             onClick={() => handleGoogleSignIn(false)}
-            className={`w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 shadow-md shadow-slate-900/5 text-slate-900 font-extrabold text-base flex items-center justify-center gap-3 cursor-pointer active:scale-[0.99] transition-all ${
+            className={`w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 shadow-md shadow-slate-900/5 text-slate-900 font-extrabold text-sm sm:text-base flex items-center justify-center gap-3 cursor-pointer active:scale-[0.99] transition-all ${
               isSigningIn ? 'opacity-80 cursor-wait' : ''
             }`}
           >
             {isSigningIn ? (
               <>
-                <Loader2 size={22} className="animate-spin text-amber-600" />
+                <Loader2 size={20} className="animate-spin text-amber-600" />
                 <span>Connecting to Google...</span>
               </>
             ) : (
@@ -255,44 +255,44 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
         </div>
 
         {/* Feature Highlights Grid in Clean White Style */}
-        <div className="grid grid-cols-2 gap-2.5 w-full mt-12 text-left px-1">
-          <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
-              <Music2 size={14} />
+        <div className="grid grid-cols-2 gap-2 w-full text-left px-1 shrink-0">
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+              <Music2 size={13} />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-slate-900 truncate">Full Playback</div>
-              <div className="text-[9px] text-slate-500 truncate">High-fidelity audio</div>
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-900 truncate">Full Playback</div>
+              <div className="text-[8px] sm:text-[9px] text-slate-500 truncate">High-fidelity audio</div>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
-              <Heart size={14} />
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
+              <Heart size={13} />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-slate-900 truncate">Liked Songs</div>
-              <div className="text-[9px] text-slate-500 truncate">Cloud-synced list</div>
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-900 truncate">Liked Songs</div>
+              <div className="text-[8px] sm:text-[9px] text-slate-500 truncate">Cloud-synced list</div>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center shrink-0">
-              <ListMusic size={14} />
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center shrink-0">
+              <ListMusic size={13} />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-slate-900 truncate">Custom Playlists</div>
-              <div className="text-[9px] text-slate-500 truncate">Create & organize</div>
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-900 truncate">Custom Playlists</div>
+              <div className="text-[8px] sm:text-[9px] text-slate-500 truncate">Create & organize</div>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-              <History size={14} />
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+              <History size={13} />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-bold text-slate-900 truncate">History & Memory</div>
-              <div className="text-[9px] text-slate-500 truncate">Remembers last track</div>
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-900 truncate">History & Memory</div>
+              <div className="text-[8px] sm:text-[9px] text-slate-500 truncate">Remembers last track</div>
             </div>
           </div>
         </div>
