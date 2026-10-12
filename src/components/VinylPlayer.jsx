@@ -14,6 +14,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
+import { resolveDirectArchiveUrl } from '../utils/mediaUrlResolver';
 
 const WAVE_BAR_HEIGHTS = [
   8, 14, 18, 12, 22, 28, 16, 24, 
@@ -129,8 +130,14 @@ export default function VinylPlayer({
               alt={currentTrack?.title} 
               className="w-full h-full object-fit rounded-full pointer-events-none"
               onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = FALLBACK_ARTWORK;
+                const raw = currentTrack?.coverUrl || '';
+                if (raw.includes('archive.org/download/') && !e.target.dataset.triedDirect) {
+                  e.target.dataset.triedDirect = 'true';
+                  e.target.src = resolveDirectArchiveUrl(raw);
+                } else {
+                  e.target.onerror = null;
+                  e.target.src = FALLBACK_ARTWORK;
+                }
               }}
             />
             {/* Center Spindle Core */}

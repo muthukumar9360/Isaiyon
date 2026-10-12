@@ -10,6 +10,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
+import { resolveDirectArchiveUrl } from '../utils/mediaUrlResolver';
 
 export default function BottomPlayer({
   currentTrack,
@@ -47,8 +48,14 @@ export default function BottomPlayer({
                 isPlaying ? 'ring-2 ring-amber-500/80 animate-[spinDisc_10s_linear_infinite]' : ''
               }`}
               onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = FALLBACK_ARTWORK;
+                const raw = currentTrack?.coverUrl || '';
+                if (raw.includes('archive.org/download/') && !e.target.dataset.triedDirect) {
+                  e.target.dataset.triedDirect = 'true';
+                  e.target.src = resolveDirectArchiveUrl(raw);
+                } else {
+                  e.target.onerror = null;
+                  e.target.src = FALLBACK_ARTWORK;
+                }
               }}
             />
             {isPlaying && (

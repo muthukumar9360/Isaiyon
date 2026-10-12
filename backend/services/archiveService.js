@@ -134,13 +134,15 @@ export async function uploadFileToArchive({
         fileStream.pipe(req);
       });
 
-      const audioUrl = `https://archive.org/download/${identifier}/${cleanPath}`;
+      const directAudioUrl = `https://ia800409.us.archive.org/25/items/${identifier}/${cleanPath}`;
+      const audioUrl = directAudioUrl;
       const archiveDetailsUrl = `https://archive.org/details/${identifier}`;
 
       return {
         success: true,
         identifier,
         audioUrl,
+        directAudioUrl,
         archiveDetailsUrl,
         remoteAudioPath: cleanPath
       };
@@ -195,10 +197,12 @@ export async function uploadBufferToArchive({
     throw new Error(`Archive upload buffer failed with status ${response.status}`);
   }
 
-  const fileUrl = `https://archive.org/download/${identifier}/${cleanPath}`;
+  const directUrl = `https://ia800409.us.archive.org/25/items/${identifier}/${cleanPath}`;
+  const fileUrl = directUrl;
   return {
     success: true,
     fileUrl,
+    directUrl,
     remotePath: cleanPath
   };
 }

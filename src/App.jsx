@@ -16,6 +16,12 @@ import HistoryPage from './components/HistoryPage';
 import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon, Download } from 'lucide-react';
 import { FALLBACK_ARTWORK } from './constants/fallbackArt';
 import { 
+  resolveDirectArchiveUrl, 
+  getAudioStreamCandidates, 
+  normalizeTrack, 
+  refreshStorageNode 
+} from './utils/mediaUrlResolver';
+import { 
   auth, 
   db, 
   onAuthStateChanged, 
@@ -148,11 +154,18 @@ export default function App() {
     setActivePage('search');
   };
 
-  // Audio element reference & track tracking
+  // Audio element reference & track tracking with auto-failover
   const audioRef = useRef(new Audio());
   const activeTrackIdRef = useRef(null);
+  const streamCandidatesRef = useRef([]);
+  const candidateIndexRef = useRef(0);
   const sleepTimerRef = useRef(null);
   const [isAudioBuffering, setIsAudioBuffering] = useState(false);
+
+  // Auto-refresh Archive storage cluster nodes for high-speed streaming
+  useEffect(() => {
+    refreshStorageNode();
+  }, []);
 
   // Splash Loading Screen Timer (only runs on first session launch, skipped on page refresh)
   const [isSplashDone, setIsSplashDone] = useState(() => {
@@ -313,7 +326,7 @@ export default function App() {
         const cleanDisplay = (val) => (typeof val === 'string' ? val.replace(/_+/g, ' ').trim() : val);
         const loadedTracks = snapshot.docs.map(d => {
           const data = d.data();
-          return {
+          const trk = {
             id: d.id,
             ...data,
             title: cleanDisplay(data.title),
@@ -322,6 +335,7 @@ export default function App() {
             composer: cleanDisplay(data.composer),
             actors: cleanDisplay(data.actors)
           };
+          return normalizeTrack(trk);
         });
         setTracks(loadedTracks);
 
@@ -581,9 +595,30 @@ export default function App() {
     };
     const handleCanPlay = () => setIsAudioBuffering(false);
     const handleError = () => {
+      const candidates = streamCandidatesRef.current || [];
+      const nextIdx = candidateIndexRef.current + 1;
+      if (nextIdx < candidates.length) {
+        candidateIndexRef.current = nextIdx;
+        const nextUrl = candidates[nextIdx];
+        console.warn(`[AudioEngine] Stream failed (${audio.error?.code}). Auto-failing over to candidate ${nextIdx + 1}/${candidates.length}: ${nextUrl}`);
+        setIsAudioBuffering(true);
+        audio.src = nextUrl;
+        audio.load();
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+              setIsAudioBuffering(false);
+            })
+            .catch(() => {});
+        }
+        return;
+      }
+
       setIsPlaying(false);
       setIsAudioBuffering(false);
-      console.warn("Audio playback error:", audio.error);
+      console.warn("Audio playback error (all candidates exhausted):", audio.error);
       if (isPlaying) {
         if (audio.error?.code === 2) {
           showToast("⚠️ Network issue");
@@ -657,20 +692,27 @@ export default function App() {
 
   // 7. Track change & Lock-screen Media Session setup with Instant Buffering Display
   useEffect(() => {
-    if (!currentTrack?.audioUrl) return;
+    if (!currentTrack) return;
 
     const audio = audioRef.current;
     if (activeTrackIdRef.current !== currentTrack.id) {
       activeTrackIdRef.current = currentTrack.id;
-      setIsAudioBuffering(true);
-      audio.preload = 'auto';
-      audio.src = currentTrack.audioUrl;
-      audio.playbackRate = playbackRate;
-      audio.load();
-      if (isPlaying) {
-        audio.play().then(() => {
-          setIsAudioBuffering(false);
-        }).catch(() => {});
+      const candidates = getAudioStreamCandidates(currentTrack);
+      streamCandidatesRef.current = candidates;
+      candidateIndexRef.current = 0;
+      const primaryUrl = candidates[0] || currentTrack.audioUrl;
+
+      if (primaryUrl) {
+        setIsAudioBuffering(true);
+        audio.preload = 'auto';
+        audio.src = primaryUrl;
+        audio.playbackRate = playbackRate;
+        audio.load();
+        if (isPlaying) {
+          audio.play().then(() => {
+            setIsAudioBuffering(false);
+          }).catch(() => {});
+        }
       }
     }
 
@@ -762,10 +804,16 @@ export default function App() {
       audio.pause();
       setIsPlaying(false);
     } else {
-      if ((!audio.src || activeTrackIdRef.current !== currentTrack?.id) && currentTrack?.audioUrl) {
+      if ((!audio.src || activeTrackIdRef.current !== currentTrack?.id) && currentTrack) {
         activeTrackIdRef.current = currentTrack.id;
-        audio.src = currentTrack.audioUrl;
-        audio.load();
+        const candidates = getAudioStreamCandidates(currentTrack);
+        streamCandidatesRef.current = candidates;
+        candidateIndexRef.current = 0;
+        const primaryUrl = candidates[0] || currentTrack.audioUrl;
+        if (primaryUrl) {
+          audio.src = primaryUrl;
+          audio.load();
+        }
       }
       setIsAudioBuffering(true);
       const playPromise = audio.play();
@@ -811,9 +859,14 @@ export default function App() {
     if (index !== -1) {
       setCurrentTrackIndex(index);
       const audio = audioRef.current;
-      if (audio && track.audioUrl) {
+      const candidates = getAudioStreamCandidates(track);
+      streamCandidatesRef.current = candidates;
+      candidateIndexRef.current = 0;
+      const primaryUrl = candidates[0] || track.audioUrl;
+
+      if (audio && primaryUrl) {
         activeTrackIdRef.current = track.id;
-        audio.src = track.audioUrl;
+        audio.src = primaryUrl;
         audio.playbackRate = playbackRate;
         audio.currentTime = 0;
         setIsAudioBuffering(true);
