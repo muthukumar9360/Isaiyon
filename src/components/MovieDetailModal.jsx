@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Play, Heart, Users, Volume2, PauseCircle, Pause, ListPlus, FolderPlus, Bookmark } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
+import { formatDisplayName } from '../utils/formatUtils';
 
 export default function MovieDetailModal({
   movie,
@@ -59,7 +60,7 @@ export default function MovieDetailModal({
           <div className="flex flex-col justify-between min-w-0 flex-1 pr-6">
             <div>
               <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight truncate font-display">
-                {movie.name}
+                {formatDisplayName(movie.name)}
               </h2>
               <div className="text-xs text-slate-500 font-medium mt-1">
                 <span>{movie.year}</span> • <span>{movie.composer}</span>

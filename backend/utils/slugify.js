@@ -1,18 +1,36 @@
 /**
- * Generates an Archive.org safe directory and filename slug.
- * Compatible with the existing Python bridge naming convention.
+ * Formats a string so that every word has its first letter capitalized,
+ * and words are connected with underscores (e.g. "neer paravai" -> "Neer_Paravai").
  *
  * @param {string} text - Input text (e.g. Movie Name or Track Title)
- * @param {string} [fallback='soundtrack'] - Fallback value if text is empty
+ * @param {string} [fallback='Soundtrack'] - Fallback value if text is empty
  * @returns {string} Clean URL/filesystem safe slug
  */
-export function slugify(text, fallback = 'soundtrack') {
+export function slugify(text, fallback = 'Soundtrack') {
   if (!text || typeof text !== 'string') return fallback;
-  const clean = text
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .replace(/[-\s]+/g, '_');
-  return clean.substring(0, 45) || fallback;
+
+  const cleaned = text.replace(/[^\w\s-]/g, '').trim();
+  if (!cleaned) return fallback;
+
+  const words = cleaned.split(/[\s_-]+/).filter(Boolean);
+  if (words.length === 0) return fallback;
+
+  const capitalized = words.map(word => {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  });
+
+  return capitalized.join('_').substring(0, 60) || fallback;
+}
+
+/**
+ * Removes underscores and replaces them with spaces for clean display in UI.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function formatDisplayName(text) {
+  if (!text || typeof text !== 'string') return '';
+  return text.replace(/_+/g, ' ').trim();
 }
 
 export default slugify;

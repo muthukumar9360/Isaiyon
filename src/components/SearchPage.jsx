@@ -17,6 +17,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
+import { formatDisplayName } from '../utils/formatUtils';
 
 export default function SearchPage({
   tracks = [],
@@ -248,7 +249,7 @@ export default function SearchPage({
                     </div>
                   </div>
                   <h4 className="text-xs font-bold text-slate-900 truncate">
-                    {movie.name}
+                    {formatDisplayName(movie.name)}
                   </h4>
                   <p className="text-[10px] text-slate-500 truncate mt-0.5 font-medium">
                     {movie.tracks.length} tracks • {movie.composer}
@@ -472,7 +473,7 @@ export default function SearchPage({
                               </div>
                             </div>
                             <h4 className="text-xs font-bold text-slate-900 truncate">
-                              {movie.name}
+                              {formatDisplayName(movie.name)}
                             </h4>
                             <p className="text-[10px] text-slate-500 truncate mt-0.5 font-medium">
                               {movie.tracks.length} tracks • {movie.composer}

@@ -310,7 +310,19 @@ export default function App() {
     const tracksCol = collection(db, 'tracks');
     const unsubscribe = onSnapshot(tracksCol, (snapshot) => {
       if (!snapshot.empty) {
-        const loadedTracks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        const cleanDisplay = (val) => (typeof val === 'string' ? val.replace(/_+/g, ' ').trim() : val);
+        const loadedTracks = snapshot.docs.map(d => {
+          const data = d.data();
+          return {
+            id: d.id,
+            ...data,
+            title: cleanDisplay(data.title),
+            movie: cleanDisplay(data.movie),
+            artist: cleanDisplay(data.artist),
+            composer: cleanDisplay(data.composer),
+            actors: cleanDisplay(data.actors)
+          };
+        });
         setTracks(loadedTracks);
 
         // Restore last played song when user hasn't clicked the X button
@@ -664,11 +676,14 @@ export default function App() {
 
     if ('mediaSession' in navigator) {
       try {
-        const titleText = isAudioBuffering ? `⏳ Loading: ${currentTrack.title}` : currentTrack.title;
+        const cleanTitle = (currentTrack.title || '').replace(/_+/g, ' ');
+        const cleanMovie = (currentTrack.movie || '').replace(/_+/g, ' ');
+        const cleanArtist = (currentTrack.artist || 'Pure Sound').replace(/_+/g, ' ');
+        const titleText = isAudioBuffering ? `⏳ Loading: ${cleanTitle}` : cleanTitle;
         navigator.mediaSession.metadata = new MediaMetadata({
           title: titleText,
-          artist: `${currentTrack.artist || 'Pure Sound'}${currentTrack.movie ? ` (${currentTrack.movie})` : ''}`,
-          album: currentTrack.movie || 'Isaiyon Sound Vault',
+          artist: `${cleanArtist}${cleanMovie ? ` (${cleanMovie})` : ''}`,
+          album: cleanMovie || 'Isaiyon Sound Vault',
           artwork: [
             { src: currentTrack.coverUrl || FALLBACK_ARTWORK, sizes: '96x96', type: 'image/jpeg' },
             { src: currentTrack.coverUrl || FALLBACK_ARTWORK, sizes: '128x128', type: 'image/jpeg' },

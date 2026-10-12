@@ -58,13 +58,12 @@ router.post('/archive-upload', requireAdmin, upload.single('audio'), async (req,
   try {
     const movie = req.body.movie || 'Sound Vault';
     const title = req.body.title || 'Unknown Track';
-    const movieSlug = slugify(movie, 'vault');
-    const songSlug = slugify(title, 'song');
-    const uniqueId = Date.now().toString(36);
+    const movieSlug = slugify(movie, 'Sound_Vault');
+    const songSlug = slugify(title, 'Track');
     const fileExt = path.extname(req.file.originalname).toLowerCase() || '.mp3';
 
-    // Structure: movie_slug/song_slug_uniqueid.ext
-    const remotePath = `${movieSlug}/${songSlug}_${uniqueId}${fileExt}`;
+    // Structure: Movie_Name/Song_Title/Song_Title.ext
+    const remotePath = `${movieSlug}/${songSlug}/${songSlug}${fileExt}`;
 
     const metadata = {
       title: `${title} (${movie})`,
@@ -115,8 +114,8 @@ router.post('/update-cover', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Movie and title are required to locate cover path.' });
   }
 
-  const movieSlug = slugify(movie, 'vault');
-  const songSlug = slugify(title, 'track');
+  const movieSlug = slugify(movie, 'Sound_Vault');
+  const songSlug = slugify(title, 'Track');
   const remoteThumbPath = `${movieSlug}/${songSlug}/${songSlug}.jpg`;
 
   try {

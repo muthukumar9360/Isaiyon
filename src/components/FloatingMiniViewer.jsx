@@ -128,14 +128,14 @@ const FloatingMiniViewer = forwardRef(function FloatingMiniViewer({
     // Track title
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
-    const title = currentTrack.title || 'Unknown Track';
+    const title = (currentTrack.title || 'Unknown Track').replace(/_+/g, ' ');
     const truncatedTitle = title.length > 22 ? `${title.slice(0, 22)}...` : title;
     ctx.fillText(truncatedTitle, textX, 82);
 
     // Movie / Artist
     ctx.fillStyle = '#94a3b8';
     ctx.font = '15px system-ui, -apple-system, sans-serif';
-    const subtitle = currentTrack.movie ? currentTrack.movie : currentTrack.artist || 'Pure Sound';
+    const subtitle = (currentTrack.movie ? currentTrack.movie : currentTrack.artist || 'Pure Sound').replace(/_+/g, ' ');
     const truncatedSub = subtitle.length > 26 ? `${subtitle.slice(0, 26)}...` : subtitle;
     ctx.fillText(truncatedSub, textX, 110);
 
@@ -203,8 +203,8 @@ const FloatingMiniViewer = forwardRef(function FloatingMiniViewer({
             <img src="${currentTrack.coverUrl || FALLBACK_ARTWORK}" style="width: 72px; height: 72px; border-radius: 10px; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" />
             <div style="flex: 1; min-width: 0; padding-right: 18px;">
               <div style="font-size: 10px; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Isaiyon</div>
-              <div style="font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;">${currentTrack.title || ''}</div>
-              <div style="font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${currentTrack.movie || currentTrack.artist || 'Vault'}</div>
+              <div style="font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;">${(currentTrack.title || '').replace(/_+/g, ' ')}</div>
+              <div style="font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${(currentTrack.movie || currentTrack.artist || 'Vault').replace(/_+/g, ' ')}</div>
               <div style="display: flex; gap: 8px; margin-top: 8px;">
                 <button id="pip-prev" style="background: rgba(255,255,255,0.1); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 12px;">⏮</button>
                 <button id="pip-play" style="background: #f59e0b; border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 12px; font-weight: bold;">${isPlaying ? '❚❚' : '▶'}</button>

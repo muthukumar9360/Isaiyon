@@ -28,6 +28,7 @@ import {
   Bookmark
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
+import { formatDisplayName } from '../utils/formatUtils';
 
 // Curated Actor & Artist Playlists with Verified Portrait Images
 const ARTIST_SPOTLIGHTS = [
@@ -439,7 +440,7 @@ export default function HomePage({
                 <div className="mt-2 flex items-end justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
-                      {movie.name}
+                      {formatDisplayName(movie.name)}
                     </h4>
                     <p className="text-xs text-slate-500 truncate mt-0.5 font-medium">
                       {movie.trackCount} {movie.trackCount === 1 ? 'song' : 'songs'} • {movie.composer}
@@ -989,7 +990,7 @@ export default function HomePage({
                       <div className="mt-2 flex items-end justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
-                            {movie.name}
+                            {formatDisplayName(movie.name)}
                           </h4>
                           <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
                             {movie.composer} • {movie.year}

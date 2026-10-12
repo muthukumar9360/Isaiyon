@@ -193,8 +193,8 @@ export async function uploadTrackNested({
   metadata = {}
 }) {
   const { identifier } = getArchiveCredentials();
-  const movieSlug = slugify(movieName, 'sound_vault');
-  const songSlug = slugify(songTitle, 'track');
+  const movieSlug = slugify(movieName, 'Sound_Vault');
+  const songSlug = slugify(songTitle, 'Track');
 
   const extAudio = path.extname(audioPath) || '.mp3';
   const remoteAudioPath = `${movieSlug}/${songSlug}/${songSlug}${extAudio}`;

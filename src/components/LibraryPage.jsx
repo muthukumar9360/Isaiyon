@@ -15,6 +15,7 @@ import {
   Bookmark
 } from 'lucide-react';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
+import { formatDisplayName } from '../utils/formatUtils';
 
 export default function LibraryPage({
   tracks = [],
@@ -406,7 +407,7 @@ export default function LibraryPage({
                   <div className="flex items-end justify-between gap-2 mt-1">
                     <div className="min-w-0 flex-1">
                       <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
-                        {movie.name}
+                        {formatDisplayName(movie.name)}
                       </h4>
                       <p className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
                         {movie.tracks.length} tracks • {movie.composer}
