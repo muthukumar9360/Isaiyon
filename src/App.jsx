@@ -252,53 +252,33 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Background Audio & Mobile Lock-Screen Notification Support via MediaSession
-  useEffect(() => {
-    if (!('mediaSession' in navigator)) return;
-
-    if (currentTrack) {
-      try {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: currentTrack.title || 'Untitled Track',
-          artist: currentTrack.artist || currentTrack.composer || 'Sound Vault',
-          album: currentTrack.movie || 'IsaiVault',
-          artwork: [
-            { src: currentTrack.coverUrl || '/logo.png', sizes: '96x96', type: 'image/jpeg' },
-            { src: currentTrack.coverUrl || '/logo.png', sizes: '128x128', type: 'image/jpeg' },
-            { src: currentTrack.coverUrl || '/logo.png', sizes: '192x192', type: 'image/jpeg' },
-            { src: currentTrack.coverUrl || '/logo.png', sizes: '512x512', type: 'image/jpeg' }
-          ]
-        });
-
-        navigator.mediaSession.setActionHandler('play', () => {
-          audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
-        });
-        navigator.mediaSession.setActionHandler('pause', () => {
-          audioRef.current?.pause();
-          setIsPlaying(false);
-        });
-        navigator.mediaSession.setActionHandler('previoustrack', () => {
-          handlePrev();
-        });
-        navigator.mediaSession.setActionHandler('nexttrack', () => {
-          handleNext();
-        });
-        navigator.mediaSession.setActionHandler('seekto', (details) => {
-          if (details.seekTime !== undefined && audioRef.current) {
-            audioRef.current.currentTime = details.seekTime;
-            setCurrentTime(details.seekTime);
-          }
-        });
-      } catch (err) {
-        console.warn("MediaSession error:", err);
-      }
-    } else {
+  // Completely close player and shut down application playback
+  const handleCloseEntireApp = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.removeAttribute('src');
+      audioRef.current.load();
+    }
+    if ('mediaSession' in navigator) {
       try {
         navigator.mediaSession.metadata = null;
         navigator.mediaSession.playbackState = 'none';
       } catch {}
     }
-  }, [currentTrack]);
+    setIsPlaying(false);
+    setCurrentTrackIndex(null);
+    setIsBottomPlayerDismissed(true);
+    try {
+      localStorage.removeItem('isaiyon_last_track_id');
+    } catch (_) {}
+    if (floatingPipRef.current?.exit) {
+      floatingPipRef.current.exit();
+    }
+    try {
+      window.close();
+    } catch (_) {}
+  };
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
@@ -663,47 +643,80 @@ export default function App() {
     }
   };
 
-  // 7. Track change & Lock-screen Media Session setup
+  // 7. Track change & Lock-screen Media Session setup with Instant Buffering Display
   useEffect(() => {
     if (!currentTrack?.audioUrl) return;
 
     const audio = audioRef.current;
     if (activeTrackIdRef.current !== currentTrack.id) {
       activeTrackIdRef.current = currentTrack.id;
+      setIsAudioBuffering(true);
+      audio.preload = 'auto';
       audio.src = currentTrack.audioUrl;
       audio.playbackRate = playbackRate;
       audio.load();
       if (isPlaying) {
-        audio.play().catch(() => {});
+        audio.play().then(() => {
+          setIsAudioBuffering(false);
+        }).catch(() => {});
       }
     }
 
     if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title,
-        artist: `${currentTrack.artist}${currentTrack.movie ? ` (${currentTrack.movie})` : ''}`,
-        album: currentTrack.movie || 'Isaiyon Music',
-        artwork: [
-          { 
-            src: currentTrack.coverUrl || FALLBACK_ARTWORK, 
-            sizes: '512x512', 
-            type: 'image/png' 
-          }
-        ]
-      });
+      try {
+        const titleText = isAudioBuffering ? `⏳ Loading: ${currentTrack.title}` : currentTrack.title;
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: titleText,
+          artist: `${currentTrack.artist || 'Pure Sound'}${currentTrack.movie ? ` (${currentTrack.movie})` : ''}`,
+          album: currentTrack.movie || 'Isaiyon Sound Vault',
+          artwork: [
+            { src: currentTrack.coverUrl || FALLBACK_ARTWORK, sizes: '96x96', type: 'image/jpeg' },
+            { src: currentTrack.coverUrl || FALLBACK_ARTWORK, sizes: '128x128', type: 'image/jpeg' },
+            { src: currentTrack.coverUrl || FALLBACK_ARTWORK, sizes: '192x192', type: 'image/jpeg' },
+            { src: currentTrack.coverUrl || FALLBACK_ARTWORK, sizes: '512x512', type: 'image/jpeg' }
+          ]
+        });
 
-      navigator.mediaSession.setActionHandler('play', () => audio.play());
-      navigator.mediaSession.setActionHandler('pause', () => audio.pause());
-      navigator.mediaSession.setActionHandler('previoustrack', handlePrev);
-      navigator.mediaSession.setActionHandler('nexttrack', handleNext);
-      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-        handleSkipSeconds(-(details.seekOffset || 10));
-      });
-      navigator.mediaSession.setActionHandler('seekforward', (details) => {
-        handleSkipSeconds(details.seekOffset || 10);
-      });
+        navigator.mediaSession.setActionHandler('play', () => audio.play());
+        navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+        navigator.mediaSession.setActionHandler('previoustrack', handlePrev);
+        navigator.mediaSession.setActionHandler('nexttrack', handleNext);
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+          handleSkipSeconds(-(details.seekOffset || 10));
+        });
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+          handleSkipSeconds(details.seekOffset || 10);
+        });
+      } catch (err) {
+        console.warn("MediaSession error:", err);
+      }
     }
-  }, [currentTrack]);
+  }, [currentTrack, isAudioBuffering]);
+
+  // 7b. Preload Next Track Audio & Cover for instantaneous playback transition
+  useEffect(() => {
+    let nextTrackToPreload = null;
+    if (isQueueMode && queue.length > 0) {
+      nextTrackToPreload = queue[0];
+    } else if (tracks.length > 1 && currentTrackIndex !== null) {
+      const nextIdx = (currentTrackIndex + 1) % tracks.length;
+      nextTrackToPreload = tracks[nextIdx];
+    }
+
+    if (nextTrackToPreload) {
+      // Preload cover artwork so notification image is cached
+      if (nextTrackToPreload.coverUrl) {
+        const img = new Image();
+        img.src = nextTrackToPreload.coverUrl;
+      }
+      // Preload audio buffer so next song starts without delay
+      if (nextTrackToPreload.audioUrl) {
+        const preloader = new Audio();
+        preloader.preload = 'auto';
+        preloader.src = nextTrackToPreload.audioUrl;
+      }
+    }
+  }, [currentTrack, queue, isQueueMode, tracks, currentTrackIndex]);
 
   // 8. Sleep Timer Countdown Logic
   useEffect(() => {
@@ -1148,12 +1161,25 @@ export default function App() {
         </div>
 
         {/* Dynamic Animated Equalizer Wave in Sleek Slate/Black */}
-        <div className="flex items-end justify-center gap-1.5 h-15 mb-3 mt-20">
+        <div className="flex items-end justify-center gap-1.5 h-15 mb-3 mt-14">
           <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.6s_ease-in-out_infinite] h-8" />
           <span className="w-1.5 bg-slate-700 rounded-full animate-[stemPulse_0.9s_ease-in-out_infinite] h-15 [animation-delay:150ms]" />
           <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.7s_ease-in-out_infinite] h-8 [animation-delay:300ms]" />
           <span className="w-1.5 bg-slate-700 rounded-full animate-[stemPulse_1.1s_ease-in-out_infinite] h-12 [animation-delay:450ms]" />
           <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.8s_ease-in-out_infinite] h-5 [animation-delay:200ms]" />
+        </div>
+
+        {/* Developer Attribution & Copyright */}
+        <div className="mt-auto mb-6 text-center z-10 flex flex-col items-center gap-1">
+          <p className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+            Developed by <span className="font-bold text-slate-900">Muthukumar</span>
+          </p>
+          <p className="text-[10px] font-mono text-slate-400">
+            GitHub: <span className="text-amber-600 font-bold">@muthukumar9360</span>
+          </p>
+          <p className="text-[9px] text-slate-400 font-mono">
+            © {new Date().getFullYear()} Isaiyon — Pure Sound
+          </p>
         </div>
       </div>
     );
@@ -1323,26 +1349,7 @@ export default function App() {
             onOpenFullPlayer={() => setActivePage('nowplaying')}
             onTogglePiP={() => floatingPipRef.current?.toggle()}
             isPiPActive={isPiPActive}
-            onClose={() => {
-              if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current.currentTime = 0;
-                audioRef.current.removeAttribute('src');
-                audioRef.current.load();
-              }
-              if ('mediaSession' in navigator) {
-                try {
-                  navigator.mediaSession.metadata = null;
-                  navigator.mediaSession.playbackState = 'none';
-                } catch {}
-              }
-              setIsPlaying(false);
-              setCurrentTrackIndex(null);
-              setIsBottomPlayerDismissed(true);
-              try {
-                localStorage.removeItem('isaiyon_last_track_id');
-              } catch (_) {}
-            }}
+            onClose={handleCloseEntireApp}
           />
         )}
 
@@ -1466,6 +1473,7 @@ export default function App() {
           onNext={handleNext}
           onPrev={handlePrev}
           onPipStateChange={setIsPiPActive}
+          onCloseApp={handleCloseEntireApp}
         />
 
         {/* Floating Quick Toast */}

@@ -220,9 +220,28 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
             </div>
           </div>
         </div>
-          <p className="text-[10px] mt-5 text-black text-center font-medium">
+
+        <p className="text-[10px] mt-4 text-slate-600 text-center font-medium">
           Sign-in securely syncs your favorites and playlists to Google Firebase.
         </p>
+
+        {/* Developer Credit & Copyright */}
+        <div className="mt-4 pt-3 border-t border-slate-200/70 w-full text-center flex flex-col items-center gap-1">
+          <p className="text-[11px] font-semibold text-slate-700">
+            Developed by <span className="font-bold text-slate-900">Muthukumar</span> (
+            <a 
+              href="https://github.com/muthukumar9360" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-amber-600 font-bold hover:underline"
+            >
+              @muthukumar9360
+            </a>)
+          </p>
+          <p className="text-[9px] text-slate-400 font-mono tracking-wider">
+            © {new Date().getFullYear()} Isaiyon — Pure Sound Vault
+          </p>
+        </div>
       </div>
 
       {/* Auth Error Diagnostic Modal */}

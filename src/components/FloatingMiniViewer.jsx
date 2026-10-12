@@ -15,7 +15,8 @@ const FloatingMiniViewer = forwardRef(function FloatingMiniViewer({
   onPlayPause,
   onNext,
   onPrev,
-  onPipStateChange
+  onPipStateChange,
+  onCloseApp
 }, ref) {
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
@@ -72,6 +73,19 @@ const FloatingMiniViewer = forwardRef(function FloatingMiniViewer({
     barGrad.addColorStop(1, '#ea580c');
     ctx.fillStyle = barGrad;
     ctx.fillRect(0, 0, width, 4);
+
+    // Top-right close indicator badge
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.beginPath();
+    ctx.arc(width - 24, 24, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✕', width - 24, 24);
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
 
     // Album art thumbnail
     const artSize = 130;
@@ -179,14 +193,15 @@ const FloatingMiniViewer = forwardRef(function FloatingMiniViewer({
         pipWin.document.body.style.padding = '12px';
         pipWin.document.body.style.gap = '12px';
         pipWin.document.body.style.boxSizing = 'border-box';
-        pipWin.document.body.style.userSelect = 'none';
+        pipWin.document.body.style.position = 'relative';
 
         const updatePipDOM = () => {
           if (!pipWindowRef.current) return;
           const body = pipWindowRef.current.document.body;
           body.innerHTML = `
+            <button id="pip-close" title="Close player & exit" style="position: absolute; top: 6px; right: 8px; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #cbd5e1; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; line-height: 1;">✕</button>
             <img src="${currentTrack.coverUrl || FALLBACK_ARTWORK}" style="width: 72px; height: 72px; border-radius: 10px; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" />
-            <div style="flex: 1; min-width: 0;">
+            <div style="flex: 1; min-width: 0; padding-right: 18px;">
               <div style="font-size: 10px; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Isaiyon</div>
               <div style="font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;">${currentTrack.title || ''}</div>
               <div style="font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">${currentTrack.movie || currentTrack.artist || 'Vault'}</div>
@@ -198,6 +213,12 @@ const FloatingMiniViewer = forwardRef(function FloatingMiniViewer({
             </div>
           `;
 
+          body.querySelector('#pip-close')?.addEventListener('click', () => {
+            try { pipWindowRef.current?.close(); } catch (_) {}
+            pipWindowRef.current = null;
+            setIsPipActive(false);
+            onCloseApp?.();
+          });
           body.querySelector('#pip-prev')?.addEventListener('click', () => onPrev?.());
           body.querySelector('#pip-play')?.addEventListener('click', () => onPlayPause?.());
           body.querySelector('#pip-next')?.addEventListener('click', () => onNext?.());
@@ -208,6 +229,7 @@ const FloatingMiniViewer = forwardRef(function FloatingMiniViewer({
         pipWin.addEventListener('pagehide', () => {
           pipWindowRef.current = null;
           setIsPipActive(false);
+          onCloseApp?.();
         });
 
         return;
@@ -263,6 +285,7 @@ const FloatingMiniViewer = forwardRef(function FloatingMiniViewer({
 
     const handleLeavePiP = () => {
       setIsPipActive(false);
+      onCloseApp?.();
     };
 
     video.addEventListener('leavepictureinpicture', handleLeavePiP);
