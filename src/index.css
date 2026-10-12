@@ -13,7 +13,11 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  html, body, #root {
+  html {
+    background-color: #0f172a;
+  }
+
+  body {
     width: 100%;
     min-height: 100%;
     margin: 0;
@@ -22,12 +26,15 @@
     color: #0f172a;
     font-family: var(--font-sans);
     overflow-x: hidden;
-    user-select: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overscroll-behavior: none;
-    overscroll-behavior-y: none;
-    overscroll-behavior-x: none;
+    /* Only disable pull-to-refresh at the top; preserve natural scrolling and horizontal edge swipes */
+    overscroll-behavior-y: contain;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100%;
   }
 }
 

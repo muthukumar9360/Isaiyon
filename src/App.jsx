@@ -167,9 +167,7 @@ export default function App() {
 
   useEffect(() => {
     // Prime initial history entry so back button/swipe back is intercepted cleanly
-    if (!window.history.state || !window.history.state.isaiyonApp) {
-      window.history.pushState({ isaiyonApp: true }, '');
-    }
+    window.history.pushState({ isaiyonApp: true }, '');
 
     const handlePopState = () => {
       // Keep history trap alive so browser doesn't close abruptly
@@ -219,6 +217,45 @@ export default function App() {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Mobile edge swipe detection: swiping inward from left or right screen edge triggers back navigation
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    };
+
+    const handleTouchEnd = (e) => {
+      if (e.changedTouches.length !== 1) return;
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const elapsedTime = Date.now() - touchStartTime;
+
+      const screenWidth = window.innerWidth;
+      // Edge swipe: touch begins within 45px of screen edge and swipes inward > 60px
+      const isFromLeftEdge = touchStartX <= 45 && deltaX > 60;
+      const isFromRightEdge = touchStartX >= screenWidth - 45 && deltaX < -60;
+
+      if ((isFromLeftEdge || isFromRightEdge) && Math.abs(deltaY) < Math.abs(deltaX) * 0.8 && elapsedTime < 500) {
+        window.history.back();
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
   }, []);
 
   const handleConfirmExitApp = () => {
@@ -364,11 +401,8 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Completely close player and shut down application playback with user confirmation
+  // Completely close player and shut down playback immediately without confirmation
   const handleCloseEntireApp = () => {
-    if (!window.confirm("Are you sure you want to stop playback and exit?")) {
-      return;
-    }
     if (audioRef.current) {
       audioRef.current.pause();
       try {
@@ -394,19 +428,6 @@ export default function App() {
       localStorage.removeItem('isaiyon_last_track_id');
     } catch (_) {}
   };
-
-  // Ask confirmation before closing/reloading window when music is playing
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (isPlaying) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isPlaying]);
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
