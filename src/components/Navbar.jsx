@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink } from 'lucide-react';
+import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink, RefreshCw } from 'lucide-react';
 import { 
   auth, 
   googleProvider, 
@@ -53,7 +53,7 @@ function getAuthErrorMessage(err) {
   }
 }
 
-export default function Navbar({ user, onOpenAdminModal, onOpenManageModal }) {
+export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRefresh, isRefreshing = false }) {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -127,8 +127,8 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal }) {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 max-w-md mx-auto h-18 bg-white border-b border-slate-300 px-4 flex items-center justify-between z-40 select-none shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-        {/* Brand / App Name (Top Left in Full Caps) */}
-        <div className="flex items-center gap-1">
+        {/* Brand / App Name (Top Left in Full Caps) with Refresh Button */}
+        <div className="flex items-center gap-1.5">
           <div className="w-9 h-9 flex items-center justify-center shrink-0">
             <img 
               src="/logo.png" 
@@ -140,6 +140,17 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal }) {
           <span className="text-black text-xl font-black tracking-widest text-slate-900 font-display uppercase">
             ISAIYON
           </span>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="w-7 h-7 ml-0.5 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition-all active:scale-90 cursor-pointer disabled:opacity-50"
+              title="Refresh library & sync"
+              aria-label="Refresh library"
+            >
+              <RefreshCw size={14} className={isRefreshing ? "animate-spin text-amber-500" : ""} />
+            </button>
+          )}
         </div>
 
         {/* Nav Actions */}

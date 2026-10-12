@@ -7,18 +7,23 @@ import {
   Save,
   CheckCircle2,
   SlidersHorizontal,
-  Music,
-  Film,
-  User,
-  Users,
   Tag,
-  Sparkles,
-  ExternalLink,
-  ChevronLeft,
   Upload
 } from 'lucide-react';
+import { auth } from '../firebase/config';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 import { compressImage } from '../utils/imageCompressor';
+import AutocompleteInput from './AutocompleteInput';
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/+$/, '');
+
+const getAuthToken = async () => {
+  try {
+    return (await auth.currentUser?.getIdToken()) || '';
+  } catch {
+    return '';
+  }
+};
 
 export default function ManageSongsModal({
   isOpen,
@@ -35,15 +40,45 @@ export default function ManageSongsModal({
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Extract unique movie names for autocomplete
-  const existingMovies = useMemo(() => {
-    const set = new Set();
+  // Extract smart suggestions for all editable fields
+  const suggestionData = useMemo(() => {
+    const titles = new Set();
+    const movies = new Set();
+    const composers = new Set();
+    const actors = new Set();
+    const artists = new Set();
+
     tracks.forEach(t => {
+      if (t.title && typeof t.title === 'string' && t.title.trim()) {
+        titles.add(t.title.trim());
+      }
       if (t.movie && typeof t.movie === 'string' && t.movie.trim()) {
-        set.add(t.movie.trim());
+        movies.add(t.movie.trim());
+      }
+      if (t.composer && typeof t.composer === 'string' && t.composer.trim()) {
+        composers.add(t.composer.trim());
+      }
+      if (t.actors && typeof t.actors === 'string' && t.actors.trim()) {
+        t.actors.split(',').forEach(a => {
+          const cleanAct = a.trim();
+          if (cleanAct) actors.add(cleanAct);
+        });
+      }
+      if (t.artist && typeof t.artist === 'string' && t.artist.trim()) {
+        t.artist.split(/[,&/]/).forEach(a => {
+          const cleanArt = a.trim();
+          if (cleanArt) artists.add(cleanArt);
+        });
       }
     });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+
+    return {
+      titles: Array.from(titles).sort((a, b) => a.localeCompare(b)),
+      movies: Array.from(movies).sort((a, b) => a.localeCompare(b)),
+      composers: Array.from(composers).sort((a, b) => a.localeCompare(b)),
+      actors: Array.from(actors).sort((a, b) => a.localeCompare(b)),
+      artists: Array.from(artists).sort((a, b) => a.localeCompare(b))
+    };
   }, [tracks]);
 
   // Filtered tracks
@@ -115,18 +150,21 @@ export default function ManageSongsModal({
 
       let finalUrl = compressedB64;
 
-      // Try local Python bridge with a 1.2s timeout (if on laptop with bridge running)
+      // Try Node.js backend to update Archive.org cover
       try {
+        const token = await getAuthToken();
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1200);
-        const res = await fetch('http://127.0.0.1:5001/api/update-cover', {
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(`${API_BASE_URL}/api/update-cover`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({
             movie: editForm.movie,
             title: editForm.title,
-            imageBase64: compressedB64,
-            projectIdentifier: 'muthuramalingam_a-vault'
+            imageBase64: compressedB64
           }),
           signal: controller.signal
         });
@@ -136,7 +174,7 @@ export default function ManageSongsModal({
           finalUrl = data.coverUrl;
         }
       } catch {
-        // Python bridge offline (normal on mobile) — use compressed cover directly
+        // Backend offline or timeout — use compressed cover directly in Firestore
       }
 
       setEditForm(prev => ({ ...prev, coverUrl: finalUrl }));
@@ -289,83 +327,59 @@ export default function ManageSongsModal({
                 </div>
               </div>
 
-              {/* Title */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                  <Music size={12} className="text-amber-500" />
-                  <span>Song Title *</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editForm.title}
-                  onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
-                />
-              </div>
+              {/* Title with Smart Autocomplete */}
+              <AutocompleteInput
+                label="Song Title *"
+                required
+                value={editForm.title}
+                onChange={val => setEditForm(prev => ({ ...prev, title: val }))}
+                suggestions={suggestionData.titles}
+                disabled={isSaving}
+              />
 
-              {/* Movie */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                  <Film size={12} className="text-amber-500" />
-                  <span>Movie / Album * (Pick from list to reuse folder)</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  list="manage-existing-movies"
-                  placeholder="Select or enter movie name"
-                  value={editForm.movie}
-                  onChange={e => setEditForm({ ...editForm, movie: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
-                />
-              </div>
+              {/* Movie with Smart Autocomplete */}
+              <AutocompleteInput
+                label="Movie / Album * (Pick from list to reuse folder)"
+                required
+                placeholder="Select or enter movie name"
+                value={editForm.movie}
+                onChange={val => setEditForm(prev => ({ ...prev, movie: val }))}
+                suggestions={suggestionData.movies}
+                disabled={isSaving}
+              />
 
               {/* Composer & Artist */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                    <Sparkles size={12} className="text-amber-500" />
-                    <span>Composer</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. A. R. Rahman"
-                    value={editForm.composer}
-                    onChange={e => setEditForm({ ...editForm, composer: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
-                  />
-                </div>
+                <AutocompleteInput
+                  label="Composer"
+                  placeholder="e.g. A. R. Rahman"
+                  value={editForm.composer}
+                  onChange={val => setEditForm(prev => ({ ...prev, composer: val }))}
+                  suggestions={suggestionData.composers}
+                  disabled={isSaving}
+                />
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                    <User size={12} className="text-amber-500" />
-                    <span>Artist / Singers</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Hariharan, Shankar Mahadevan"
-                    value={editForm.artist}
-                    onChange={e => setEditForm({ ...editForm, artist: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
-                  />
-                </div>
+                <AutocompleteInput
+                  label="Artist / Singers"
+                  isMultiValue
+                  placeholder="e.g. Hariharan, Shankar Mahadevan"
+                  value={editForm.artist}
+                  onChange={val => setEditForm(prev => ({ ...prev, artist: val }))}
+                  suggestions={suggestionData.artists}
+                  disabled={isSaving}
+                />
               </div>
 
               {/* Actors */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                  <Users size={12} className="text-amber-500" />
-                  <span>Featured Actors / Cast</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Ajith Kumar, Tabu, Aishwarya Rai"
-                  value={editForm.actors}
-                  onChange={e => setEditForm({ ...editForm, actors: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
-                />
-              </div>
+              <AutocompleteInput
+                label="Featured Actors / Cast"
+                isMultiValue
+                placeholder="e.g. Ajith Kumar, Tabu, Aishwarya Rai"
+                value={editForm.actors}
+                onChange={val => setEditForm(prev => ({ ...prev, actors: val }))}
+                suggestions={suggestionData.actors}
+                disabled={isSaving}
+              />
 
               {/* Genre & Mood */}
               <div className="grid grid-cols-2 gap-2">

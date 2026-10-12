@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "bridge": "py -u scripts/yt_archive_bridge.py",
+    "backend:dev": "node --watch backend/index.js",
+    "backend:start": "node backend/index.js",
+    "archive:cleanup-temp": "npm --prefix backend run archive:cleanup-temp --",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

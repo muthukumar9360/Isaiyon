@@ -15,6 +15,15 @@ dist-ssr
 # Environment & Credentials (CRITICAL SECURITY)
 .env
 .env.*
+!.env.example
+!.env.production
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/temp/
+backend/downloads/
+*serviceAccount*.json
+*firebase-admin*.json
 scripts/ia_config.json
 scripts/downloads/
 

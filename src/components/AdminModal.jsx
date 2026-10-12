@@ -7,16 +7,15 @@ import {
   ExternalLink, 
   Edit3, 
   Smartphone, 
-  Monitor, 
   Music, 
   Image as ImageIcon, 
-  Link as LinkIcon, 
   FileAudio,
   AlertCircle,
   ChevronDown
 } from 'lucide-react';
-import { storage, ref, uploadBytes, uploadBytesResumable, getDownloadURL } from '../firebase/config';
+import { auth } from '../firebase/config';
 import { compressImage } from '../utils/imageCompressor';
+import AutocompleteInput from './AutocompleteInput';
 
 const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className="inline mr-1.5 shrink-0">
@@ -24,144 +23,65 @@ const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
   </svg>
 );
 
-const slugify = (text, fallback = 'soundtrack') => {
-  if (!text || typeof text !== 'string') return fallback;
-  const clean = text
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-  return clean.substring(0, 36) || fallback;
-};
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/+$/, '');
 
-const getAudioMimeType = (ext) => {
-  switch (ext) {
-    case 'mp3': return 'audio/mpeg';
-    case 'm4a': return 'audio/mp4';
-    case 'wav': return 'audio/wav';
-    case 'aac': return 'audio/aac';
-    case 'ogg': return 'audio/ogg';
-    case 'flac': return 'audio/flac';
-    case 'mp4': return 'audio/mp4';
-    default: return 'audio/mpeg';
-  }
-};
-
-const detectAudioFormat = async (file) => {
+const getAuthToken = async () => {
   try {
-    const slice = file.slice(0, 16);
-    const buffer = await slice.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-
-    // ID3v2 tag (MP3)
-    if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
-      return { ext: 'mp3', mime: 'audio/mpeg' };
-    }
-    // MPEG Audio frame sync: 0xFF 0xFB, 0xFF 0xF3, 0xFF 0xF2, 0xFF 0xE3
-    if (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0) {
-      return { ext: 'mp3', mime: 'audio/mpeg' };
-    }
-    // MP4 / M4A (AAC / ALAC): "ftyp" at offset 4
-    if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
-      return { ext: 'm4a', mime: 'audio/mp4' };
-    }
-    // RIFF WAV
-    if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
-      return { ext: 'wav', mime: 'audio/wav' };
-    }
-    // Ogg container
-    if (bytes[0] === 0x4F && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) {
-      return { ext: 'ogg', mime: 'audio/ogg' };
-    }
-    // FLAC
-    if (bytes[0] === 0x66 && bytes[1] === 0x4C && bytes[2] === 0x61 && bytes[3] === 0x43) {
-      return { ext: 'flac', mime: 'audio/flac' };
-    }
-  } catch (_) {}
-
-  // Fallback to filename extension
-  const rawExt = (file.name.split('.').pop() || '').toLowerCase().trim();
-  if (['mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'mp4'].includes(rawExt)) {
-    return { ext: rawExt, mime: getAudioMimeType(rawExt) };
+    return (await auth.currentUser?.getIdToken()) || '';
+  } catch {
+    return '';
   }
-  return { ext: 'mp3', mime: 'audio/mpeg' };
 };
 
-const executeArchiveUpload = (file, remotePath, onProgress, mimeTypeOverride) => {
+const uploadAudioToBackend = async (file, formFields, onProgress) => {
+  const token = await getAuthToken();
   return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    // Normalize path to prevent double slashes or malformed encoding
-    const cleanPath = remotePath
-      .split('/')
-      .filter(Boolean)
-      .map(part => encodeURIComponent(part))
-      .join('/');
-    const url = `https://s3.us.archive.org/muthuramalingam_a-vault/${cleanPath}`;
+    try {
+      const xhr = new XMLHttpRequest();
+      const url = `${API_BASE_URL}/api/archive-upload`;
 
-    xhr.open('PUT', url, true);
-    // Standard Internet Archive S3 REST upload headers
-    xhr.setRequestHeader('authorization', 'LOW sftYc6GkCtNMjk7H:lR6TOMtJUAnE7tZg');
-    xhr.setRequestHeader('x-archive-size-hint', String(file.size));
-    xhr.setRequestHeader('x-archive-ignore-preexisting-bucket', '1');
-    xhr.setRequestHeader('x-archive-interactive-priority', '1');
-    // Disable server derive validator that rejects non-standard mobile files
-    xhr.setRequestHeader('x-archive-queue-derive', '0');
-
-    const ext = cleanPath.split('.').pop()?.toLowerCase() || 'mp3';
-    xhr.setRequestHeader('content-type', mimeTypeOverride || getAudioMimeType(ext));
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        const pct = Math.round((e.loaded / e.total) * 100);
-        onProgress(pct);
+      xhr.open('POST', url, true);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       }
-    };
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(`https://archive.org/download/muthuramalingam_a-vault/${cleanPath}`);
-      } else {
-        let errorDetail = xhr.statusText || 'Upload rejected';
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          onProgress(pct);
+        }
+      };
+
+      xhr.onload = () => {
         try {
-          if (xhr.responseText) {
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(xhr.responseText, 'application/xml');
-            const msg = xml.querySelector('Message')?.textContent || xml.querySelector('Code')?.textContent;
-            if (msg) {
-              errorDetail = msg;
-            } else {
-              const textClean = xhr.responseText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 150);
-              if (textClean) errorDetail = textClean;
-            }
+          const data = JSON.parse(xhr.responseText || '{}');
+          if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+            resolve(data);
+          } else {
+            reject(new Error(data.error || `Upload rejected (${xhr.status})`));
           }
-        } catch (_) {}
-        reject(new Error(`Vault upload error: ${errorDetail} (${xhr.status})`));
-      }
-    };
+        } catch {
+          reject(new Error(`Server error (${xhr.status}): ${xhr.responseText.slice(0, 100)}`));
+        }
+      };
 
-    xhr.onerror = () => {
-      reject(new Error("Network connection error. Please verify your internet connection."));
-    };
+      xhr.onerror = () => reject(new Error("Network connection error. Please verify your connection to the backend."));
+      xhr.ontimeout = () => reject(new Error("Upload timed out. The file might be too large for current network."));
+      xhr.timeout = 360000;
 
-    xhr.ontimeout = () => {
-      reject(new Error("Upload timed out. The file might be too large for your current network."));
-    };
-    xhr.timeout = 360000; // 6 minutes for large mobile audio files
+      const formData = new FormData();
+      formData.append('audio', file);
+      formData.append('movie', formFields.movie || 'Sound Vault');
+      formData.append('title', formFields.title || 'Unknown Track');
+      formData.append('composer', formFields.composer || '');
+      formData.append('artist', formFields.artist || '');
+      formData.append('actors', formFields.actors || '');
 
-    xhr.send(file);
+      xhr.send(formData);
+    } catch (err) {
+      reject(err);
+    }
   });
-};
-
-const uploadFileToArchiveS3 = async (file, remotePath, onProgress, mimeTypeOverride) => {
-  try {
-    return await executeArchiveUpload(file, remotePath, onProgress, mimeTypeOverride);
-  } catch (err) {
-    console.warn("Primary Vault S3 upload attempt failed, attempting fallback path...", err);
-    // Retry once with a clean flat path to bypass any nested folder restrictions
-    const ext = remotePath.split('.').pop()?.toLowerCase() || 'mp3';
-    const fallbackPath = `audio_uploads/track_${Date.now().toString(36)}.${ext}`;
-    return await executeArchiveUpload(file, fallbackPath, onProgress, mimeTypeOverride);
-  }
 };
 
 export default function AdminModal({
@@ -170,41 +90,71 @@ export default function AdminModal({
   onSaveTrack,
   tracks = []
 }) {
-  // Mode: 'direct' (Mobile friendly direct MP3/URL) | 'youtube' (PC Python bridge)
+  // Mode: 'direct' (Mobile friendly direct MP3/URL) | 'youtube' (PC/Cloud Node.js backend)
   const [activeTab, setActiveTab] = useState('direct');
   const [isBridgeOnline, setIsBridgeOnline] = useState(false);
   const audioInputRef = useRef(null);
   const coverInputRef = useRef(null);
 
-  // Existing movies for quick autocomplete
-  const existingMovies = useMemo(() => {
-    const movieSet = new Set();
+  // Smart Autocomplete Suggestions derived from real-time tracks
+  const suggestionData = useMemo(() => {
+    const titles = new Set();
+    const movies = new Set();
+    const composers = new Set();
+    const actors = new Set();
+    const artists = new Set();
+
     tracks.forEach(t => {
+      if (t.title && typeof t.title === 'string' && t.title.trim()) {
+        titles.add(t.title.trim());
+      }
       if (t.movie && typeof t.movie === 'string' && t.movie.trim()) {
-        movieSet.add(t.movie.trim());
+        movies.add(t.movie.trim());
+      }
+      if (t.composer && typeof t.composer === 'string' && t.composer.trim()) {
+        composers.add(t.composer.trim());
+      }
+      if (t.actors && typeof t.actors === 'string' && t.actors.trim()) {
+        t.actors.split(',').forEach(a => {
+          const cleanAct = a.trim();
+          if (cleanAct) actors.add(cleanAct);
+        });
+      }
+      if (t.artist && typeof t.artist === 'string' && t.artist.trim()) {
+        t.artist.split(/[,&/]/).forEach(a => {
+          const cleanArt = a.trim();
+          if (cleanArt) artists.add(cleanArt);
+        });
       }
     });
-    return Array.from(movieSet).sort((a, b) => a.localeCompare(b));
+
+    return {
+      titles: Array.from(titles).sort((a, b) => a.localeCompare(b)),
+      movies: Array.from(movies).sort((a, b) => a.localeCompare(b)),
+      composers: Array.from(composers).sort((a, b) => a.localeCompare(b)),
+      actors: Array.from(actors).sort((a, b) => a.localeCompare(b)),
+      artists: Array.from(artists).sort((a, b) => a.localeCompare(b))
+    };
   }, [tracks]);
 
-  // Check Python bridge connectivity on open
+  // Check Node.js backend connectivity on open
   useEffect(() => {
     if (!isOpen) return;
     let isMounted = true;
     const checkBridge = async () => {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 900);
-        const res = await fetch('http://127.0.0.1:5001/api/status', { signal: controller.signal });
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+        const res = await fetch(`${API_BASE_URL}/api/status`, { signal: controller.signal });
         clearTimeout(timeoutId);
         const data = await res.json();
-        if (isMounted && data.status === 'online') {
+        if (isMounted && (data.status === 'online' || data.server === 'running')) {
           setIsBridgeOnline(true);
         }
       } catch {
         if (isMounted) {
           setIsBridgeOnline(false);
-          setActiveTab('direct'); // Default to direct upload if bridge offline
+          setActiveTab('direct'); // Default to direct upload if backend offline
         }
       }
     };
@@ -331,41 +281,36 @@ export default function AdminModal({
     try {
       let finalAudioUrl = directAudioUrl.trim();
 
-      // 1. Upload audio file if chosen (Direct Archive.org S3 upload from browser without Python)
+      // 1. Upload audio file if chosen (via Node.js backend using server-side Archive.org credentials)
       if (directAudioType === 'file' && directAudioFile) {
         const sizeMb = (directAudioFile.size / (1024 * 1024)).toFixed(1);
         setStatusMessage(`Uploading audio to Vault: 0.0 / ${sizeMb} MB (0%)...`);
         setUploadProgress(10);
 
-        const detected = await detectAudioFormat(directAudioFile);
-        const fileExt = detected.ext;
-        const mimeType = detected.mime;
-
-        const movieSlug = slugify(directForm.movie || 'Sound Vault', 'vault');
-        const songSlug = slugify(directForm.title, 'song_' + Date.now().toString(36));
-        const uniqueId = Date.now().toString(36);
-        // Clean 2-level path: "movie_slug/song_slug_uniqueid.ext"
-        const remoteAudioPath = `${movieSlug}/${songSlug}_${uniqueId}.${fileExt}`;
+        const matchedMovie = suggestionData.movies.find(
+          m => m.toLowerCase() === (directForm.movie || '').trim().toLowerCase()
+        );
+        const canonicalMovie = matchedMovie || (directForm.movie || '').trim() || 'Sound Vault';
 
         try {
-          finalAudioUrl = await uploadFileToArchiveS3(
+          const uploadRes = await uploadAudioToBackend(
             directAudioFile,
-            remoteAudioPath,
+            { ...directForm, movie: canonicalMovie },
             (pct) => {
               const currentMb = ((directAudioFile.size * pct / 100) / (1024 * 1024)).toFixed(1);
               if (pct >= 100) {
                 setUploadProgress(92);
-                setStatusMessage(`Audio uploaded. Verifying in Vault`);
+                setStatusMessage('Audio uploaded to Vault. Verifying...');
               } else {
                 setUploadProgress(Math.round(10 + pct * 0.78));
-                setStatusMessage(`Uploading audio : ${currentMb} / ${sizeMb} MB`);
+                setStatusMessage(`Uploading audio: ${currentMb} / ${sizeMb} MB (${pct}%)`);
               }
-            },
-            mimeType
+            }
           );
+          finalAudioUrl = uploadRes.audioUrl;
           setUploadProgress(90);
         } catch (uploadErr) {
-          console.warn("Direct Vault S3 upload error:", uploadErr);
+          console.warn("Direct Vault backend upload error:", uploadErr);
           throw new Error("Could not upload audio file: " + uploadErr.message);
         }
       } else {
@@ -377,7 +322,7 @@ export default function AdminModal({
       setUploadProgress(92);
 
       // 3. Match canonical movie
-      const matchedMovie = existingMovies.find(
+      const matchedMovie = suggestionData.movies.find(
         m => m.toLowerCase() === (directForm.movie || '').trim().toLowerCase()
       );
       const canonicalMovie = matchedMovie || (directForm.movie || '').trim() || 'Sound Vault';
@@ -447,9 +392,13 @@ export default function AdminModal({
     setYtIsFetching(true);
     setStatusMessage('Fetching song credits from YouTube...');
     try {
-      const res = await fetch('http://127.0.0.1:5001/api/extract-info', {
+      const token = await getAuthToken();
+      const res = await fetch(`${API_BASE_URL}/api/extract-info`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ url: ytUrl })
       });
       const data = await res.json();
@@ -464,7 +413,7 @@ export default function AdminModal({
         setStatusMessage('Fetch error: ' + (data.error || 'Could not extract metadata'));
       }
     } catch (err) {
-      setStatusMessage('Error contacting local Python bridge: ' + err.message);
+      setStatusMessage('Error contacting backend server: ' + err.message);
     } finally {
       setYtIsFetching(false);
     }
@@ -474,44 +423,86 @@ export default function AdminModal({
     e.preventDefault();
     setYtIsUploading(true);
     setUploadProgress(15);
-    setStatusMessage('1/2 Downloading audio & uploading to Archive.org folders...');
-
-    const progressTimer = setInterval(() => {
-      setUploadProgress(prev => (prev < 80 ? prev + 5 : prev));
-    }, 600);
+    setStatusMessage('1/2 Initiating audio processing on backend...');
 
     try {
-      const matchedMovie = existingMovies.find(
+      const token = await getAuthToken();
+      const matchedMovie = suggestionData.movies.find(
         m => m.toLowerCase() === (ytEditMeta.movie || '').trim().toLowerCase()
       );
-      const canonicalMovie = matchedMovie || (ytEditMeta.movie || '').trim();
+      const canonicalMovie = matchedMovie || (ytEditMeta.movie || '').trim() || 'Sound Vault';
 
       const payload = {
         ...ytEditMeta,
         movie: canonicalMovie,
-        url: ytUrl,
-        projectIdentifier: 'muthuramalingam_a-vault'
+        url: ytUrl
       };
 
-      const res = await fetch('http://127.0.0.1:5001/api/upload-track', {
+      const res = await fetch(`${API_BASE_URL}/api/upload-track`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload)
       });
-      const result = await res.json();
+      const data = await res.json();
 
-      if (result.success && result.audioUrl) {
-        clearInterval(progressTimer);
-        setUploadProgress(90);
+      if (!res.ok || (!data.success && !data.audioUrl)) {
+        throw new Error(data.error || 'Failed to start upload job');
+      }
+
+      let result = null;
+
+      // Handle async background job polling (ideal for Render and mobile networks)
+      if (data.jobId) {
+        setStatusMessage(data.stage || 'Processing audio on server...');
+        setUploadProgress(data.progress || 20);
+
+        const pollStartTime = Date.now();
+        while (!result) {
+          if (Date.now() - pollStartTime > 180000) {
+            throw new Error('Upload job timed out after 3 minutes.');
+          }
+
+          await new Promise(r => setTimeout(r, 1500));
+          const jobRes = await fetch(`${API_BASE_URL}/api/jobs/${data.jobId}`, {
+            headers: {
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+          });
+          const jobData = await jobRes.json();
+          if (!jobRes.ok || !jobData.success) {
+            throw new Error(jobData.error || 'Failed to poll upload job');
+          }
+
+          const currentJob = jobData.job;
+          setUploadProgress(currentJob.progress || 50);
+          setStatusMessage(currentJob.stage || 'Processing in progress...');
+
+          if (currentJob.status === 'completed' && currentJob.result) {
+            result = currentJob.result;
+            break;
+          } else if (currentJob.status === 'failed') {
+            throw new Error(currentJob.error || 'Background upload failed.');
+          }
+        }
+      } else {
+        // Direct synchronous response
+        result = data;
+      }
+
+      if (result && result.audioUrl) {
+        setUploadProgress(92);
         setStatusMessage('2/2 Saving track to your Firebase database...');
         const trackToSave = {
           title: ytEditMeta.title.trim(),
           movie: canonicalMovie,
-          actors: ytEditMeta.actors,
-          composer: ytEditMeta.composer,
-          artist: ytEditMeta.artist,
-          genre: ytEditMeta.genre,
-          mood: ytEditMeta.mood,
+          actors: ytEditMeta.actors || '',
+          composer: ytEditMeta.composer || '',
+          artist: ytEditMeta.artist || '',
+          genre: ytEditMeta.genre || 'Soundtrack',
+          mood: ytEditMeta.mood || 'Melody Hits',
           duration: ytEditMeta.duration || 260,
           audioUrl: result.audioUrl,
           coverUrl: result.coverUrl || ytEditMeta.thumbnailUrl,
@@ -526,16 +517,12 @@ export default function AdminModal({
         setYtStage('done');
         setStatusMessage('Song uploaded to Archive.org and permanently saved to Vault!');
       } else {
-        clearInterval(progressTimer);
-        setUploadProgress(0);
-        setStatusMessage('Upload error: ' + (result.error || 'Failed to complete upload'));
+        throw new Error('Upload finished but audio URL was missing.');
       }
     } catch (err) {
-      clearInterval(progressTimer);
       setUploadProgress(0);
       setStatusMessage('Error during upload: ' + err.message);
     } finally {
-      clearInterval(progressTimer);
       setYtIsUploading(false);
     }
   };
@@ -762,77 +749,58 @@ export default function AdminModal({
                   </div>
                 </div>
 
-                {/* 3. Track Details */}
+                {/* 3. Track Details with Smart Autocomplete */}
                 <div className="flex flex-col gap-2">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">* Song Title</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Kadhale Kadhale"
-                      value={directForm.title}
-                      onChange={e => setDirectForm({ ...directForm, title: e.target.value })}
+                  <AutocompleteInput
+                    label="* Song Title"
+                    required
+                    placeholder="e.g. Kadhale Kadhale"
+                    value={directForm.title}
+                    onChange={val => setDirectForm(prev => ({ ...prev, title: val }))}
+                    suggestions={suggestionData.titles}
+                    disabled={isSubmitting}
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <AutocompleteInput
+                      label="Movie / Album"
+                      placeholder="e.g. 96"
+                      value={directForm.movie}
+                      onChange={val => setDirectForm(prev => ({ ...prev, movie: val }))}
+                      suggestions={suggestionData.movies}
                       disabled={isSubmitting}
-                      className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
+                    />
+
+                    <AutocompleteInput
+                      label="Music Director"
+                      placeholder="e.g. Govind Vasantha"
+                      value={directForm.composer}
+                      onChange={val => setDirectForm(prev => ({ ...prev, composer: val }))}
+                      suggestions={suggestionData.composers}
+                      disabled={isSubmitting}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">Movie / Album</label>
-                      <input
-                        type="text"
-                        list="existing-movies-list"
-                        placeholder="e.g. 96"
-                        value={directForm.movie}
-                        onChange={e => setDirectForm({ ...directForm, movie: e.target.value })}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
-                      />
-                      <datalist id="existing-movies-list">
-                        {existingMovies.map(m => (
-                          <option key={m} value={m} />
-                        ))}
-                      </datalist>
-                    </div>
+                    <AutocompleteInput
+                      label="Actors / Cast"
+                      isMultiValue
+                      placeholder="e.g. Vijay Sethupathi, Trisha"
+                      value={directForm.actors}
+                      onChange={val => setDirectForm(prev => ({ ...prev, actors: val }))}
+                      suggestions={suggestionData.actors}
+                      disabled={isSubmitting}
+                    />
 
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">Music Director</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Govind Vasantha"
-                        value={directForm.composer}
-                        onChange={e => setDirectForm({ ...directForm, composer: e.target.value })}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">Actors / Cast</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Vijay Sethupathi, Trisha"
-                        value={directForm.actors}
-                        onChange={e => setDirectForm({ ...directForm, actors: e.target.value })}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">Singers</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Chinmayi, Govind"
-                        value={directForm.artist}
-                        onChange={e => setDirectForm({ ...directForm, artist: e.target.value })}
-                        disabled={isSubmitting}
-                        className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden"
-                      />
-                    </div>
+                    <AutocompleteInput
+                      label="Singers"
+                      isMultiValue
+                      placeholder="e.g. Chinmayi, Govind"
+                      value={directForm.artist}
+                      onChange={val => setDirectForm(prev => ({ ...prev, artist: val }))}
+                      suggestions={suggestionData.artists}
+                      disabled={isSubmitting}
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -912,9 +880,9 @@ export default function AdminModal({
               <div className="mb-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] leading-relaxed flex items-start gap-2">
                 <AlertCircle size={15} className="text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold">Python Bridge is offline on this device.</p>
+                  <p className="font-bold">Backend Service is offline or sleeping.</p>
                   <p className="text-slate-600 mt-0.5">
-                    If you are on your laptop, run: <code className="bg-amber-100 px-1 py-0.2 rounded font-mono">py scripts/yt_archive_bridge.py</code>. If you are on your phone, use the <strong>Direct Upload</strong> tab above.
+                    If running locally, start: <code className="bg-amber-100 px-1 py-0.2 rounded font-mono">npm run backend:dev</code>. If on Render free tier, please allow ~45s for the server to wake up, or use the <strong>Direct Upload</strong> tab above.
                   </p>
                 </div>
               </div>
@@ -957,7 +925,7 @@ export default function AdminModal({
               </form>
             )}
 
-            {/* STAGE 2: Review & Edit Metadata */}
+            {/* STAGE 2: Review & Edit Metadata with Smart Autocomplete */}
             {ytStage === 'preview_edit' && (
               <form onSubmit={handleYtConfirmUpload} className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
@@ -980,39 +948,51 @@ export default function AdminModal({
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">Song Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={ytEditMeta.title}
-                      onChange={e => setYtEditMeta({ ...ytEditMeta, title: e.target.value })}
+                  <AutocompleteInput
+                    label="Song Title *"
+                    required
+                    value={ytEditMeta.title}
+                    onChange={val => setYtEditMeta(prev => ({ ...prev, title: val }))}
+                    suggestions={suggestionData.titles}
+                    disabled={ytIsUploading}
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <AutocompleteInput
+                      label="Movie"
+                      value={ytEditMeta.movie}
+                      onChange={val => setYtEditMeta(prev => ({ ...prev, movie: val }))}
+                      suggestions={suggestionData.movies}
                       disabled={ytIsUploading}
-                      className="w-full px-3 py-2 bg-slate-100 text-xs font-semibold rounded-xl outline-hidden"
+                    />
+
+                    <AutocompleteInput
+                      label="Composer"
+                      value={ytEditMeta.composer}
+                      onChange={val => setYtEditMeta(prev => ({ ...prev, composer: val }))}
+                      suggestions={suggestionData.composers}
+                      disabled={ytIsUploading}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">Movie</label>
-                      <input
-                        type="text"
-                        value={ytEditMeta.movie}
-                        onChange={e => setYtEditMeta({ ...ytEditMeta, movie: e.target.value })}
-                        disabled={ytIsUploading}
-                        className="w-full px-3 py-2 bg-slate-100 text-xs font-semibold rounded-xl outline-hidden"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-slate-600">Composer</label>
-                      <input
-                        type="text"
-                        value={ytEditMeta.composer}
-                        onChange={e => setYtEditMeta({ ...ytEditMeta, composer: e.target.value })}
-                        disabled={ytIsUploading}
-                        className="w-full px-3 py-2 bg-slate-100 text-xs font-semibold rounded-xl outline-hidden"
-                      />
-                    </div>
+                    <AutocompleteInput
+                      label="Actors / Cast"
+                      isMultiValue
+                      value={ytEditMeta.actors || ''}
+                      onChange={val => setYtEditMeta(prev => ({ ...prev, actors: val }))}
+                      suggestions={suggestionData.actors}
+                      disabled={ytIsUploading}
+                    />
+
+                    <AutocompleteInput
+                      label="Singers"
+                      isMultiValue
+                      value={ytEditMeta.artist || ''}
+                      onChange={val => setYtEditMeta(prev => ({ ...prev, artist: val }))}
+                      suggestions={suggestionData.artists}
+                      disabled={ytIsUploading}
+                    />
                   </div>
                 </div>
 

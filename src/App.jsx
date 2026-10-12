@@ -6,6 +6,7 @@ import QueueDrawer from './components/QueueDrawer';
 import LibraryPage from './components/LibraryPage';
 import VinylPlayer from './components/VinylPlayer';
 import BottomPlayer from './components/BottomPlayer';
+import FloatingMiniViewer from './components/FloatingMiniViewer';
 import MovieDetailModal from './components/MovieDetailModal';
 import AdminModal from './components/AdminModal';
 import ManageSongsModal from './components/ManageSongsModal';
@@ -73,14 +74,28 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Navigation: 'home' | 'search' | 'queue' | 'history' | 'library' | 'nowplaying'
-  const [activePage, setActivePage] = useState('home');
+  const [activePage, setActivePage] = useState(() => {
+    try {
+      return sessionStorage.getItem('isaiyon_active_page') || 'home';
+    } catch (_) {
+      return 'home';
+    }
+  });
   const [isBottomPlayerDismissed, setIsBottomPlayerDismissed] = useState(false);
-  const [playerViewMode, setPlayerViewMode] = useState('mini'); // 'mini' | 'bar'
+  const [isPiPActive, setIsPiPActive] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const floatingPipRef = useRef(null);
+
+  // Sync activePage across refreshes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('isaiyon_active_page', activePage);
+    } catch (_) {}
+  }, [activePage]);
 
   // Queue state (Up Next) and history stack
   const [queue, setQueue] = useState([]);
   const [queueHistory, setQueueHistory] = useState([]);
-  const [miniPosition, setMiniPosition] = useState({ x: 0, y: 0 });
 
   // Sync player preferences and queue changes to localStorage
   useEffect(() => {
@@ -139,14 +154,41 @@ export default function App() {
   const sleepTimerRef = useRef(null);
   const [isAudioBuffering, setIsAudioBuffering] = useState(false);
 
-  // 5-Second Splash Loading Screen Timer
-  const [isSplashDone, setIsSplashDone] = useState(false);
+  // Splash Loading Screen Timer (only runs on first session launch, skipped on page refresh)
+  const [isSplashDone, setIsSplashDone] = useState(() => {
+    try {
+      return sessionStorage.getItem('isaiyon_session_active') === 'true';
+    } catch (_) {
+      return false;
+    }
+  });
+
   useEffect(() => {
+    if (isSplashDone) {
+      try {
+        sessionStorage.setItem('isaiyon_session_active', 'true');
+      } catch (_) {}
+      return;
+    }
     const timer = setTimeout(() => {
       setIsSplashDone(true);
-    }, 5000); // exactly 5 seconds
+      try {
+        sessionStorage.setItem('isaiyon_session_active', 'true');
+      } catch (_) {}
+    }, 3800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isSplashDone]);
+
+  // Smooth in-app refresh handler for navbar refresh button
+  const handleRefreshData = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      setToastMessage('✨ Library synced & up to date');
+      toastTimeoutRef.current = setTimeout(() => setToastMessage(''), 2500);
+    }, 700);
+  };
 
   // PWA Standalone Detection & Install Prompt
   const [isStandalone, setIsStandalone] = useState(false);
@@ -1130,6 +1172,8 @@ export default function App() {
           user={user} 
           onOpenAdminModal={() => setIsAdminModalOpen(true)} 
           onOpenManageModal={() => setIsManageModalOpen(true)}
+          onRefresh={handleRefreshData}
+          isRefreshing={isRefreshing}
         />
 
         {/* Main Screen Router */}
@@ -1137,7 +1181,7 @@ export default function App() {
           activePage === 'nowplaying' 
             ? 'flex-1 min-h-screen pb-20 px-3 flex flex-col justify-between' 
             : `flex-1 flex flex-col px-4 ${
-                currentTrack && !isBottomPlayerDismissed && playerViewMode === 'bar'
+                currentTrack && !isBottomPlayerDismissed
                   ? 'pb-40' 
                   : 'pb-20'
               }`
@@ -1257,7 +1301,6 @@ export default function App() {
               onToggleQueueMode={handleToggleQueueMode}
               queueCount={queue.length}
               onCollapsePlayer={() => {
-                setPlayerViewMode('mini');
                 setActivePage(lastActivePageRef.current || 'home');
               }}
               user={user}
@@ -1265,7 +1308,7 @@ export default function App() {
           )}
         </main>
 
-        {/* Floating Bottom Mini Player / Draggable Widget */}
+        {/* Persistent Bottom Bar Player */}
         {activePage !== 'nowplaying' && currentTrack && !isBottomPlayerDismissed && (
           <BottomPlayer 
             currentTrack={currentTrack}
@@ -1278,10 +1321,8 @@ export default function App() {
             onToggleFavorite={handleToggleFavorite}
             user={user}
             onOpenFullPlayer={() => setActivePage('nowplaying')}
-            playerViewMode={playerViewMode}
-            onSetPlayerViewMode={setPlayerViewMode}
-            position={miniPosition}
-            onPositionChange={setMiniPosition}
+            onTogglePiP={() => floatingPipRef.current?.toggle()}
+            isPiPActive={isPiPActive}
             onClose={() => {
               if (audioRef.current) {
                 audioRef.current.pause();
@@ -1412,6 +1453,19 @@ export default function App() {
           user={user}
           onToggleTrackInPlaylist={handleToggleTrackInPlaylist}
           onCreatePlaylistWithTrack={handleCreatePlaylistWithTrack}
+        />
+
+        {/* Floating Mini Viewer over other apps (OS-level Picture-in-Picture) */}
+        <FloatingMiniViewer 
+          ref={floatingPipRef}
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={duration}
+          onPlayPause={handlePlayPause}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          onPipStateChange={setIsPiPActive}
         />
 
         {/* Floating Quick Toast */}
