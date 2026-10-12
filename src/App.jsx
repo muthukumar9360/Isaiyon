@@ -165,106 +165,63 @@ export default function App() {
   const isExitModalOpenRef = useRef(isExitModalOpen);
   isExitModalOpenRef.current = isExitModalOpen;
 
-  const lastBackActionTimeRef = useRef(0);
-
-  const handleNavigationBackAction = () => {
-    // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN!
-    // It only closes when the user explicitly clicks the buttons inside the modal ("Stay" or "Exit App")
-    if (isExitModalOpenRef.current) {
-      return;
+  // Push history entry whenever navigating away from home so OS back swipe naturally routes to home
+  useEffect(() => {
+    if (activePage !== 'home' && activePage !== 'nowplaying') {
+      window.history.pushState({ isaiyonPage: activePage }, '');
     }
-
-    // 2. If any modal is open -> close it
-    if (isAdminModalOpenRef.current) {
-      setIsAdminModalOpen(false);
-      return;
-    }
-    if (isManageModalOpenRef.current) {
-      setIsManageModalOpen(false);
-      return;
-    }
-    if (playlistModalTrackRef.current) {
-      setPlaylistModalTrack(null);
-      return;
-    }
-    if (selectedMovieRef.current) {
-      setSelectedMovie(null);
-      return;
-    }
-
-    // 3. If expanded VinylPlayer is open -> minimize to previous view
-    if (activePageRef.current === 'nowplaying') {
-      setActivePage(lastActivePageRef.current || 'home');
-      return;
-    }
-
-    // 4. If on any other page (search, library, queue, history) -> return directly to home
-    if (activePageRef.current !== 'home') {
-      setActivePage('home');
-      return;
-    }
-
-    // 5. If on home page (whether bottom player is ON or OFF!) -> prompt exit confirmation dialog
-    setIsExitModalOpen(true);
-  };
-
-  const triggerBackAction = () => {
-    const now = Date.now();
-    if (now - lastBackActionTimeRef.current < 400) return; // Debounce duplicate triggers from OS gesture & touch
-    lastBackActionTimeRef.current = now;
-    handleNavigationBackAction();
-  };
+  }, [activePage]);
 
   useEffect(() => {
-    // Keep history trap alive so browser doesn't close abruptly
+    // Keep history trap alive so browser never closes abruptly on back swipe
     window.history.pushState({ isaiyonApp: true }, '');
 
     const handlePopState = () => {
+      // ALWAYS re-push immediately to keep the trap alive for multiple/repeated swipes
       window.history.pushState({ isaiyonApp: true }, '');
-      triggerBackAction();
+
+      // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN!
+      // Must not close or exit on repeated swipes; only closes when clicking buttons inside modal
+      if (isExitModalOpenRef.current) {
+        return;
+      }
+
+      // 2. If any modal is open -> close it
+      if (isAdminModalOpenRef.current) {
+        setIsAdminModalOpen(false);
+        return;
+      }
+      if (isManageModalOpenRef.current) {
+        setIsManageModalOpen(false);
+        return;
+      }
+      if (playlistModalTrackRef.current) {
+        setPlaylistModalTrack(null);
+        return;
+      }
+      if (selectedMovieRef.current) {
+        setSelectedMovie(null);
+        return;
+      }
+
+      // 3. If expanded VinylPlayer is open -> minimize to previous view
+      if (activePageRef.current === 'nowplaying') {
+        setActivePage(lastActivePageRef.current || 'home');
+        return;
+      }
+
+      // 4. If on any other page (search, library, queue, history) -> return directly to home
+      if (activePageRef.current !== 'home') {
+        setActivePage('home');
+        return;
+      }
+
+      // 5. If on home page (whether bottom player is ON or OFF!) -> ALWAYS prompt exit confirmation dialog!
+      setIsExitModalOpen(true);
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // Mobile edge swipe detection: swiping inward from left or right screen edge triggers unified in-app back
-  useEffect(() => {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-
-    const handleTouchStart = (e) => {
-      if (e.touches.length !== 1) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
-    };
-
-    const handleTouchEnd = (e) => {
-      if (e.changedTouches.length !== 1) return;
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-      const elapsedTime = Date.now() - touchStartTime;
-
-      const screenWidth = window.innerWidth;
-      // Edge swipe: touch begins within 45px of screen edge and swipes inward > 60px
-      const isFromLeftEdge = touchStartX <= 45 && deltaX > 60;
-      const isFromRightEdge = touchStartX >= screenWidth - 45 && deltaX < -60;
-
-      if ((isFromLeftEdge || isFromRightEdge) && Math.abs(deltaY) < Math.abs(deltaX) * 0.8 && elapsedTime < 500) {
-        triggerBackAction();
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
   }, []);
 
   const handleConfirmExitApp = () => {
@@ -1411,7 +1368,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950/5 flex justify-center text-slate-900 antialiased selection:bg-amber-100 selection:text-amber-800">
-      <div className="w-full max-w-md min-h-screen bg-white shadow-2xl relative flex flex-col border-x border-slate-200/60 overflow-x-hidden">
+      <div className="w-full max-w-md min-h-screen bg-white shadow-2xl relative flex flex-col border-x border-slate-200/60 overflow-x-clip">
         {/* Top Mobile App Header */}
         <Navbar 
           user={user} 

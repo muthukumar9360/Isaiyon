@@ -13,7 +13,11 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  html, body {
+  html {
+    overscroll-behavior-y: contain;
+  }
+
+  body {
     width: 100%;
     min-height: 100%;
     margin: 0;
@@ -21,17 +25,14 @@
     background-color: #0f172a;
     color: #0f172a;
     font-family: var(--font-sans);
-    overflow-x: hidden;
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Globally disable vertical pull-to-refresh on Android Chrome and WebViews while keeping normal scrolling & horizontal swipe intact */
-    overscroll-behavior-y: none;
   }
 
   #root {
     width: 100%;
     min-height: 100%;
-    overscroll-behavior-y: none;
   }
 }
 
