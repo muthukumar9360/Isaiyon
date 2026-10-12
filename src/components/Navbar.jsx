@@ -178,17 +178,7 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
             </div>
           )}
 
-           {onRefresh && (
-                <button
-                  onClick={onRefresh}
-                  disabled={isRefreshing}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-black hover:text-amber-600 hover:bg-slate-100 transition-all active:scale-90 cursor-pointer disabled:opacity-50"
-                  title="Refresh library & sync"
-                  aria-label="Refresh library"
-                >
-                  <RefreshCw size={22} className={isRefreshing ? "animate-spin text-amber-500" : ""} />
-                </button>
-              )}
+
 
           {/* Google Authentication */}
           {user ? (

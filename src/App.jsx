@@ -165,61 +165,70 @@ export default function App() {
   const isExitModalOpenRef = useRef(isExitModalOpen);
   isExitModalOpenRef.current = isExitModalOpen;
 
+  const lastBackActionTimeRef = useRef(0);
+
+  const handleNavigationBackAction = () => {
+    // 1. If Exit Confirmation dialog is open -> close it
+    if (isExitModalOpenRef.current) {
+      setIsExitModalOpen(false);
+      return;
+    }
+
+    // 2. If any modal is open -> close it
+    if (isAdminModalOpenRef.current) {
+      setIsAdminModalOpen(false);
+      return;
+    }
+    if (isManageModalOpenRef.current) {
+      setIsManageModalOpen(false);
+      return;
+    }
+    if (playlistModalTrackRef.current) {
+      setPlaylistModalTrack(null);
+      return;
+    }
+    if (selectedMovieRef.current) {
+      setSelectedMovie(null);
+      return;
+    }
+
+    // 3. If expanded VinylPlayer is open -> minimize to previous view
+    if (activePageRef.current === 'nowplaying') {
+      setActivePage(lastActivePageRef.current || 'home');
+      return;
+    }
+
+    // 4. If on any other page (search, library, queue, history) -> return directly to home
+    if (activePageRef.current !== 'home') {
+      setActivePage('home');
+      return;
+    }
+
+    // 5. If on home page (whether bottom player is ON or OFF!) -> prompt exit confirmation dialog
+    setIsExitModalOpen(true);
+  };
+
+  const triggerBackAction = () => {
+    const now = Date.now();
+    if (now - lastBackActionTimeRef.current < 400) return; // Debounce duplicate triggers from OS gesture & touch
+    lastBackActionTimeRef.current = now;
+    handleNavigationBackAction();
+  };
+
   useEffect(() => {
-    // Prime initial history entry so back button/swipe back is intercepted cleanly
+    // Keep history trap alive so browser doesn't close abruptly
     window.history.pushState({ isaiyonApp: true }, '');
 
     const handlePopState = () => {
-      // Keep history trap alive so browser doesn't close abruptly
       window.history.pushState({ isaiyonApp: true }, '');
-
-      // 1. If Exit Confirmation dialog is open -> close it
-      if (isExitModalOpenRef.current) {
-        setIsExitModalOpen(false);
-        return;
-      }
-
-      // 2. If any modal is open -> close it
-      if (isAdminModalOpenRef.current) {
-        setIsAdminModalOpen(false);
-        return;
-      }
-      if (isManageModalOpenRef.current) {
-        setIsManageModalOpen(false);
-        return;
-      }
-      if (playlistModalTrackRef.current) {
-        setPlaylistModalTrack(null);
-        return;
-      }
-      if (selectedMovieRef.current) {
-        setSelectedMovie(null);
-        return;
-      }
-
-      // 3. If expanded VinylPlayer is open -> minimize to previous view
-      if (activePageRef.current === 'nowplaying') {
-        setActivePage(lastActivePageRef.current || 'home');
-        return;
-      }
-
-      // 4. If on any other page (search, library, queue, history) -> return directly to home
-      if (activePageRef.current !== 'home') {
-        setActivePage('home');
-        return;
-      }
-
-      // 5. If on home page with nothing open -> prompt exit confirmation dialog
-      if (activePageRef.current === 'home') {
-        setIsExitModalOpen(true);
-      }
+      triggerBackAction();
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Mobile edge swipe detection: swiping inward from left or right screen edge triggers back navigation
+  // Mobile edge swipe detection: swiping inward from left or right screen edge triggers unified in-app back
   useEffect(() => {
     let touchStartX = 0;
     let touchStartY = 0;
@@ -246,7 +255,7 @@ export default function App() {
       const isFromRightEdge = touchStartX >= screenWidth - 45 && deltaX < -60;
 
       if ((isFromLeftEdge || isFromRightEdge) && Math.abs(deltaY) < Math.abs(deltaX) * 0.8 && elapsedTime < 500) {
-        window.history.back();
+        triggerBackAction();
       }
     };
 
@@ -255,6 +264,40 @@ export default function App() {
     return () => {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  // Globally prevent browser pull-to-refresh when dragging down at top of page across all screens
+  useEffect(() => {
+    let startY = 0;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length !== 1) return;
+      const currentY = e.touches[0].clientY;
+      const deltaY = currentY - startY;
+
+      // Only cancel if pulling DOWN from the top of the viewport
+      if (deltaY > 0) {
+        const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        if (scrollTop <= 0) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
     };
   }, []);
 
@@ -1689,7 +1732,7 @@ export default function App() {
               <div>
                 <h3 className="text-base font-black text-slate-900 font-display">Exit Isaiyon?</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Are you sure you want to stop playback and exit the application?
+                  Are you sure you want to exit the application?
                 </p>
               </div>
               <div className="flex gap-2 w-full mt-1">
