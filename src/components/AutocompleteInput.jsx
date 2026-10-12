@@ -146,11 +146,6 @@ export default function AutocompleteInput({
           className="text-[11px] font-bold text-slate-600 flex items-center justify-between"
         >
           <span>{label}</span>
-          {isMultiValue && (
-            <span className="text-[10px] text-slate-500 font-normal">
-              (Type comma for multiple)
-            </span>
-          )}
         </label>
       )}
 
@@ -190,10 +185,9 @@ export default function AutocompleteInput({
           className="absolute left-0 right-0 top-full mt-1.5 bg-white/98 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 overflow-hidden z-50 animate-[modalPop_0.15s_ease-out] max-h-52 overflow-y-auto"
           role="listbox"
         >
-          <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+          <div className="px-3 py-1.5 bg-slate-50 border-b border-black/10 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
             <span className="flex items-center gap-1 text-amber-600">
-              <Sparkles size={11} />
-              <span>Matching Vault Suggestions</span>
+              <span>Matching</span>
             </span>
             <span className="font-mono">{filteredSuggestions.length} found</span>
           </div>

@@ -94,7 +94,7 @@ export default function VinylPlayer({
           className="px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/90 text-slate-800 flex items-center gap-1.5 text-xs font-bold transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200"
           title="Minimize player"
         >
-          <ChevronDown size={30} className="text-slate-600" />
+          <ChevronDown size={25} className="text-slate-600" />
         </button>
 
         <div className="flex flex-col items-center">

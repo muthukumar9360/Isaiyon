@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink, RefreshCw } from 'lucide-react';
-import { 
-  auth, 
-  googleProvider, 
-  signInWithPopup, 
-  signInWithRedirect, 
-  signOut, 
-  isAdminUser 
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  isAdminUser
 } from '../firebase/config';
 
 function getAuthErrorMessage(err) {
@@ -130,36 +130,25 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
         {/* Brand / App Name (Top Left in Full Caps) with Refresh Button */}
         <div className="flex items-center gap-1.5">
           <div className="w-9 h-9 flex items-center justify-center shrink-0">
-            <img 
-              src="/logo.png" 
-              alt="Isaiyon" 
-              className="w-full h-full object-cover rounded-[10px]" 
-              onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+            <img
+              src="/logo.png"
+              alt="Isaiyon"
+              className="w-full h-full object-cover rounded-[10px]"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           </div>
           <span className="text-black text-xl font-black tracking-widest text-slate-900 font-display uppercase">
             ISAIYON
           </span>
-          {onRefresh && (
-            <button
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="w-7 h-7 ml-0.5 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition-all active:scale-90 cursor-pointer disabled:opacity-50"
-              title="Refresh library & sync"
-              aria-label="Refresh library"
-            >
-              <RefreshCw size={14} className={isRefreshing ? "animate-spin text-amber-500" : ""} />
-            </button>
-          )}
         </div>
 
         {/* Nav Actions */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {/* PWA Install Button on mobile */}
           {installPrompt && !isInstalled && (
-            <button 
-              className="w-8 h-8 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-600 flex items-center justify-center transition-all active:scale-95 shadow-2xs" 
-              onClick={handleInstallClick} 
+            <button
+              className="w-8 h-8 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-600 flex items-center justify-center transition-all active:scale-95 shadow-2xs"
+              onClick={handleInstallClick}
               title="Install mobile app"
             >
               <Download size={16} />
@@ -169,18 +158,18 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
           {/* Discreet Admin Actions: ONLY visible for perumpatayans@gmail.com */}
           {isAdmin && (
             <div className="flex items-center gap-1">
-              <button 
+              <button
                 type="button"
-                className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-white flex items-center justify-center shadow-xs hover:from-amber-600 hover:to-amber-700 transition-all active:scale-90 cursor-pointer mr-0.5" 
+                className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-white flex items-center justify-center shadow-xs hover:from-amber-600 hover:to-amber-700 transition-all active:scale-90 cursor-pointer mr-0.5"
                 onClick={onOpenAdminModal}
                 title="Add Track from YouTube to Archive.org"
               >
                 <Plus size={18} strokeWidth={2.8} />
               </button>
 
-              <button 
+              <button
                 type="button"
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 flex items-center justify-center shadow-2xs transition-all active:scale-90 cursor-pointer" 
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 flex items-center justify-center shadow-2xs transition-all active:scale-90 cursor-pointer"
                 onClick={onOpenManageModal}
                 title="Manage & Edit Vault Songs"
               >
@@ -189,27 +178,38 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
             </div>
           )}
 
+           {onRefresh && (
+                <button
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-black hover:text-amber-600 hover:bg-slate-100 transition-all active:scale-90 cursor-pointer disabled:opacity-50"
+                  title="Refresh library & sync"
+                  aria-label="Refresh library"
+                >
+                  <RefreshCw size={22} className={isRefreshing ? "animate-spin text-amber-500" : ""} />
+                </button>
+              )}
+
           {/* Google Authentication */}
           {user ? (
-            <button 
+            <button
               type="button"
-              className="flex items-center gap-1.5 p-1.5 pr-2.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 cursor-pointer transition-all active:scale-95 shadow-2xs" 
-              onClick={() => setShowLogoutConfirm(true)} 
+              className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 cursor-pointer transition-all active:scale-95 shadow-2xs"
+              onClick={() => setShowLogoutConfirm(true)}
               title="Account & Log Out"
             >
-              <img 
-                src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'} 
-                alt={user.displayName || 'User'} 
+              <img
+                src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                alt={user.displayName || 'User'}
                 className="w-6 h-6 rounded-full object-cover ring-2 ring-white"
               />
-              <LogOut size={16} className="text-slate-600" />
+              <LogOut size={16} className="text-black" />
             </button>
           ) : (
-            <button 
+            <button
               disabled={isSigningIn}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer ${
-                isSigningIn ? 'opacity-70 cursor-not-allowed' : ''
-              }`} 
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer ${isSigningIn ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               onClick={() => handleGoogleSignIn(false)}
             >
               {isSigningIn ? (
@@ -225,15 +225,15 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && user && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
           onClick={() => setShowLogoutConfirm(false)}
         >
-          <div 
+          <div
             className="w-full max-w-xs sm:max-w-sm bg-white rounded-3xl p-5 shadow-2xl relative border border-slate-100 flex flex-col gap-4 text-center items-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <button 
+            <button
               type="button"
               onClick={() => setShowLogoutConfirm(false)}
               className="absolute top-3.5 right-3.5 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
@@ -258,9 +258,9 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
 
             {/* User Profile Card */}
             <div className="w-full flex items-center gap-3 p-2.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-left">
-              <img 
-                src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'} 
-                alt={user.displayName || 'User'} 
+              <img
+                src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                alt={user.displayName || 'User'}
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-white shrink-0"
               />
               <div className="min-w-0 flex-1">
@@ -300,15 +300,15 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
 
       {/* Auth Diagnostic & Error Modal */}
       {authErrorInfo && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
           onClick={() => setAuthErrorInfo(null)}
         >
-          <div 
+          <div
             className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl relative border border-slate-100 flex flex-col gap-3"
             onClick={(e) => e.stopPropagation()}
           >
-            <button 
+            <button
               onClick={() => setAuthErrorInfo(null)}
               className="absolute top-3.5 right-3.5 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90"
             >

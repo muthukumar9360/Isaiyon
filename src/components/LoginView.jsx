@@ -140,7 +140,7 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900 flex flex-col justify-between items-center px-4 py-6 pb-10 select-none relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900 flex flex-col justify-between items-center px-4 pt-5 select-none relative overflow-hidden">
       {/* Soft Background Radial Lighting Shadows */}
       <div className="absolute top-1/4 -left-20 w-80 h-80 bg-black/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/3 -right-20 w-80 h-80 bg-slate-900/5 rounded-full blur-3xl pointer-events-none" />
@@ -167,10 +167,10 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
           <button
             type="button"
             onClick={handleInstallClick}
-            className="py-1.5 px-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md shadow-slate-900/10 active:scale-95 transition-all cursor-pointer border border-slate-700 hover:border-amber-400 group"
+            className="py-1.5 px-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-lg sm:text-sm font-bold flex items-center gap-1.5 shadow-md shadow-slate-900/10 active:scale-95 transition-all cursor-pointer border border-slate-700 hover:border-amber-400 group"
             title="Install Isaiyon Web App"
           >
-            <Download size={14} className="text-amber-400 group-hover:translate-y-0.5 transition-transform" />
+            <Download size={22} className="text-amber-400 group-hover:translate-y-0.5 transition-transform" />
             <span>Install App</span>
           </button>
         ) : (
@@ -221,7 +221,7 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight font-display">
+        <h1 className="mt-12 text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight font-display">
           Your Personal <span className="text-slate-900">Music Vault</span>
         </h1>
         <p className="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed font-medium">
@@ -254,59 +254,10 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
               </>
             )}
           </button>
-
-          {/* Dynamic Smart Slot: In Web mode, promote install. In PWA mode, highlight native engine perks */}
-          {!effectiveStandalone ? (
-            <div 
-              onClick={handleInstallClick}
-              className="w-full p-2.5 rounded-2xl bg-amber-500/10 border border-amber-300/80 hover:bg-amber-500/15 flex items-center justify-between gap-2.5 cursor-pointer transition-all active:scale-[0.99] group shadow-2xs text-left"
-              title="Install Isaiyon for Full App Features"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
-                  <Download size={16} />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-black text-slate-900 truncate flex items-center gap-1">
-                    <span>Install App for Full Sound</span>
-                    <Sparkles size={11} className="text-amber-600 shrink-0" />
-                  </div>
-                  <div className="text-[10px] font-medium text-slate-600 truncate">
-                    Lockscreen controls, background play & zero latency
-                  </div>
-                </div>
-              </div>
-              <ChevronRight size={16} className="text-amber-700 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          ) : (
-            <div 
-              onClick={() => setShowPwaModal(true)}
-              className="w-full p-2.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-slate-50 border border-emerald-300/80 hover:border-emerald-400 flex items-center justify-between gap-2.5 cursor-pointer transition-all active:scale-[0.99] group shadow-2xs text-left"
-              title="PWA Native Features are Active • Tap for details"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
-                  <Zap size={16} />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-black text-slate-900 truncate flex items-center gap-1">
-                    <span>Native Sound Engine Active</span>
-                    <ShieldCheck size={12} className="text-emerald-600 shrink-0" />
-                  </div>
-                  <div className="text-[10px] font-medium text-slate-600 truncate">
-                    Background audio • Floating PiP • High-speed vault
-                  </div>
-                </div>
-              </div>
-              <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-300 shrink-0">
-                Active
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Feature Highlights Grid in Clean White Style */}
-        <div className="grid grid-cols-2 gap-2.5 w-full mt-4 text-left px-1">
+        <div className="grid grid-cols-2 gap-2.5 w-full mt-12 text-left px-1">
           <div className="p-2.5 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-2">
             <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
               <Music2 size={14} />
@@ -348,27 +299,6 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
           </div>
         </div>
 
-        <p className="text-[10px] mt-3 text-slate-500 text-center font-medium">
-          Sign-in securely syncs your favorites and playlists to Google Firebase.
-        </p>
-
-        {/* Developer Credit & Copyright */}
-        <div className="mt-3 pt-2.5 border-t border-slate-200/70 w-full text-center flex flex-col items-center gap-0.5">
-          <p className="text-[11px] font-semibold text-slate-700">
-            Developed by <span className="font-bold text-slate-900">Muthukumar</span> (
-            <a 
-              href="https://github.com/muthukumar9360" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-amber-600 font-bold hover:underline"
-            >
-              @muthukumar9360
-            </a>)
-          </p>
-          <p className="text-[9px] text-slate-400 font-mono tracking-wider">
-            © {new Date().getFullYear()} Isaiyon — Pure Sound Vault
-          </p>
-        </div>
       </div>
 
       {/* 1. Modal: Web Installation Guide (For Web Access) */}

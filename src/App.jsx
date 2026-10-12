@@ -185,7 +185,7 @@ export default function App() {
     setTimeout(() => {
       setIsRefreshing(false);
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-      setToastMessage('✨ Library synced & up to date');
+      setToastMessage('✨ Library synced');
       toastTimeoutRef.current = setTimeout(() => setToastMessage(''), 2500);
     }, 700);
   };

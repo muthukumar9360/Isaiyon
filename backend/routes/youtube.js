@@ -61,7 +61,9 @@ router.post('/upload-track', requireAdmin, async (req, res) => {
         title: payload.title.trim(),
         actors: (payload.actors || '').trim(),
         composer: (payload.composer || '').trim(),
-        artist: (payload.artist || '').trim()
+        artist: (payload.artist || '').trim(),
+        genre: (payload.genre || 'Soundtrack').trim(),
+        mood: (payload.mood || 'Melody Hits').trim()
       }
     });
 

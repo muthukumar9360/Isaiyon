@@ -403,10 +403,12 @@ export default function AdminModal({
       });
       const data = await res.json();
       if (data.success && data.data) {
-        setYtEditMeta({
+        setYtEditMeta(prev => ({
           ...data.data,
+          genre: (prev.genre && prev.genre !== 'Soundtrack') ? prev.genre : (data.data.genre || prev.genre || 'Soundtrack'),
+          mood: (prev.mood && prev.mood !== 'Melody Hits') ? prev.mood : (data.data.mood || prev.mood || 'Melody Hits'),
           projectIdentifier: 'muthuramalingam_a-vault'
-        });
+        }));
         setYtStage('preview_edit');
         setStatusMessage('Review or edit details below before uploading.');
       } else {
@@ -530,6 +532,17 @@ export default function AdminModal({
   const resetYtAll = () => {
     setYtStage('input');
     setYtUrl('');
+    setYtEditMeta({
+      title: '',
+      movie: '',
+      actors: '',
+      composer: '',
+      artist: '',
+      genre: 'Soundtrack',
+      mood: 'Melody Hits',
+      thumbnailUrl: '',
+      duration: 250
+    });
     setYtUploadResult(null);
     setUploadProgress(0);
     setStatusMessage('');
@@ -819,6 +832,8 @@ export default function AdminModal({
                           <option value="Classical">Classical</option>
                           <option value="Pop">Pop</option>
                           <option value="Rock">Rock</option>
+                          <option value="Devotional">Devotional</option>
+                          <option value="Indie">Indie</option>
                         </select>
                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                           <ChevronDown size={14} />
@@ -839,6 +854,8 @@ export default function AdminModal({
                           <option value="Love Failure">💔 Love Failure</option>
                           <option value="Energetic">⚡ Energetic / Kuthu</option>
                           <option value="Midnight Chill">🌙 Midnight Chill</option>
+                          <option value="Mass">🔥 Mass & Folk</option>
+                          <option value="Love">❤️ Love & Romance</option>
                         </select>
                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                           <ChevronDown size={14} />
@@ -904,6 +921,54 @@ export default function AdminModal({
                     disabled={ytIsFetching}
                     className="w-full px-3 py-2.5 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-transparent focus:border-amber-400 outline-hidden transition-all"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">Genre (Song Type)</label>
+                    <div className="relative">
+                      <select
+                        value={ytEditMeta.genre || 'Soundtrack'}
+                        onChange={e => setYtEditMeta(prev => ({ ...prev, genre: e.target.value }))}
+                        disabled={ytIsFetching}
+                        className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
+                      >
+                        <option value="Soundtrack">Soundtrack</option>
+                        <option value="Melody">Melody</option>
+                        <option value="Folk">Folk</option>
+                        <option value="Classical">Classical</option>
+                        <option value="Pop">Pop</option>
+                        <option value="Rock">Rock</option>
+                        <option value="Devotional">Devotional</option>
+                        <option value="Indie">Indie</option>
+                      </select>
+                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                        <ChevronDown size={14} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">Mood / Category</label>
+                    <div className="relative">
+                      <select
+                        value={ytEditMeta.mood || 'Melody Hits'}
+                        onChange={e => setYtEditMeta(prev => ({ ...prev, mood: e.target.value }))}
+                        disabled={ytIsFetching}
+                        className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
+                      >
+                        <option value="Melody Hits">🎵 Melody Hits</option>
+                        <option value="Love Failure">💔 Love Failure</option>
+                        <option value="Energetic">⚡ Energetic / Kuthu</option>
+                        <option value="Midnight Chill">🌙 Midnight Chill</option>
+                        <option value="Mass">🔥 Mass & Folk</option>
+                        <option value="Love">❤️ Love & Romance</option>
+                      </select>
+                      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                        <ChevronDown size={14} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <button
@@ -993,6 +1058,54 @@ export default function AdminModal({
                       suggestions={suggestionData.artists}
                       disabled={ytIsUploading}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Genre (Song Type)</label>
+                      <div className="relative">
+                        <select
+                          value={ytEditMeta.genre || 'Soundtrack'}
+                          onChange={e => setYtEditMeta(prev => ({ ...prev, genre: e.target.value }))}
+                          disabled={ytIsUploading}
+                          className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
+                        >
+                          <option value="Soundtrack">Soundtrack</option>
+                          <option value="Melody">Melody</option>
+                          <option value="Folk">Folk</option>
+                          <option value="Classical">Classical</option>
+                          <option value="Pop">Pop</option>
+                          <option value="Rock">Rock</option>
+                          <option value="Devotional">Devotional</option>
+                          <option value="Indie">Indie</option>
+                        </select>
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                          <ChevronDown size={14} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[11px] font-bold text-slate-600">Mood / Category</label>
+                      <div className="relative">
+                        <select
+                          value={ytEditMeta.mood || 'Melody Hits'}
+                          onChange={e => setYtEditMeta(prev => ({ ...prev, mood: e.target.value }))}
+                          disabled={ytIsUploading}
+                          className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
+                        >
+                          <option value="Melody Hits">🎵 Melody Hits</option>
+                          <option value="Love Failure">💔 Love Failure</option>
+                          <option value="Energetic">⚡ Energetic / Kuthu</option>
+                          <option value="Midnight Chill">🌙 Midnight Chill</option>
+                          <option value="Mass">🔥 Mass & Folk</option>
+                          <option value="Love">❤️ Love & Romance</option>
+                        </select>
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                          <ChevronDown size={14} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
