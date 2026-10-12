@@ -1184,18 +1184,6 @@ export default function App() {
           <span className="w-1.5 bg-slate-900 rounded-full animate-[stemPulse_0.8s_ease-in-out_infinite] h-5 [animation-delay:200ms]" />
         </div>
 
-        {/* Developer Attribution & Copyright */}
-        <div className="mt-auto mb-6 text-center z-10 flex flex-col items-center gap-1">
-          <p className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-            Developed by <span className="font-bold text-slate-900">Muthukumar</span>
-          </p>
-          <p className="text-[10px] font-mono text-slate-400">
-            GitHub: <span className="text-amber-600 font-bold">@muthukumar9360</span>
-          </p>
-          <p className="text-[9px] text-slate-400 font-mono">
-            © {new Date().getFullYear()} Isaiyon — Pure Sound
-          </p>
-        </div>
       </div>
     );
   }

@@ -7,9 +7,30 @@ import { slugify } from '../utils/slugify.js';
 const DEFAULT_PROJECT_IDENTIFIER = 'muthuramalingam_a-vault';
 
 export function getArchiveCredentials() {
-  const accessKey = process.env.IA_ACCESS_KEY || '';
-  const secretKey = process.env.IA_SECRET_KEY || '';
-  const identifier = process.env.IA_IDENTIFIER || DEFAULT_PROJECT_IDENTIFIER;
+  let accessKey = process.env.IA_ACCESS_KEY || '';
+  let secretKey = process.env.IA_SECRET_KEY || '';
+  let identifier = process.env.IA_IDENTIFIER || DEFAULT_PROJECT_IDENTIFIER;
+
+  if (!accessKey || !secretKey) {
+    const candidatePaths = [
+      path.resolve('scripts/ia_config.json'),
+      path.resolve('../scripts/ia_config.json'),
+      path.resolve('../../scripts/ia_config.json')
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        try {
+          const json = JSON.parse(fs.readFileSync(p, 'utf8'));
+          accessKey = accessKey || json.access_key || '';
+          secretKey = secretKey || json.secret_key || '';
+          if (json.project_identifier) {
+            identifier = json.project_identifier;
+          }
+          break;
+        } catch (_) {}
+      }
+    }
+  }
 
   return {
     accessKey: accessKey.trim(),
