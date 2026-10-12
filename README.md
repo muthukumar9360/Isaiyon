@@ -26,7 +26,7 @@
 
 - 🚀 **Primary Live URL**: [https://music-player-d0eb8.web.app](https://music-player-d0eb8.web.app)
 - 🔗 **Mirror URL**: [https://music-player-d0eb8.firebaseapp.com](https://music-player-d0eb8.firebaseapp.com)
-- 📂 **GitHub Repository**: [muthukumar9360/Music_App](https://github.com/muthukumar9360/Music_App)
+- 📂 **GitHub Repository**: [muthukumar9360/Isaiyon](https://github.com/muthukumar9360/Isaiyon)
 
 ---
 
@@ -75,8 +75,8 @@
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/muthukumar9360/Music_App.git
-cd Music_App
+git clone https://github.com/muthukumar9360/Isaiyon.git
+cd Isaiyon
 ```
 
 ### 2. Install dependencies

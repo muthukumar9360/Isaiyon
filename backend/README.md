@@ -123,7 +123,7 @@ npm run archive:cleanup-temp -- --confirm
 ## 🚢 Deploying to Render
 
 1. Go to [Render Dashboard](https://dashboard.render.com/) and click **New +** -> **Web Service**.
-2. Connect your GitHub repository: `https://github.com/muthukumar9360/Music_App`.
+2. Connect your GitHub repository: `https://github.com/muthukumar9360/Isaiyon`.
 3. Fill in the deployment settings:
    - **Name**: `isaiyon-backend` (or your choice)
    - **Region**: Choose closest to your audience (e.g., Singapore or Frankfurt)
