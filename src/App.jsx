@@ -168,9 +168,9 @@ export default function App() {
   const lastBackActionTimeRef = useRef(0);
 
   const handleNavigationBackAction = () => {
-    // 1. If Exit Confirmation dialog is open -> close it
+    // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN!
+    // It only closes when the user explicitly clicks the buttons inside the modal ("Stay" or "Exit App")
     if (isExitModalOpenRef.current) {
-      setIsExitModalOpen(false);
       return;
     }
 
@@ -264,40 +264,6 @@ export default function App() {
     return () => {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, []);
-
-  // Globally prevent browser pull-to-refresh when dragging down at top of page across all screens
-  useEffect(() => {
-    let startY = 0;
-
-    const handleTouchStart = (e) => {
-      if (e.touches.length === 1) {
-        startY = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      if (e.touches.length !== 1) return;
-      const currentY = e.touches[0].clientY;
-      const deltaY = currentY - startY;
-
-      // Only cancel if pulling DOWN from the top of the viewport
-      if (deltaY > 0) {
-        const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-        if (scrollTop <= 0) {
-          if (e.cancelable) {
-            e.preventDefault();
-          }
-        }
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
     };
   }, []);
 
