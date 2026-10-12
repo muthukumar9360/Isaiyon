@@ -100,14 +100,13 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
     return () => mql.removeEventListener?.('change', checkStandalone);
   }, [isStandalone]);
 
-  const [previewAppMode, setPreviewAppMode] = useState(false);
-  const effectiveStandalone = Boolean(isStandalone || internalStandalone || previewAppMode);
+  const effectiveStandalone = Boolean(isStandalone || internalStandalone);
 
   const handleInstallClick = () => {
-    // Temporarily switch to App Mode on laptop so user can inspect the look & feel
-    setPreviewAppMode(true);
     if (onInstallApp) {
-      try { onInstallApp(); } catch (_) {}
+      onInstallApp();
+    } else {
+      setShowInstallGuide(true);
     }
   };
 
@@ -181,9 +180,9 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
             className="flex items-center gap-2 text-black cursor-pointer active:scale-95 transition-transform group py-1"
             title="PWA App Mode is Active • Tap for details"
           >
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            <span className="relative flex h-3 w-3 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
             </span>
             <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 font-display whitespace-nowrap">
               App Mode
@@ -409,7 +408,7 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
             <div className="flex items-center gap-2.5 text-emerald-600">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-1.5">
-                  <span>PWA App Mode Active</span>
+                  <span>App Mode Active/Enabled</span>
                   <Sparkles size={14} className="text-amber-500" />
                 </h3>
               </div>
@@ -431,7 +430,7 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
               <div className="p-2.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/70 flex items-center gap-2.5">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                 <span className="text-[11px] text-slate-800">
-                  <strong>Hardware Controls:</strong> Lockscreen & Headphone Remotes.
+                  <strong>Hardware Controls:</strong> Lockscreen Remotes.
                 </span>
               </div>
             </div>
@@ -444,18 +443,6 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
               Continue to Isaiyon
             </button>
 
-            {previewAppMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPwaModal(false);
-                  setPreviewAppMode(false);
-                }}
-                className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer border border-slate-200"
-              >
-                Reset back to "Install App" button
-              </button>
-            )}
           </div>
         </div>
       )}
