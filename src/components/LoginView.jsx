@@ -186,10 +186,8 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
             </span>
             <div className="flex flex-col text-left leading-none">
               <span className="text-[10px] font-black text-slate-900 flex items-center gap-1">
-                <Sparkles size={10} className="text-amber-600 group-hover:rotate-12 transition-transform" />
                 <span>App Mode</span>
               </span>
-              <span className="text-[8px] font-bold text-emerald-700">Studio Master</span>
             </div>
           </button>
         )}
@@ -408,17 +406,11 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
             </button>
 
             <div className="flex items-center gap-2.5 text-emerald-600">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
-                <Zap size={22} className="text-emerald-600" />
-              </div>
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-1.5">
                   <span>PWA App Mode Active</span>
                   <Sparkles size={14} className="text-amber-500" />
                 </h3>
-                <p className="text-[11px] text-emerald-700 font-semibold">
-                  Full standalone audio privileges unlocked
-                </p>
               </div>
             </div>
 
@@ -426,25 +418,19 @@ export default function LoginView({ isStandalone = false, onInstallApp }) {
               <div className="p-2.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/70 flex items-center gap-2.5">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                 <span className="text-[11px] text-slate-800">
-                  <strong>Fullscreen Experience:</strong> Zero browser address bar distractions.
+                  <strong>Fullscreen Experience:</strong> Zero Distractions.
                 </span>
               </div>
               <div className="p-2.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/70 flex items-center gap-2.5">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                 <span className="text-[11px] text-slate-800">
-                  <strong>Background Audio:</strong> Continuous playback when device is locked.
+                  <strong>Background Audio:</strong> Continuous Playback.
                 </span>
               </div>
               <div className="p-2.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/70 flex items-center gap-2.5">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                 <span className="text-[11px] text-slate-800">
-                  <strong>Hardware Controls:</strong> Headphone remotes & lockscreen seek active.
-                </span>
-              </div>
-              <div className="p-2.5 bg-emerald-50/70 rounded-2xl border border-emerald-200/70 flex items-center gap-2.5">
-                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span className="text-[11px] text-slate-800">
-                  <strong>Picture-in-Picture:</strong> Floating mini player window ready.
+                  <strong>Picture-in-Picture:</strong> Floating Window.
                 </span>
               </div>
             </div>
