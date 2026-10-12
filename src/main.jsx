@@ -20,12 +20,15 @@ if (import.meta.env.DEV && typeof window !== 'undefined' && 'serviceWorker' in n
     }
   });
 
-  // Automatically refresh with new version once the new Service Worker activates
+  // Automatically refresh with new version once the new Service Worker activates, unless audio is playing
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
+      const isAudioActive = document.querySelector('audio')?.paused === false;
+      if (!isAudioActive) {
+        refreshing = true;
+        window.location.reload();
+      }
     }
   });
 }

@@ -165,20 +165,44 @@ export default function App() {
   const isExitModalOpenRef = useRef(isExitModalOpen);
   isExitModalOpenRef.current = isExitModalOpen;
 
-  // Push history entry whenever navigating away from home so OS back swipe naturally routes to home
+  // Anchor history trap to genuine user gestures (pointerdown / touchstart / click)
+  // so Chrome's History Manipulation Intervention never bypasses it
+  useEffect(() => {
+    const ensureHistoryTrapOnGesture = () => {
+      if (!window.history.state || !window.history.state.isaiyonApp) {
+        try {
+          window.history.pushState({ isaiyonApp: true }, '', window.location.href);
+        } catch (_) {}
+      }
+    };
+
+    window.addEventListener('pointerdown', ensureHistoryTrapOnGesture, { passive: true });
+    window.addEventListener('touchstart', ensureHistoryTrapOnGesture, { passive: true });
+    window.addEventListener('click', ensureHistoryTrapOnGesture, { passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', ensureHistoryTrapOnGesture);
+      window.removeEventListener('touchstart', ensureHistoryTrapOnGesture);
+      window.removeEventListener('click', ensureHistoryTrapOnGesture);
+    };
+  }, []);
+
+  // When activePage changes to any page other than home, push history entry
   useEffect(() => {
     if (activePage !== 'home' && activePage !== 'nowplaying') {
-      window.history.pushState({ isaiyonPage: activePage }, '');
+      try {
+        window.history.pushState({ isaiyonApp: true, page: activePage }, '', window.location.href);
+      } catch (_) {}
     }
   }, [activePage]);
 
   useEffect(() => {
-    // Keep history trap alive so browser never closes abruptly on back swipe
-    window.history.pushState({ isaiyonApp: true }, '');
+    let lastPopActionTime = 0;
 
     const handlePopState = () => {
       // ALWAYS re-push immediately to keep the trap alive for multiple/repeated swipes
-      window.history.pushState({ isaiyonApp: true }, '');
+      try {
+        window.history.pushState({ isaiyonApp: true }, '', window.location.href);
+      } catch (_) {}
 
       // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN!
       // Must not close or exit on repeated swipes; only closes when clicking buttons inside modal
@@ -189,39 +213,90 @@ export default function App() {
       // 2. If any modal is open -> close it
       if (isAdminModalOpenRef.current) {
         setIsAdminModalOpen(false);
+        isAdminModalOpenRef.current = false;
         return;
       }
       if (isManageModalOpenRef.current) {
         setIsManageModalOpen(false);
+        isManageModalOpenRef.current = false;
         return;
       }
       if (playlistModalTrackRef.current) {
         setPlaylistModalTrack(null);
+        playlistModalTrackRef.current = null;
         return;
       }
       if (selectedMovieRef.current) {
         setSelectedMovie(null);
+        selectedMovieRef.current = null;
         return;
       }
 
-      // 3. If expanded VinylPlayer is open -> minimize to previous view
+      // 3. If expanded VinylPlayer is open -> minimize to home
       if (activePageRef.current === 'nowplaying') {
-        setActivePage(lastActivePageRef.current || 'home');
+        setActivePage('home');
+        activePageRef.current = 'home';
         return;
       }
 
       // 4. If on any other page (search, library, queue, history) -> return directly to home
       if (activePageRef.current !== 'home') {
         setActivePage('home');
+        activePageRef.current = 'home';
         return;
       }
 
-      // 5. If on home page (whether bottom player is ON or OFF!) -> ALWAYS prompt exit confirmation dialog!
+      // 5. If on home page (whether bottom player is ON or OFF, playing or paused!) -> ALWAYS prompt exit confirmation dialog!
       setIsExitModalOpen(true);
+      isExitModalOpenRef.current = true;
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    const triggerSafePop = () => {
+      const now = Date.now();
+      if (now - lastPopActionTime < 350) return;
+      lastPopActionTime = now;
+      handlePopState();
+    };
+
+    window.addEventListener('popstate', triggerSafePop);
+
+    // Touch edge-swipe detection for devices where system gesture doesn't dispatch popstate
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    };
+
+    const handleTouchEnd = (e) => {
+      if (e.changedTouches.length !== 1) return;
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const elapsedTime = Date.now() - touchStartTime;
+
+      const screenWidth = window.innerWidth;
+      const isFromLeftEdge = touchStartX <= 45 && deltaX > 60;
+      const isFromRightEdge = touchStartX >= screenWidth - 45 && deltaX < -60;
+
+      if ((isFromLeftEdge || isFromRightEdge) && Math.abs(deltaY) < Math.abs(deltaX) * 0.8 && elapsedTime < 450) {
+        triggerSafePop();
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('popstate', triggerSafePop);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
   }, []);
 
   const handleConfirmExitApp = () => {
@@ -1643,7 +1718,10 @@ export default function App() {
         {isExitModalOpen && (
           <div 
             className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 select-none animate-[modalPop_0.2s_ease-out]"
-            onClick={() => setIsExitModalOpen(false)}
+            onClick={() => {
+              setIsExitModalOpen(false);
+              isExitModalOpenRef.current = false;
+            }}
           >
             <div 
               className="w-full max-w-xs bg-white rounded-3xl p-5 shadow-2xl flex flex-col items-center text-center gap-3 border border-slate-100"
@@ -1661,7 +1739,10 @@ export default function App() {
               <div className="flex gap-2 w-full mt-1">
                 <button
                   type="button"
-                  onClick={() => setIsExitModalOpen(false)}
+                  onClick={() => {
+                    setIsExitModalOpen(false);
+                    isExitModalOpenRef.current = false;
+                  }}
                   className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer"
                 >
                   Stay
