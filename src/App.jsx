@@ -269,7 +269,9 @@ export default function App() {
   const handleCloseEntireApp = () => {
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      try {
+        audioRef.current.currentTime = 0;
+      } catch (_) {}
       audioRef.current.removeAttribute('src');
       audioRef.current.load();
     }
@@ -279,18 +281,19 @@ export default function App() {
         navigator.mediaSession.playbackState = 'none';
       } catch {}
     }
+    activeTrackIdRef.current = null;
     setIsPlaying(false);
     setCurrentTrackIndex(null);
+    setCurrentTime(0);
+    setDuration(0);
     setIsBottomPlayerDismissed(true);
+    setActivePage(prev => (prev === 'nowplaying' ? 'home' : prev));
     try {
       localStorage.removeItem('isaiyon_last_track_id');
     } catch (_) {}
     if (floatingPipRef.current?.exit) {
       floatingPipRef.current.exit();
     }
-    try {
-      window.close();
-    } catch (_) {}
   };
 
   useEffect(() => {
@@ -338,6 +341,14 @@ export default function App() {
           return normalizeTrack(trk);
         });
         setTracks(loadedTracks);
+
+        // Preload all cover images into browser cache for instant rendering
+        loadedTracks.forEach(t => {
+          if (t.coverUrl && !t.coverUrl.startsWith('data:')) {
+            const img = new Image();
+            img.src = t.coverUrl;
+          }
+        });
 
         // Restore last played song when user hasn't clicked the X button
         try {
@@ -697,21 +708,29 @@ export default function App() {
     const audio = audioRef.current;
     if (activeTrackIdRef.current !== currentTrack.id) {
       activeTrackIdRef.current = currentTrack.id;
+      setCurrentTime(0);
+      try { audio.currentTime = 0; } catch (_) {}
       const candidates = getAudioStreamCandidates(currentTrack);
       streamCandidatesRef.current = candidates;
       candidateIndexRef.current = 0;
       const primaryUrl = candidates[0] || currentTrack.audioUrl;
 
       if (primaryUrl) {
-        setIsAudioBuffering(true);
-        audio.preload = 'auto';
+        audio.preload = isPlaying ? 'auto' : 'none';
         audio.src = primaryUrl;
         audio.playbackRate = playbackRate;
-        audio.load();
+        try { audio.currentTime = 0; } catch (_) {}
         if (isPlaying) {
+          setIsAudioBuffering(true);
+          audio.load();
           audio.play().then(() => {
             setIsAudioBuffering(false);
-          }).catch(() => {});
+            try { audio.currentTime = 0; } catch (_) {}
+            setCurrentTime(0);
+          }).catch((err) => {
+            console.warn("Track change play error:", err);
+            handleError();
+          });
         }
       }
     }
@@ -804,7 +823,7 @@ export default function App() {
       audio.pause();
       setIsPlaying(false);
     } else {
-      if ((!audio.src || activeTrackIdRef.current !== currentTrack?.id) && currentTrack) {
+      if ((!audio.src || audio.error || activeTrackIdRef.current !== currentTrack?.id || audio.readyState === 0) && currentTrack) {
         activeTrackIdRef.current = currentTrack.id;
         const candidates = getAudioStreamCandidates(currentTrack);
         streamCandidatesRef.current = candidates;
@@ -812,6 +831,8 @@ export default function App() {
         const primaryUrl = candidates[0] || currentTrack.audioUrl;
         if (primaryUrl) {
           audio.src = primaryUrl;
+          audio.playbackRate = playbackRate;
+          try { audio.currentTime = currentTime || 0; } catch (_) {}
           audio.load();
         }
       }
@@ -824,8 +845,8 @@ export default function App() {
             setIsAudioBuffering(false);
           })
           .catch((err) => {
-            console.warn("Play error:", err);
-            setIsAudioBuffering(false);
+            console.warn("Play error, trying auto-failover:", err);
+            handleError();
           });
       }
       setIsBottomPlayerDismissed(false);
@@ -858,6 +879,8 @@ export default function App() {
     const index = tracks.findIndex(t => t.id === track.id);
     if (index !== -1) {
       setCurrentTrackIndex(index);
+      setCurrentTime(0);
+      setDuration(track.duration || 0);
       const audio = audioRef.current;
       const candidates = getAudioStreamCandidates(track);
       streamCandidatesRef.current = candidates;
@@ -868,7 +891,9 @@ export default function App() {
         activeTrackIdRef.current = track.id;
         audio.src = primaryUrl;
         audio.playbackRate = playbackRate;
-        audio.currentTime = 0;
+        try {
+          audio.currentTime = 0;
+        } catch (_) {}
         setIsAudioBuffering(true);
         audio.load();
         const playPromise = audio.play();
@@ -877,10 +902,12 @@ export default function App() {
             .then(() => {
               setIsPlaying(true);
               setIsAudioBuffering(false);
+              try { audio.currentTime = 0; } catch (_) {}
+              setCurrentTime(0);
             })
             .catch((err) => {
-              console.warn("Mobile audio autoplay restriction:", err);
-              setIsAudioBuffering(false);
+              console.warn("Mobile audio autoplay restriction, trying auto-failover:", err);
+              handleError();
             });
         }
       }
@@ -1385,6 +1412,7 @@ export default function App() {
               onCollapsePlayer={() => {
                 setActivePage(lastActivePageRef.current || 'home');
               }}
+              onClosePlayer={handleCloseEntireApp}
               user={user}
             />
           )}

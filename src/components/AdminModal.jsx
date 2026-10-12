@@ -548,6 +548,22 @@ export default function AdminModal({
     setStatusMessage('');
   };
 
+  const resetAllState = () => {
+    resetYtAll();
+    resetDirectForm();
+    setSuccessCreatedTrack(null);
+    setUploadProgress(0);
+    setStatusMessage('');
+    setIsSubmitting(false);
+    setYtIsFetching(false);
+    setYtIsUploading(false);
+  };
+
+  const handleCloseModal = () => {
+    resetAllState();
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3.5 z-50 select-none animate-[modalPop_0.2s_ease-out]">
       <div 
@@ -568,7 +584,7 @@ export default function AdminModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCloseModal}
             className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
             title="Close"
           >
@@ -642,7 +658,7 @@ export default function AdminModal({
                   </button>
                   <button
                     type="button"
-                    onClick={onClose}
+                    onClick={handleCloseModal}
                     className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer"
                   >
                     Done & Close
@@ -1169,7 +1185,7 @@ export default function AdminModal({
                   </button>
 
                   <button
-                    onClick={onClose}
+                    onClick={handleCloseModal}
                     className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold hover:bg-slate-200 transition-all active:scale-95 cursor-pointer"
                   >
                     Done & Close
