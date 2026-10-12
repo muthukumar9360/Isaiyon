@@ -1109,36 +1109,23 @@ export default function AdminModal({
 
             {/* STAGE 3: Done */}
             {ytStage === 'done' && ytUploadResult && (
-              <div className="text-center py-4 flex flex-col gap-3">
+              <div className="text-center py-2 flex flex-col gap-3">
                 <CheckCircle2 size={40} className="text-emerald-500 mx-auto" />
-                <h4 className="text-sm font-black text-slate-900 font-display">
+                <h4 className="text-lg font-black text-slate-900 font-display">
                   Song Uploaded Successfully!
                 </h4>
-                <p className="text-xs text-slate-500">
-                  Uploaded to: <code className="text-slate-700 bg-slate-100 px-1 py-0.5 rounded text-[11px]">{ytUploadResult.remoteAudioPath}</code>
-                </p>
-
-                <div className="flex flex-col gap-2 mt-2">
-                  <a
-                    href={ytUploadResult.archiveDetailsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs hover:bg-slate-800 transition-all active:scale-95"
-                  >
-                    <span>Inspect in Archive.org</span>
-                    <ExternalLink size={13} />
-                  </a>
+                <div className="flex flex-col gap-5 mt-2">
 
                   <button
                     onClick={resetYtAll}
-                    className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-all active:scale-95 cursor-pointer"
+                    className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-md font-bold hover:bg-amber-100 transition-all active:scale-95 cursor-pointer"
                   >
                     + Add Another Song
                   </button>
 
                   <button
                     onClick={handleCloseModal}
-                    className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold hover:bg-slate-200 transition-all active:scale-95 cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-800 text-md font-bold hover:bg-slate-200 transition-all active:scale-95 cursor-pointer"
                   >
                     Done & Close
                   </button>

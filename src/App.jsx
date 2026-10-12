@@ -198,8 +198,8 @@ export default function App() {
     setTimeout(() => {
       setIsRefreshing(false);
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-      setToastMessage('✨ Library synced');
-      toastTimeoutRef.current = setTimeout(() => setToastMessage(''), 2500);
+      setToastMessage('Library Synced');
+      toastTimeoutRef.current = setTimeout(() => setToastMessage(''), 2200);
     }, 700);
   };
 
@@ -566,7 +566,7 @@ export default function App() {
       localStorage.removeItem(`isaiyon_listened_${user.uid}`);
       const historyDocRef = doc(db, 'users', user.uid, 'settings', 'listenedHistory');
       await setDoc(historyDocRef, { items: [], updatedAt: serverTimestamp() }, { merge: true });
-      showToast("Listening history cleared");
+      showToast("History Cleared");
     } catch (err) {
       console.warn("Failed clearing listened history:", err);
     }
@@ -632,9 +632,9 @@ export default function App() {
       console.warn("Audio playback error (all candidates exhausted):", audio.error);
       if (isPlaying) {
         if (audio.error?.code === 2) {
-          showToast("⚠️ Network issue");
+          showToast("Network Error");
         } else if (audio.error?.code === 4) {
-          showToast("⚠️ Stream unavailable");
+          showToast("Stream Error");
         }
       }
     };
@@ -957,10 +957,7 @@ export default function App() {
   const handleToggleQueueMode = () => {
     setIsQueueMode(prev => {
       const next = !prev;
-      showToast(next 
-        ? `Queue Mode ON` 
-        : "Queue Mode OFF"
-      );
+      showToast(next ? "Queue ON" : "Queue OFF");
       return next;
     });
   };
@@ -971,7 +968,7 @@ export default function App() {
     if (unheardList.length > 1) {
       setQueue(unheardList.slice(1));
       setIsQueueMode(true);
-      showToast(`Playing unheard tracks (${unheardList.length} songs)!`);
+      showToast("Playing Unheard");
     }
   };
 
@@ -1034,9 +1031,9 @@ export default function App() {
   const handleAddToQueue = (track) => {
     if (!queue.some(q => q.id === track.id)) {
       setQueue(prev => [...prev, track]);
-      showToast(`Added "${track.title}" to queue`);
+      showToast("Queue Added");
     } else {
-      showToast(`"${track.title}" is already in queue`);
+      showToast("Already Queued");
     }
   };
 
@@ -1049,7 +1046,7 @@ export default function App() {
         trackIds: [],
         createdAt: serverTimestamp()
       });
-      showToast(`Playlist "${name}" created!`);
+      showToast("Playlist Created");
     } catch (err) {
       console.error(err);
     }
@@ -1075,7 +1072,7 @@ export default function App() {
         updatedAt: serverTimestamp()
       }, { merge: true });
 
-      showToast(isIn ? `Removed from "${targetPl.name}"` : `Added to "${targetPl.name}"!`);
+      showToast(isIn ? "Track Removed" : "Track Added");
     } catch (err) {
       console.error('Error updating playlist track:', err);
     }
@@ -1092,7 +1089,7 @@ export default function App() {
         trackIds: trackId ? [trackId] : [],
         createdAt: serverTimestamp()
       });
-      showToast(`Created "${name}" & added song!`);
+      showToast("Playlist Created");
     } catch (err) {
       console.error('Error creating playlist with track:', err);
     }
@@ -1102,7 +1099,7 @@ export default function App() {
     if (!user || !confirm('Delete this playlist?')) return;
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'playlists', playlistId));
-      showToast('Playlist deleted');
+      showToast("Playlist Deleted");
     } catch (err) {
       console.error(err);
     }
@@ -1152,7 +1149,7 @@ export default function App() {
       : [...savedAlbums.filter(name => name?.trim().toLowerCase() !== trimmedName.toLowerCase()), trimmedName];
     
     setSavedAlbums(updated);
-    showToast(isSaved ? `Removed "${trimmedName}" from saved albums` : `Saved "${trimmedName}" album to Library!`);
+    showToast(isSaved ? "Album Removed" : "Album Saved");
 
     try {
       localStorage.setItem(`isaiyon_albums_${user.uid}`, JSON.stringify(updated));
@@ -1186,7 +1183,7 @@ export default function App() {
         ...trackData,
         createdAt: serverTimestamp()
       });
-      showToast('Track permanently saved to Vault!');
+      showToast('Track Saved');
     } catch (err) {
       alert('Error saving track: ' + err.message);
       throw err;
@@ -1200,7 +1197,7 @@ export default function App() {
         ...updatedFields,
         updatedAt: serverTimestamp()
       });
-      showToast('Track updated in vault successfully!');
+      showToast('Track Updated');
     } catch (err) {
       alert('Error updating track: ' + err.message);
       throw err;
@@ -1210,7 +1207,7 @@ export default function App() {
   const handleDeleteTrack = async (trackId) => {
     try {
       await deleteDoc(doc(db, 'tracks', trackId));
-      showToast('Track removed from vault.');
+      showToast('Track Deleted');
     } catch (err) {
       alert('Error deleting track: ' + err.message);
       throw err;
@@ -1562,7 +1559,7 @@ export default function App() {
 
         {/* Floating Quick Toast */}
         {toastMessage && (
-          <div className="fixed top-18 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-md border border-white/10 animate-[modalPop_0.2s_ease-out] pointer-events-none">
+          <div className="fixed top-18 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-md border border-white/10 animate-[modalPop_0.2s_ease-out] pointer-events-none whitespace-nowrap text-center">
             {toastMessage}
           </div>
         )}
