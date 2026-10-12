@@ -12,7 +12,7 @@ import ManageSongsModal from './components/ManageSongsModal';
 import AddToPlaylistModal from './components/AddToPlaylistModal';
 import LoginView from './components/LoginView';
 import HistoryPage from './components/HistoryPage';
-import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon, Download, LogOut, AlertCircle } from 'lucide-react';
+import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon, Download, LogOut, AlertCircle, X, Power } from 'lucide-react';
 import { FALLBACK_ARTWORK } from './constants/fallbackArt';
 import { 
   resolveDirectArchiveUrl, 
@@ -199,13 +199,12 @@ export default function App() {
     let lastPopActionTime = 0;
 
     const handlePopState = () => {
-      // ALWAYS re-push immediately to keep the trap alive for multiple/repeated swipes
+      // Re-push immediately to keep the trap alive so the app is not exited by swipe gestures
       try {
         window.history.pushState({ isaiyonApp: true }, '', window.location.href);
       } catch (_) {}
 
-      // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN!
-      // Must not close or exit on repeated swipes; only closes when clicking buttons inside modal
+      // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN
       if (isExitModalOpenRef.current) {
         return;
       }
@@ -246,9 +245,8 @@ export default function App() {
         return;
       }
 
-      // 5. If on home page (whether bottom player is ON or OFF, playing or paused!) -> ALWAYS prompt exit confirmation dialog!
-      setIsExitModalOpen(true);
-      isExitModalOpenRef.current = true;
+      // 5. If on home page -> NEVER exit or prompt on swipe/back gesture!
+      // The app exits ONLY when the user clicks the Exit button in the Navbar.
     };
 
     const triggerSafePop = () => {
@@ -260,42 +258,8 @@ export default function App() {
 
     window.addEventListener('popstate', triggerSafePop);
 
-    // Touch edge-swipe detection for devices where system gesture doesn't dispatch popstate
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-
-    const handleTouchStart = (e) => {
-      if (e.touches.length !== 1) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
-    };
-
-    const handleTouchEnd = (e) => {
-      if (e.changedTouches.length !== 1) return;
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-      const elapsedTime = Date.now() - touchStartTime;
-
-      const screenWidth = window.innerWidth;
-      const isFromLeftEdge = touchStartX <= 45 && deltaX > 60;
-      const isFromRightEdge = touchStartX >= screenWidth - 45 && deltaX < -60;
-
-      if ((isFromLeftEdge || isFromRightEdge) && Math.abs(deltaY) < Math.abs(deltaX) * 0.8 && elapsedTime < 450) {
-        triggerSafePop();
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-
     return () => {
       window.removeEventListener('popstate', triggerSafePop);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
 
@@ -1449,6 +1413,7 @@ export default function App() {
           user={user} 
           onOpenAdminModal={() => setIsAdminModalOpen(true)} 
           onOpenManageModal={() => setIsManageModalOpen(true)}
+          onConfirmExitApp={handleConfirmExitApp}
           onRefresh={handleRefreshData}
           isRefreshing={isRefreshing}
         />
@@ -1724,35 +1689,55 @@ export default function App() {
             }}
           >
             <div 
-              className="w-full max-w-xs bg-white rounded-3xl p-5 shadow-2xl flex flex-col items-center text-center gap-3 border border-slate-100"
+              className="w-full max-w-xs bg-white rounded-3xl p-5 shadow-2xl relative flex flex-col items-center text-center gap-3 border border-slate-100"
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-xs">
-                <LogOut size={22} />
+              {/* Top Right X button acts as Cancel */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExitModalOpen(false);
+                  isExitModalOpenRef.current = false;
+                }}
+                className="absolute top-3.5 right-3.5 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+                title="Cancel"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-xs mt-1">
+                <Power size={22} />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900 font-display">Exit Isaiyon?</h3>
+                <h3 className="text-base font-black text-slate-900 font-display">Account & Exit</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Are you sure you want to exit the application?
+                  Choose to sign out from your account or completely exit the app.
                 </p>
               </div>
-              <div className="flex gap-2 w-full mt-1">
+              <div className="flex gap-2 w-full pt-1">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     setIsExitModalOpen(false);
                     isExitModalOpenRef.current = false;
+                    try {
+                      await auth.signOut();
+                    } catch (_) {}
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                  title="Log Out"
                 >
-                  Stay
+                  <LogOut size={13} />
+                  <span>Log Out</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmExitApp}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                  title="Exit App"
                 >
-                  Exit App
+                  <Power size={13} />
+                  <span>Exit App</span>
                 </button>
               </div>
             </div>

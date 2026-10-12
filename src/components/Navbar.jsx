@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink, RefreshCw } from 'lucide-react';
+import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink, RefreshCw, Power } from 'lucide-react';
 import {
   auth,
   googleProvider,
@@ -53,7 +53,7 @@ function getAuthErrorMessage(err) {
   }
 }
 
-export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRefresh, isRefreshing = false }) {
+export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onConfirmExitApp, onRefresh, isRefreshing = false }) {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -180,21 +180,29 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
 
 
 
-          {/* Google Authentication */}
+          {/* Google Authentication & Exit */}
           {user ? (
-            <button
-              type="button"
-              className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 cursor-pointer transition-all active:scale-95 shadow-2xs"
-              onClick={() => setShowLogoutConfirm(true)}
-              title="Account & Log Out"
-            >
-              <img
-                src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
-                alt={user.displayName || 'User'}
-                className="w-6 h-6 rounded-full object-cover ring-2 ring-white"
-              />
-              <LogOut size={16} className="text-black" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <div
+                className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all active:scale-95 shadow-2xs"
+              >
+                <img
+                  src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                  alt={user.displayName || 'User'}
+                  className="w-6 h-6 rounded-full object-cover ring-2 ring-white"
+                />
+              </div>
+
+              {/* Dedicated Exit App Button at top Navbar near to logout button */}
+              <button
+                type="button"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200/80 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs"
+                onClick={() => setShowLogoutConfirm(true)}
+                title="Exit Application"
+              >
+                <Power size={15} />
+              </button>
+            </div>
           ) : (
             <button
               disabled={isSigningIn}
@@ -213,7 +221,7 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
         </div>
       </header>
 
-      {/* Logout Confirmation Modal */}
+      {/* Account, Logout & Exit Confirmation Modal */}
       {showLogoutConfirm && user && (
         <div
           className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
@@ -223,26 +231,27 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
             className="w-full max-w-xs sm:max-w-sm bg-white rounded-3xl p-5 shadow-2xl relative border border-slate-100 flex flex-col gap-4 text-center items-center"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Top Right X button acts as Cancel */}
             <button
               type="button"
               onClick={() => setShowLogoutConfirm(false)}
               className="absolute top-3.5 right-3.5 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
-              title="Close"
+              title="Cancel"
             >
               <X size={16} />
             </button>
 
-            {/* Logout Icon Graphic */}
-            <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 text-rose-500 flex items-center justify-center shadow-xs mt-1">
-              <LogOut size={15} className="ml-0.5" />
+            {/* Icon Graphic */}
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shadow-xs mt-1">
+              <Power size={18} />
             </div>
 
             <div className="flex flex-col gap-1">
               <h3 className="text-base font-extrabold text-slate-900 font-display">
-                Sign Out of ISAIYON?
+                Account & Exit
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                Are you sure you want to log out?
+                Choose to sign out from your account or completely exit the app.
               </p>
             </div>
 
@@ -263,25 +272,31 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
               </div>
             </div>
 
-            {/* Confirmation Action Buttons */}
+            {/* Confirmation Action Buttons: Left is Logout, Right is Exit App */}
             <div className="w-full flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer"
-              >
-                Cancel
-              </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowLogoutConfirm(false);
                   handleSignOut();
                 }}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                title="Log Out"
               >
                 <LogOut size={13} />
-                <span>Logout</span>
+                <span>Log Out</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  onConfirmExitApp?.();
+                }}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                title="Exit App"
+              >
+                <Power size={13} />
+                <span>Exit App</span>
               </button>
             </div>
           </div>
