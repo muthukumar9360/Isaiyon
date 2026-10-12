@@ -165,24 +165,28 @@ export default function App() {
   const isExitModalOpenRef = useRef(isExitModalOpen);
   isExitModalOpenRef.current = isExitModalOpen;
 
-  // Anchor history trap to genuine user gestures (pointerdown / touchstart / click)
-  // so Chrome's History Manipulation Intervention never bypasses it
+  // Anchor history trap cushion so swipe gestures never pop past the root
   useEffect(() => {
-    const ensureHistoryTrapOnGesture = () => {
-      if (!window.history.state || !window.history.state.isaiyonApp) {
-        try {
-          window.history.pushState({ isaiyonApp: true }, '', window.location.href);
-        } catch (_) {}
-      }
+    try {
+      window.history.replaceState({ isaiyonApp: true, root: true }, '', window.location.href);
+      window.history.pushState({ isaiyonApp: true, trap: true }, '', window.location.href);
+    } catch (_) {}
+
+    const replenishHistoryCushion = () => {
+      try {
+        if (!window.history.state || !window.history.state.trap) {
+          window.history.pushState({ isaiyonApp: true, trap: true }, '', window.location.href);
+        }
+      } catch (_) {}
     };
 
-    window.addEventListener('pointerdown', ensureHistoryTrapOnGesture, { passive: true });
-    window.addEventListener('touchstart', ensureHistoryTrapOnGesture, { passive: true });
-    window.addEventListener('click', ensureHistoryTrapOnGesture, { passive: true });
+    window.addEventListener('pointerdown', replenishHistoryCushion, { passive: true });
+    window.addEventListener('touchstart', replenishHistoryCushion, { passive: true });
+    window.addEventListener('click', replenishHistoryCushion, { passive: true });
     return () => {
-      window.removeEventListener('pointerdown', ensureHistoryTrapOnGesture);
-      window.removeEventListener('touchstart', ensureHistoryTrapOnGesture);
-      window.removeEventListener('click', ensureHistoryTrapOnGesture);
+      window.removeEventListener('pointerdown', replenishHistoryCushion);
+      window.removeEventListener('touchstart', replenishHistoryCushion);
+      window.removeEventListener('click', replenishHistoryCushion);
     };
   }, []);
 
@@ -201,7 +205,7 @@ export default function App() {
     const handlePopState = () => {
       // Re-push immediately to keep the trap alive so the app is not exited by swipe gestures
       try {
-        window.history.pushState({ isaiyonApp: true }, '', window.location.href);
+        window.history.pushState({ isaiyonApp: true, trap: true }, '', window.location.href);
       } catch (_) {}
 
       // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN

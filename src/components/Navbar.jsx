@@ -242,17 +242,14 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onCo
             </button>
 
             {/* Icon Graphic */}
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shadow-xs mt-1">
+            <div className="w-10 h-10 rounded-full bg-slate-900 border border-black text-white flex items-center justify-center mt-1">
               <Power size={18} />
             </div>
 
             <div className="flex flex-col gap-1">
-              <h3 className="text-base font-extrabold text-slate-900 font-display">
-                Account & Exit
+              <h3 className="text-base font-extrabold text-black font-display">
+                Sign out / Exit
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                Choose to sign out from your account or completely exit the app.
-              </p>
             </div>
 
             {/* User Profile Card */}
