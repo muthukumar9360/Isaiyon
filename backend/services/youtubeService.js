@@ -78,16 +78,73 @@ export async function getBinaryCommands() {
   return { ytCommand, ytPrefixArgs, ffmpegLocation };
 }
 
-function checkCommand(cmd, args) {
-  return new Promise((resolve) => {
-    try {
-      const proc = spawn(cmd, args, { shell: true, stdio: 'ignore' });
-      proc.on('error', () => resolve(false));
-      proc.on('close', (code) => resolve(code === 0));
-    } catch {
-      resolve(false);
-    }
+/**
+ * Executes a process cleanly without shell wrapping on POSIX systems (Linux/Render),
+ * which prevents /bin/sh syntax errors caused by '%' or '(' in templates or '&' in URLs.
+ * On Windows, transparently falls back to shell: true only if a .cmd/.bat wrapper requires it.
+ */
+function runProcess(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    let proc;
+    let stdoutData = '';
+    let stderrData = '';
+    let settled = false;
+
+    const trySpawn = (useShell) => {
+      try {
+        proc = spawn(command, args, { ...options, shell: useShell });
+      } catch (err) {
+        if (!useShell && process.platform === 'win32') {
+          return trySpawn(true);
+        }
+        if (!settled) {
+          settled = true;
+          reject(err);
+        }
+        return;
+      }
+
+      if (proc.stdout) {
+        proc.stdout.on('data', (data) => {
+          stdoutData += data.toString();
+        });
+      }
+
+      if (proc.stderr) {
+        proc.stderr.on('data', (data) => {
+          stderrData += data.toString();
+        });
+      }
+
+      proc.on('error', (err) => {
+        if (!useShell && process.platform === 'win32' && err.code === 'ENOENT') {
+          return trySpawn(true);
+        }
+        if (!settled) {
+          settled = true;
+          reject(err);
+        }
+      });
+
+      proc.on('close', (code) => {
+        if (!settled) {
+          settled = true;
+          resolve({ code, stdout: stdoutData, stderr: stderrData });
+        }
+      });
+    };
+
+    trySpawn(false);
   });
+}
+
+async function checkCommand(cmd, args) {
+  try {
+    const { code } = await runProcess(cmd, args, { stdio: 'ignore' });
+    return code === 0;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -252,39 +309,17 @@ export async function extractYoutubeInfo(youtubeUrl) {
   console.log(`[YouTubeService] Extracting metadata using ${ytCommand} ${args.join(' ')}`);
 
   try {
-    const ytResult = await new Promise((resolve, reject) => {
-      const proc = spawn(ytCommand, args, { shell: true });
-      let stdoutData = '';
-      let stderrData = '';
+    const { code, stdout, stderr } = await runProcess(ytCommand, args);
+    if (code !== 0) {
+      throw new Error(`yt-dlp extraction failed (code ${code}): ${stderr || 'Unknown error'}`);
+    }
 
-      proc.stdout.on('data', (data) => {
-        stdoutData += data.toString();
-      });
-
-      proc.stderr.on('data', (data) => {
-        stderrData += data.toString();
-      });
-
-      proc.on('close', (code) => {
-        if (code !== 0) {
-          return reject(new Error(`yt-dlp extraction failed (code ${code}): ${stderrData || 'Unknown error'}`));
-        }
-
-        try {
-          const parsed = JSON.parse(stdoutData.trim());
-          const rich = parseRichMetadata(parsed);
-          resolve(rich);
-        } catch (err) {
-          reject(new Error(`Failed to parse yt-dlp metadata JSON: ${err.message}`));
-        }
-      });
-
-      proc.on('error', (err) => {
-        reject(new Error(`Failed to spawn yt-dlp: ${err.message}`));
-      });
-    });
-
-    return ytResult;
+    try {
+      const parsed = JSON.parse(stdout.trim());
+      return parseRichMetadata(parsed);
+    } catch (err) {
+      throw new Error(`Failed to parse yt-dlp metadata JSON: ${err.message}`);
+    }
   } catch (ytErr) {
     console.warn(`[YouTubeService] Primary extraction failed (${ytErr.message}). Attempting YouTube oEmbed fallback...`);
 
@@ -359,25 +394,10 @@ export async function downloadAudioAndThumbnail({ youtubeUrl, videoId, tempDir }
 
   console.log(`[YouTubeService] Downloading audio & thumb: ${ytCommand} ${args.join(' ')}`);
 
-  await new Promise((resolve, reject) => {
-    const proc = spawn(ytCommand, args, { shell: true });
-    let stderrData = '';
-
-    proc.stderr.on('data', (data) => {
-      stderrData += data.toString();
-    });
-
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        return reject(new Error(`yt-dlp download failed (code ${code}): ${stderrData}`));
-      }
-      resolve();
-    });
-
-    proc.on('error', (err) => {
-      reject(new Error(`Failed to spawn yt-dlp download: ${err.message}`));
-    });
-  });
+  const { code, stderr } = await runProcess(ytCommand, args);
+  if (code !== 0) {
+    throw new Error(`yt-dlp download failed (code ${code}): ${stderr || 'Unknown error'}`);
+  }
 
   // Locate audio file
   const files = fs.readdirSync(tempDir);
