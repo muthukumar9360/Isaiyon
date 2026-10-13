@@ -53,7 +53,7 @@ function getAuthErrorMessage(err) {
   }
 }
 
-export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRefresh, isRefreshing = false }) {
+export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRefresh, isRefreshing = false, isBuffering = false }) {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -127,8 +127,8 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
   return (
     <>
       <header className="fixed top-0 left-0 right-0 max-w-md mx-auto h-18 bg-white border-b border-slate-300 px-4 flex items-center justify-between z-40 select-none shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-        {/* Brand / App Name (Top Left in Full Caps) with Refresh Button */}
-        <div className="flex items-center gap-1.5">
+        {/* Brand / App Name (Top Left in Full Caps) with Rotating Vinyl Loading Animation */}
+        <div className="flex items-center gap-2">
           <div className="w-9 h-9 flex items-center justify-center shrink-0">
             <img
               src="/logo.png"
@@ -140,6 +140,22 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
           <span className="text-black text-xl font-black tracking-widest text-slate-900 font-display uppercase">
             ISAIYON
           </span>
+
+          {/* Floating Navbar Rotating Mini Vinyl Disc Loading Animation */}
+          {isBuffering && (
+            <div 
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-800 animate-[fadeIn_0.2s_ease-out]"
+              title="Buffering audio..."
+            >
+              <div className="relative w-4 h-4 rounded-full bg-slate-950 animate-spin border border-slate-700 shadow-xs flex items-center justify-center shrink-0">
+                <div className="absolute inset-0.5 rounded-full border border-white/20" />
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 border border-slate-900" />
+              </div>
+              <span className="text-[10px] font-black tracking-wider uppercase hidden xs:inline text-amber-800 font-display">
+                Loading
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Nav Actions */}

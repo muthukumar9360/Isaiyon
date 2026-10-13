@@ -409,6 +409,22 @@ export default function App() {
     : null;
   currentTrackRef.current = currentTrack;
 
+  // Rotating disc animation frames for mobile lock screen & notification title
+  const ROTATING_DISC_FRAMES = ['◐', '◓', '◑', '◒'];
+  const [discFrameIndex, setDiscFrameIndex] = useState(0);
+
+  // Rotate spinner frame while buffering or transitioning
+  useEffect(() => {
+    if (!isAudioBuffering && !isTransitioningRef.current) {
+      setDiscFrameIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setDiscFrameIndex(prev => (prev + 1) % ROTATING_DISC_FRAMES.length);
+    }, 280);
+    return () => clearInterval(interval);
+  }, [isAudioBuffering]);
+
   // Immediate MediaSession updater to preserve notification card on Android lock screen & notification shade
   const updateMediaSession = (track, isBuffering = false, isPlayingState = true) => {
     if (!('mediaSession' in navigator) || !track) return;
@@ -417,9 +433,10 @@ export default function App() {
       const cleanMovie = (track.movie || '').replace(/_+/g, ' ');
       const cleanArtist = (track.artist || 'Pure Sound').replace(/_+/g, ' ');
       const resolvedCover = resolveDirectArchiveUrl(track.coverUrl) || track.coverUrl || FALLBACK_ARTWORK;
+      const titleText = isBuffering ? `${ROTATING_DISC_FRAMES[discFrameIndex]} ${cleanTitle}` : cleanTitle;
 
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: cleanTitle,
+        title: titleText,
         artist: `${cleanArtist}${cleanMovie ? ` (${cleanMovie})` : ''}`,
         album: cleanMovie || 'Isaiyon Sound Vault',
         artwork: [
@@ -436,6 +453,23 @@ export default function App() {
       console.warn("MediaSession update error:", err);
     }
   };
+
+  // Mutate lock screen title dynamically during buffering to animate the disc on Android notification & lock screen
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !currentTrack) return;
+    try {
+      const cleanTitle = (currentTrack.title || '').replace(/_+/g, ' ');
+      if (isAudioBuffering || isTransitioningRef.current) {
+        if (navigator.mediaSession.metadata) {
+          navigator.mediaSession.metadata.title = `${ROTATING_DISC_FRAMES[discFrameIndex]} ${cleanTitle}`;
+        }
+      } else {
+        if (navigator.mediaSession.metadata && navigator.mediaSession.metadata.title !== cleanTitle) {
+          navigator.mediaSession.metadata.title = cleanTitle;
+        }
+      }
+    } catch (_) {}
+  }, [discFrameIndex, isAudioBuffering, currentTrack]);
 
   // Keep global audio references and track states for service worker and background playback
   useEffect(() => {
@@ -1052,7 +1086,7 @@ export default function App() {
     }
   }, [currentTrack, queue, isQueueMode, tracks, currentTrackIndex]);
 
-  // 8. Sleep Timer Countdown Logic
+  // 8. Sleep Timer Countdown Logic - Applies globally to entire app
   useEffect(() => {
     if (sleepTimerRef.current) {
       clearTimeout(sleepTimerRef.current);
@@ -1062,10 +1096,12 @@ export default function App() {
     if (sleepTimer && typeof sleepTimer === 'number' && sleepTimer > 0) {
       sleepTimerRef.current = setTimeout(() => {
         const audio = audioRef.current;
-        audio.pause();
+        if (audio) {
+          audio.pause();
+        }
         setIsPlaying(false);
         setSleepTimer(0);
-        alert('Sleep timer completed. Audio paused.');
+        showToast("Sleep Timer Done");
       }, sleepTimer * 60 * 1000);
     }
 
@@ -1073,6 +1109,27 @@ export default function App() {
       if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
     };
   }, [sleepTimer]);
+
+  // Global Volume & Playback Rate Sync
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
+
+  const handleToggleRepeatMode = () => {
+    setRepeatMode(prev => {
+      if (prev === 'all') return 'one';
+      if (prev === 'one') return 'off';
+      return 'all';
+    });
+  };
 
   // Playback Control Handlers
   const handleUserPlay = () => {
@@ -1592,12 +1649,13 @@ export default function App() {
           onOpenManageModal={() => setIsManageModalOpen(true)}
           onRefresh={handleRefreshData}
           isRefreshing={isRefreshing}
+          isBuffering={isAudioBuffering}
         />
 
         {/* Main Screen Router */}
         <main className={`w-full pt-16 ${
           activePage === 'nowplaying' 
-            ? 'flex-1 min-h-screen pb-20 px-3 flex flex-col justify-between' 
+            ? 'flex-1 pb-20 px-3 flex flex-col justify-between' 
             : `flex-1 flex flex-col px-4 ${
                 currentTrack && !isBottomPlayerDismissed
                   ? 'pb-40' 
@@ -1731,6 +1789,12 @@ export default function App() {
               playbackRate={playbackRate}
               onSetPlaybackRate={setPlaybackRate}
               onShareTrack={handleShareTrack}
+              volume={volume}
+              onSetVolume={setVolume}
+              repeatMode={repeatMode}
+              onToggleRepeatMode={handleToggleRepeatMode}
+              isShuffle={isShuffle}
+              onToggleShuffle={() => setIsShuffle(prev => !prev)}
               user={user}
             />
           )}
