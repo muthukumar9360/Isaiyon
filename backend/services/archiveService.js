@@ -134,7 +134,7 @@ export async function uploadFileToArchive({
         fileStream.pipe(req);
       });
 
-      const directAudioUrl = `https://ia800409.us.archive.org/25/items/${identifier}/${cleanPath}`;
+      const directAudioUrl = `https://archive.org/download/${identifier}/${cleanPath}`;
       const audioUrl = directAudioUrl;
       const archiveDetailsUrl = `https://archive.org/details/${identifier}`;
 
@@ -197,7 +197,7 @@ export async function uploadBufferToArchive({
     throw new Error(`Archive upload buffer failed with status ${response.status}`);
   }
 
-  const directUrl = `https://ia800409.us.archive.org/25/items/${identifier}/${cleanPath}`;
+  const directUrl = `https://archive.org/download/${identifier}/${cleanPath}`;
   const fileUrl = directUrl;
   return {
     success: true,
