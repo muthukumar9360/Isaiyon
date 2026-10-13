@@ -142,6 +142,7 @@ npm run archive:cleanup-temp -- --confirm
    - `FRONTEND_ORIGINS` = `https://isaiyon-music.web.app,https://isaiyon-music.firebaseapp.com`
    - `FIREBASE_SERVICE_ACCOUNT_JSON` = `<minified-service-account-json>`
    - `NODE_ENV` = `production`
+   - `YOUTUBE_COOKIES` = *(Optional but recommended: Paste contents of your exported Netscape cookies.txt to bypass cloud datacenter 429 bot checks)*
 6. Click **Create Web Service**. Render will build the Docker container with Node 22, FFmpeg, and yt-dlp.
 7. Once deployed, note down your Render service URL (e.g., `https://isaiyon-backend.onrender.com`).
 8. Add this URL to your frontend's `.env.production`:

@@ -25,6 +25,8 @@ backend/downloads/
 *firebase-admin*.json
 scripts/ia_config.json
 scripts/downloads/
+*cookies.txt
+cookies.txt
 
 # Editor files
 .vscode/*

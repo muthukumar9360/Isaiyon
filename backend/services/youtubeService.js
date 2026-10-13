@@ -331,7 +331,7 @@ export async function extractYoutubeInfo(youtubeUrl) {
   const args = [
     ...ytPrefixArgs,
     ...cookieArgs,
-    '--extractor-args', 'youtube:player_skip=webpage;player_client=android',
+    ...(activeCookiePath ? [] : ['--extractor-args', 'youtube:player_skip=webpage;player_client=android']),
     '--dump-json',
     '--no-playlist',
     '--quiet',
@@ -446,14 +446,15 @@ export async function downloadAudioAndThumbnail({ youtubeUrl, videoId, tempDir }
   }
 
   // Client strategies to bypass YouTube cloud/datacenter HTTP 429 bot checks:
-  // 1. Android mobile API skipping HTML webpage download
-  // 2. iOS mobile API skipping HTML webpage download
-  // 3. Fallback to mweb / tv
-  const clientStrategies = [
-    'youtube:player_skip=webpage;player_client=android',
-    'youtube:player_skip=webpage;player_client=ios',
-    'youtube:player_skip=webpage;player_client=mweb,tv'
-  ];
+  // When cookies are present: prioritize default/web client which reads cookies
+  // When cookies are absent: try android/ios with webpage skipping to avoid datacenter 429
+  const clientStrategies = activeCookiePath
+    ? [null, 'youtube:player_client=web,mweb', 'youtube:player_client=ios']
+    : [
+        'youtube:player_skip=webpage;player_client=android',
+        'youtube:player_skip=webpage;player_client=ios',
+        null
+      ];
 
   let lastError = '';
 
@@ -462,7 +463,8 @@ export async function downloadAudioAndThumbnail({ youtubeUrl, videoId, tempDir }
     const args = [
       ...ytPrefixArgs,
       ...cookieArgs,
-      '--extractor-args', extractorArg,
+      ...(extractorArg ? ['--extractor-args', extractorArg] : []),
+      '-f', 'ba/b',
       '-x',
       '--audio-format', 'mp3',
       '--audio-quality', '192K',
