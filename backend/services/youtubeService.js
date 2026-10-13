@@ -330,6 +330,8 @@ export async function extractYoutubeInfo(youtubeUrl) {
 
   const args = [
     ...ytPrefixArgs,
+    '--js-runtimes', 'node',
+    '--remote-components', 'ejs:github',
     ...cookieArgs,
     ...(activeCookiePath ? [] : ['--extractor-args', 'youtube:player_skip=webpage;player_client=android']),
     '--dump-json',
@@ -462,6 +464,8 @@ export async function downloadAudioAndThumbnail({ youtubeUrl, videoId, tempDir }
     const extractorArg = clientStrategies[i];
     const args = [
       ...ytPrefixArgs,
+      '--js-runtimes', 'node',
+      '--remote-components', 'ejs:github',
       ...cookieArgs,
       ...(extractorArg ? ['--extractor-args', extractorArg] : []),
       '-f', 'ba/b',
