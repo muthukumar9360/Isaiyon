@@ -91,7 +91,7 @@ export default function AdminModal({
   tracks = []
 }) {
   // Mode: 'direct' (Mobile friendly direct MP3/URL) | 'youtube' (PC/Cloud Node.js backend)
-  const [activeTab, setActiveTab] = useState('direct');
+  const [activeTab, setActiveTab] = useState('youtube');
   const [isBridgeOnline, setIsBridgeOnline] = useState(false);
   const audioInputRef = useRef(null);
   const coverInputRef = useRef(null);
@@ -1153,13 +1153,26 @@ export default function AdminModal({
 
         {/* Status Message (when not actively uploading) */}
         {statusMessage && !isSubmitting && !ytIsUploading && uploadProgress === 0 && (
-          <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${statusMessage.includes('Success') || statusMessage.includes('successfully') || statusMessage.includes('saved to Vault')
+          <div className={`mt-3 p-3 rounded-2xl text-[11px] leading-relaxed flex flex-col gap-2 ${statusMessage.includes('Success') || statusMessage.includes('successfully') || statusMessage.includes('saved to Vault')
               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/50'
               : statusMessage.includes('Error')
                 ? 'bg-rose-50 text-rose-800 border border-rose-200/50'
                 : 'bg-slate-50 text-slate-600 border border-slate-100'
             }`}>
-            {statusMessage}
+            <span>{statusMessage}</span>
+            {statusMessage.includes('Direct Upload') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('direct');
+                  setStatusMessage('');
+                }}
+                className="w-full py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all active:scale-95 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+              >
+                <Smartphone size={13} />
+                <span>Switch to Direct Upload</span>
+              </button>
+            )}
           </div>
         )}
       </div>
