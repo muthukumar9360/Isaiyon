@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { 
-  X, 
-  RefreshCw, 
-  Upload, 
-  CheckCircle2, 
-  ExternalLink, 
-  Edit3, 
-  Smartphone, 
-  Music, 
-  Image as ImageIcon, 
+import {
+  X,
+  RefreshCw,
+  Upload,
+  CheckCircle2,
+  ExternalLink,
+  Edit3,
+  Smartphone,
+  Music,
+  Image as ImageIcon,
   FileAudio,
   AlertCircle,
   ChevronDown
@@ -234,7 +234,7 @@ export default function AdminModal({
           setDirectAudioDuration(Math.round(tempAudio.duration));
         }
       };
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const handleDirectCoverPick = async (e) => {
@@ -276,7 +276,7 @@ export default function AdminModal({
       if ('wakeLock' in navigator) {
         wakeLockSentinel = await navigator.wakeLock.request('screen');
       }
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       let finalAudioUrl = directAudioUrl.trim();
@@ -355,7 +355,7 @@ export default function AdminModal({
       if (wakeLockSentinel) {
         try {
           await wakeLockSentinel.release();
-        } catch (_) {}
+        } catch (_) { }
       }
       setIsSubmitting(false);
     }
@@ -395,7 +395,7 @@ export default function AdminModal({
       const token = await getAuthToken();
       const res = await fetch(`${API_BASE_URL}/api/extract-info`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
@@ -442,7 +442,7 @@ export default function AdminModal({
 
       const res = await fetch(`${API_BASE_URL}/api/upload-track`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
@@ -523,7 +523,11 @@ export default function AdminModal({
       }
     } catch (err) {
       setUploadProgress(0);
-      setStatusMessage('Error during upload: ' + err.message);
+      let errMsg = err.message || 'Unknown error.';
+      if (errMsg.includes('bot') || errMsg.includes('429') || errMsg.includes('Too Many Requests')) {
+        errMsg = 'YouTube cloud rate-limit (429) hit. Please switch to the "Direct Upload" tab to upload your MP3 file directly, or try again shortly.';
+      }
+      setStatusMessage('Error during upload: ' + errMsg);
     } finally {
       setYtIsUploading(false);
     }
@@ -566,7 +570,7 @@ export default function AdminModal({
 
   return (
     <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3.5 z-50 select-none animate-[modalPop_0.2s_ease-out]">
-      <div 
+      <div
         className="w-full max-w-md bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto relative"
         onClick={e => e.stopPropagation()}
       >
@@ -594,31 +598,31 @@ export default function AdminModal({
 
         {/* Tab Switcher: Direct Mobile Upload vs YouTube Importer */}
         <div className="flex items-center gap-1.5 p-2 bg-slate-100 rounded-2xl mb-3.5">
+
+          <button
+            type="button"
+            onClick={() => { setActiveTab('youtube'); setStatusMessage(''); }}
+            className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeTab === 'youtube'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800'
+              }`}
+          >
+            <YoutubeIcon size={14} />
+            <span>YouTube Bridge</span>
+          </button>
+
           <button
             type="button"
             onClick={() => { setActiveTab('direct'); setStatusMessage(''); }}
-            className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'direct'
+            className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeTab === 'direct'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800'
-            }`}
+              }`}
           >
             <Smartphone size={14} className={activeTab === 'direct' ? 'text-amber-500' : ''} />
             <span>Direct Upload</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => { setActiveTab('youtube'); setStatusMessage(''); }}
-            className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              activeTab === 'youtube'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <YoutubeIcon size={14} />
-            <span>YouTube Bridge</span>
-          </button>
         </div>
 
         {/* ========================================================================= */}
@@ -637,10 +641,10 @@ export default function AdminModal({
                 </div>
 
                 <div className="flex gap-2.5 items-center p-2.5 bg-slate-50 rounded-2xl border border-slate-100 max-w-lg text-left">
-                  <img 
-                    src={successCreatedTrack.coverUrl || '/logo.png'} 
-                    alt="Cover" 
-                    className="w-12 h-12 rounded-xl object-cover shrink-0" 
+                  <img
+                    src={successCreatedTrack.coverUrl || '/logo.png'}
+                    alt="Cover"
+                    className="w-12 h-12 rounded-xl object-cover shrink-0"
                   />
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 truncate">{successCreatedTrack.title}</p>
@@ -668,7 +672,7 @@ export default function AdminModal({
             ) : (
               /* Direct Input Form */
               <form onSubmit={handleDirectSubmit} className="flex flex-col gap-3">
-                
+
                 {/* 1. Audio Source Selector */}
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
@@ -679,9 +683,8 @@ export default function AdminModal({
                       <button
                         type="button"
                         onClick={() => setDirectAudioType('file')}
-                        className={`px-2 py-0.5 rounded-md cursor-pointer transition-colors ${
-                          directAudioType === 'file' ? 'bg-amber-100 text-amber-800 font-bold' : 'hover:bg-slate-100'
-                        }`}
+                        className={`px-2 py-0.5 rounded-md cursor-pointer transition-colors ${directAudioType === 'file' ? 'bg-amber-100 text-amber-800 font-bold' : 'hover:bg-slate-100'
+                          }`}
                       >
                         MP3 File
                       </button>
@@ -689,9 +692,8 @@ export default function AdminModal({
                       <button
                         type="button"
                         onClick={() => setDirectAudioType('url')}
-                        className={`px-2 py-0.5 rounded-md cursor-pointer transition-colors ${
-                          directAudioType === 'url' ? 'bg-amber-100 text-amber-800 font-bold' : 'hover:bg-slate-100'
-                        }`}
+                        className={`px-2 py-0.5 rounded-md cursor-pointer transition-colors ${directAudioType === 'url' ? 'bg-amber-100 text-amber-800 font-bold' : 'hover:bg-slate-100'
+                          }`}
                       >
                         Audio URL
                       </button>
@@ -718,8 +720,8 @@ export default function AdminModal({
                           {directAudioFile ? directAudioFile.name : 'Choose Audio File from Mobile'}
                         </span>
                         <span className="text-[10px] text-slate-500 font-medium">
-                          {directAudioFile 
-                            ? `${(directAudioFile.size / (1024 * 1024)).toFixed(2)} MB • ~${directAudioDuration}s` 
+                          {directAudioFile
+                            ? `${(directAudioFile.size / (1024 * 1024)).toFixed(2)} MB • ~${directAudioDuration}s`
                             : 'Supports MP3, M4A, WAV, AAC'}
                         </span>
                       </button>
@@ -744,10 +746,10 @@ export default function AdminModal({
                     2. Cover Artwork
                   </label>
                   <div className="flex gap-2.5 items-center bg-slate-50 p-2 rounded-2xl border border-slate-200/80">
-                    <img 
-                      src={directCoverBase64 || directCoverUrl || '/logo.png'} 
-                      alt="Cover Preview" 
-                      className="w-15 h-15 rounded-xl object-cover shrink-0 border border-slate-200 bg-white shadow-2xs" 
+                    <img
+                      src={directCoverBase64 || directCoverUrl || '/logo.png'}
+                      alt="Cover Preview"
+                      className="w-15 h-15 rounded-xl object-cover shrink-0 border border-slate-200 bg-white shadow-2xs"
                     />
                     <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                       <input
@@ -958,10 +960,10 @@ export default function AdminModal({
                 </div>
 
                 <div className="flex gap-2.5 items-center bg-slate-50 p-2 rounded-2xl border border-slate-200">
-                  <img 
-                    src={ytEditMeta.thumbnailUrl || '/logo.png'} 
-                    alt="Thumb" 
-                    className="w-13 h-13 rounded-xl object-cover shrink-0 border border-slate-200 bg-white" 
+                  <img
+                    src={ytEditMeta.thumbnailUrl || '/logo.png'}
+                    alt="Thumb"
+                    className="w-13 h-13 rounded-xl object-cover shrink-0 border border-slate-200 bg-white"
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-slate-900 truncate">{ytEditMeta.title || 'Untitled'}</p>
@@ -1134,9 +1136,9 @@ export default function AdminModal({
               </span>
               <span className="font-mono text-amber-400 ml-2 text-xs font-bold shrink-0">{uploadProgress}%</span>
             </div>
-            
+
             <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-700/60">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-emerald-400 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(251,191,36,0.6)]"
                 style={{ width: `${Math.max(uploadProgress, 5)}%` }}
               />
@@ -1151,13 +1153,12 @@ export default function AdminModal({
 
         {/* Status Message (when not actively uploading) */}
         {statusMessage && !isSubmitting && !ytIsUploading && uploadProgress === 0 && (
-          <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${
-            statusMessage.includes('Success') || statusMessage.includes('successfully') || statusMessage.includes('saved to Vault')
+          <div className={`mt-3 p-2.5 rounded-xl text-[11px] leading-relaxed ${statusMessage.includes('Success') || statusMessage.includes('successfully') || statusMessage.includes('saved to Vault')
               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/50'
               : statusMessage.includes('Error')
-              ? 'bg-rose-50 text-rose-800 border border-rose-200/50'
-              : 'bg-slate-50 text-slate-600 border border-slate-100'
-          }`}>
+                ? 'bg-rose-50 text-rose-800 border border-rose-200/50'
+                : 'bg-slate-50 text-slate-600 border border-slate-100'
+            }`}>
             {statusMessage}
           </div>
         )}

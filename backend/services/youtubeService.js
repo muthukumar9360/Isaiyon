@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -296,9 +297,41 @@ export async function extractYoutubeInfo(youtubeUrl) {
   const videoId = videoIdMatch ? videoIdMatch[1] : '';
 
   const { ytCommand, ytPrefixArgs } = await getBinaryCommands();
+
+  // Support cookies file if specified in env or if cookies.txt exists in root or backend
+  let cookieArgs = [];
+  const envCookie = process.env.YOUTUBE_COOKIES || process.env.YT_COOKIES;
+  const possibleCookieFiles = [
+    process.env.YOUTUBE_COOKIE_PATH,
+    path.join(__dirname, '../cookies.txt'),
+    path.join(__dirname, '../../cookies.txt'),
+    path.join(process.cwd(), 'cookies.txt')
+  ].filter(Boolean);
+
+  let activeCookiePath = null;
+  if (envCookie && envCookie.trim().length > 10) {
+    try {
+      const tempCookiePath = path.join(os.tmpdir(), 'yt_cookies.txt');
+      fs.writeFileSync(tempCookiePath, envCookie.trim(), 'utf8');
+      activeCookiePath = tempCookiePath;
+    } catch (_) {}
+  } else {
+    for (const cp of possibleCookieFiles) {
+      if (fs.existsSync(cp)) {
+        activeCookiePath = cp;
+        break;
+      }
+    }
+  }
+
+  if (activeCookiePath) {
+    cookieArgs = ['--cookies', activeCookiePath];
+  }
+
   const args = [
     ...ytPrefixArgs,
-    '--extractor-args', 'youtube:player_client=android,ios,mweb,web',
+    ...cookieArgs,
+    '--extractor-args', 'youtube:player_skip=webpage;player_client=android',
     '--dump-json',
     '--no-playlist',
     '--quiet',
@@ -376,52 +409,100 @@ export async function downloadAudioAndThumbnail({ youtubeUrl, videoId, tempDir }
   const { ytCommand, ytPrefixArgs, ffmpegLocation } = await getBinaryCommands();
   const outTemplate = path.join(tempDir, `${videoId}.%(ext)s`);
 
-  const args = [
-    ...ytPrefixArgs,
-    '--extractor-args', 'youtube:player_client=android,ios,mweb,web',
-    '-x',
-    '--audio-format', 'mp3',
-    '--audio-quality', '192K',
-    '--write-thumbnail',
-    '-o', outTemplate
+  // Support cookies file if specified in env or if cookies.txt exists in root or backend
+  let cookieArgs = [];
+  const envCookie = process.env.YOUTUBE_COOKIES || process.env.YT_COOKIES;
+  const possibleCookieFiles = [
+    process.env.YOUTUBE_COOKIE_PATH,
+    path.join(__dirname, '../cookies.txt'),
+    path.join(__dirname, '../../cookies.txt'),
+    path.join(process.cwd(), 'cookies.txt')
+  ].filter(Boolean);
+
+  let activeCookiePath = null;
+  if (envCookie && envCookie.trim().length > 10) {
+    try {
+      const tempCookiePath = path.join(tempDir, 'yt_cookies.txt');
+      fs.writeFileSync(tempCookiePath, envCookie.trim(), 'utf8');
+      activeCookiePath = tempCookiePath;
+    } catch (_) {}
+  } else {
+    for (const cp of possibleCookieFiles) {
+      if (fs.existsSync(cp)) {
+        activeCookiePath = cp;
+        break;
+      }
+    }
+  }
+
+  if (activeCookiePath) {
+    cookieArgs = ['--cookies', activeCookiePath];
+  }
+
+  const ffmpegArgs = [];
+  // Only pass --ffmpeg-location if it points to a specific custom binary/path (not generic 'ffmpeg')
+  if (ffmpegLocation && ffmpegLocation !== 'ffmpeg') {
+    ffmpegArgs.push('--ffmpeg-location', ffmpegLocation);
+  }
+
+  // Client strategies to bypass YouTube cloud/datacenter HTTP 429 bot checks:
+  // 1. Android mobile API skipping HTML webpage download
+  // 2. iOS mobile API skipping HTML webpage download
+  // 3. Fallback to mweb / tv
+  const clientStrategies = [
+    'youtube:player_skip=webpage;player_client=android',
+    'youtube:player_skip=webpage;player_client=ios',
+    'youtube:player_skip=webpage;player_client=mweb,tv'
   ];
 
-  if (ffmpegLocation) {
-    args.push('--ffmpeg-location', ffmpegLocation);
-  }
+  let lastError = '';
 
-  args.push(youtubeUrl.trim());
+  for (let i = 0; i < clientStrategies.length; i++) {
+    const extractorArg = clientStrategies[i];
+    const args = [
+      ...ytPrefixArgs,
+      ...cookieArgs,
+      '--extractor-args', extractorArg,
+      '-x',
+      '--audio-format', 'mp3',
+      '--audio-quality', '192K',
+      '--write-thumbnail',
+      ...ffmpegArgs,
+      '-o', outTemplate,
+      youtubeUrl.trim()
+    ];
 
-  console.log(`[YouTubeService] Downloading audio & thumb: ${ytCommand} ${args.join(' ')}`);
+    console.log(`[YouTubeService] Download attempt ${i + 1}/${clientStrategies.length} with ${extractorArg}`);
+    const { code, stderr } = await runProcess(ytCommand, args);
 
-  const { code, stderr } = await runProcess(ytCommand, args);
-  if (code !== 0) {
-    throw new Error(`yt-dlp download failed (code ${code}): ${stderr || 'Unknown error'}`);
-  }
+    if (code === 0) {
+      // Check if audio file was produced
+      const files = fs.readdirSync(tempDir);
+      let audioFile = null;
+      for (const f of files) {
+        if (f.startsWith(videoId) && !f.endsWith('.jpg') && !f.endsWith('.webp') && !f.endsWith('.png') && !f.endsWith('.part')) {
+          audioFile = path.join(tempDir, f);
+          break;
+        }
+      }
 
-  // Locate audio file
-  const files = fs.readdirSync(tempDir);
-  let audioFile = null;
-  for (const f of files) {
-    if (f.startsWith(videoId) && !f.endsWith('.jpg') && !f.endsWith('.webp') && !f.endsWith('.png') && !f.endsWith('.part')) {
-      audioFile = path.join(tempDir, f);
-      break;
+      if (audioFile) {
+        // Locate thumbnail file
+        let thumbFile = null;
+        for (const ext of ['.jpg', '.webp', '.png']) {
+          const candidate = path.join(tempDir, `${videoId}${ext}`);
+          if (fs.existsSync(candidate)) {
+            thumbFile = candidate;
+            break;
+          }
+        }
+        return { audioPath: audioFile, thumbPath: thumbFile };
+      }
     }
+
+    lastError = stderr || `Attempt ${i + 1} exited with code ${code}`;
+    console.warn(`[YouTubeService] Attempt ${i + 1} failed: ${lastError.slice(0, 180)}`);
   }
 
-  // Locate thumbnail file
-  let thumbFile = null;
-  for (const ext of ['.jpg', '.webp', '.png']) {
-    const candidate = path.join(tempDir, `${videoId}${ext}`);
-    if (fs.existsSync(candidate)) {
-      thumbFile = candidate;
-      break;
-    }
-  }
-
-  if (!audioFile) {
-    throw new Error('Audio file was not generated by yt-dlp.');
-  }
-
-  return { audioPath: audioFile, thumbPath: thumbFile };
+  throw new Error(`yt-dlp download failed: ${lastError || 'Could not download audio from YouTube.'}`);
 }
