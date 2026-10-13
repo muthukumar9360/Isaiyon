@@ -165,24 +165,29 @@ export default function App() {
   const isExitModalOpenRef = useRef(isExitModalOpen);
   isExitModalOpenRef.current = isExitModalOpen;
 
-  // Anchor history trap cushion so swipe gestures never pop past the root
+  // Robust multi-layer history buffer to permanently prevent Android from exiting on back swipe
   useEffect(() => {
     try {
-      window.history.replaceState({ isaiyonApp: true, root: true }, '', window.location.href);
-      window.history.pushState({ isaiyonApp: true, trap: true }, '', window.location.href);
+      window.history.replaceState({ isaiyonApp: true, depth: 0 }, '', window.location.href);
+      window.history.pushState({ isaiyonApp: true, depth: 1 }, '', window.location.href);
+      window.history.pushState({ isaiyonApp: true, depth: 2 }, '', window.location.href);
     } catch (_) {}
 
+    let lastReplenish = 0;
     const replenishHistoryCushion = () => {
-      try {
-        if (!window.history.state || !window.history.state.trap) {
-          window.history.pushState({ isaiyonApp: true, trap: true }, '', window.location.href);
-        }
-      } catch (_) {}
+      const now = Date.now();
+      if (now - lastReplenish > 250) {
+        lastReplenish = now;
+        try {
+          window.history.pushState({ isaiyonApp: true, depth: now }, '', window.location.href);
+        } catch (_) {}
+      }
     };
 
     window.addEventListener('pointerdown', replenishHistoryCushion, { passive: true });
     window.addEventListener('touchstart', replenishHistoryCushion, { passive: true });
     window.addEventListener('click', replenishHistoryCushion, { passive: true });
+
     return () => {
       window.removeEventListener('pointerdown', replenishHistoryCushion);
       window.removeEventListener('touchstart', replenishHistoryCushion);
@@ -190,7 +195,7 @@ export default function App() {
     };
   }, []);
 
-  // When activePage changes to any page other than home, push history entry
+  // When activePage changes, push history entry so back gesture navigates smoothly
   useEffect(() => {
     if (activePage !== 'home' && activePage !== 'nowplaying') {
       try {
@@ -199,13 +204,48 @@ export default function App() {
     }
   }, [activePage]);
 
+  // Cancel in-app horizontal edge swipes that would trigger navigation away
   useEffect(() => {
-    let lastPopActionTime = 0;
+    let startX = 0;
+    let startY = 0;
 
+    const handleTouchStart = (e) => {
+      if (e.touches && e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches && e.touches.length === 1) {
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const deltaX = Math.abs(currentX - startX);
+        const deltaY = Math.abs(currentY - startY);
+        const isFromEdge = startX < 40 || startX > window.innerWidth - 40;
+        if (isFromEdge && deltaX > deltaY && deltaX > 8) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
+  // Intercept back gesture (popstate): NEVER close app, NEVER kill music!
+  useEffect(() => {
     const handlePopState = () => {
-      // Re-push immediately to keep the trap alive so the app is not exited by swipe gestures
+      // ALWAYS re-push immediately so the stack never drains and Android never exits
       try {
-        window.history.pushState({ isaiyonApp: true, trap: true }, '', window.location.href);
+        window.history.pushState({ isaiyonApp: true, time: Date.now() }, '', window.location.href);
       } catch (_) {}
 
       // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN
@@ -235,35 +275,28 @@ export default function App() {
         return;
       }
 
-      // 3. If expanded VinylPlayer is open -> minimize to home
+      // 3. If expanded VinylPlayer is open -> minimize to home (audio continues playing in background!)
       if (activePageRef.current === 'nowplaying') {
         setActivePage('home');
         activePageRef.current = 'home';
         return;
       }
 
-      // 4. If on any other page (search, library, queue, history) -> return directly to home
+      // 4. If on any other page (search, library, queue, history) -> return to home (audio continues!)
       if (activePageRef.current !== 'home') {
         setActivePage('home');
         activePageRef.current = 'home';
         return;
       }
 
-      // 5. If on home page -> NEVER exit or prompt on swipe/back gesture!
-      // The app exits ONLY when the user clicks the Exit button in the Navbar.
+      // 5. If on home page -> keep playing! The app NEVER exits on swipe gesture!
+      // Exit only happens when clicking Exit in the Navbar.
     };
 
-    const triggerSafePop = () => {
-      const now = Date.now();
-      if (now - lastPopActionTime < 350) return;
-      lastPopActionTime = now;
-      handlePopState();
-    };
-
-    window.addEventListener('popstate', triggerSafePop);
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
-      window.removeEventListener('popstate', triggerSafePop);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, []);
 
