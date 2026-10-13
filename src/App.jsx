@@ -974,13 +974,13 @@ export default function App() {
 
   // Keep track of positionState in MediaSession for background lock screen timeline
   useEffect(() => {
-    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && currentTrack) {
+    if ('mediaSession' in navigator && typeof navigator.mediaSession.setPositionState === 'function' && currentTrack) {
       try {
-        if (duration > 0 && !isNaN(duration) && isFinite(duration) && currentTime >= 0) {
+        if (duration > 0 && !isNaN(duration) && isFinite(duration) && currentTime >= 0 && currentTime <= duration) {
           navigator.mediaSession.setPositionState({
-            duration: Math.max(0, duration),
+            duration: duration,
             playbackRate: playbackRate || 1,
-            position: Math.min(Math.max(0, currentTime), duration)
+            position: currentTime
           });
         }
       } catch (_) {}
@@ -1496,15 +1496,6 @@ export default function App() {
           onConfirmExitApp={handleConfirmExitApp}
           onRefresh={handleRefreshData}
           isRefreshing={isRefreshing}
-        />
-
-        {/* Foreground DOM Audio Element with Inline Background Play Permissions */}
-        <audio
-          ref={audioRef}
-          preload="auto"
-          playsInline
-          webkit-playsinline="true"
-          className="hidden"
         />
 
         {/* Main Screen Router */}
