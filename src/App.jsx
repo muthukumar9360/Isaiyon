@@ -195,9 +195,9 @@ export default function App() {
     };
   }, []);
 
-  // When activePage changes, push history entry so back gesture navigates smoothly
+  // When activePage changes (nowplaying, search, library, queue, history), push history entry so back gesture collapses or navigates back smoothly
   useEffect(() => {
-    if (activePage !== 'home' && activePage !== 'nowplaying') {
+    if (activePage !== 'home') {
       try {
         window.history.pushState({ isaiyonApp: true, page: activePage }, '', window.location.href);
       } catch (_) {}
@@ -1069,6 +1069,9 @@ export default function App() {
 
   // Playback Control Handlers
   const handlePlayPause = (targetViewMode = 'bar') => {
+    try {
+      window.history.pushState({ isaiyonApp: true, userActivated: Date.now() }, '', window.location.href);
+    } catch (_) {}
     const audio = audioRef.current;
     if (isPlaying) {
       audio.pause();
@@ -1124,6 +1127,9 @@ export default function App() {
 
   const handleSelectTrack = (track, openBig = false, targetViewMode = null) => {
     if (!track) return;
+    try {
+      window.history.pushState({ isaiyonApp: true, userActivated: Date.now() }, '', window.location.href);
+    } catch (_) {}
     const index = tracks.findIndex(t => t.id === track.id);
     if (index !== -1) {
       setCurrentTrackIndex(index);
