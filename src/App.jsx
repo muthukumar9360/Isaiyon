@@ -322,14 +322,6 @@ export default function App() {
   const sleepTimerRef = useRef(null);
   const [isAudioBuffering, setIsAudioBuffering] = useState(false);
 
-  // Keep global audio references and track states for service worker and background playback
-  useEffect(() => {
-    if (audioRef.current) {
-      window.__isaiyonAudio = audioRef.current;
-    }
-    window.__isaiyonHasTrack = Boolean(currentTrack);
-  }, [currentTrack]);
-
   // Auto-refresh Archive storage cluster nodes for high-speed streaming
   useEffect(() => {
     refreshStorageNode();
@@ -408,6 +400,14 @@ export default function App() {
   const currentTrack = (currentTrackIndex !== null && currentTrackIndex >= 0 && tracks[currentTrackIndex]) 
     ? tracks[currentTrackIndex] 
     : null;
+
+  // Keep global audio references and track states for service worker and background playback
+  useEffect(() => {
+    if (audioRef.current) {
+      window.__isaiyonAudio = audioRef.current;
+    }
+    window.__isaiyonHasTrack = Boolean(currentTrack);
+  }, [currentTrack]);
 
   // 1. Auth Listener
   useEffect(() => {
