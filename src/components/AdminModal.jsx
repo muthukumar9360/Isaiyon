@@ -909,17 +909,6 @@ export default function AdminModal({
         {/* ========================================================================= */}
         {activeTab === 'youtube' && (
           <div>
-            {!isBridgeOnline && (
-              <div className="mb-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-[11px] leading-relaxed flex items-start gap-2">
-                <AlertCircle size={15} className="text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold">Backend Service is offline or sleeping.</p>
-                  <p className="text-slate-600 mt-0.5">
-                    If running locally, start: <code className="bg-amber-100 px-1 py-0.2 rounded font-mono">npm run backend:dev</code>. If on Render free tier, please allow ~45s for the server to wake up, or use the <strong>Direct Upload</strong> tab above.
-                  </p>
-                </div>
-              </div>
-            )}
 
             {/* STAGE 1: Paste Link & Fetch */}
             {ytStage === 'input' && (

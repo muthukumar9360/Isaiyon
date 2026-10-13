@@ -322,6 +322,10 @@ export default function App() {
   const candidateIndexRef = useRef(0);
   const sleepTimerRef = useRef(null);
   const [isAudioBuffering, setIsAudioBuffering] = useState(false);
+  const isTransitioningRef = useRef(false);
+  const handleNextRef = useRef(null);
+  const handlePrevRef = useRef(null);
+  const currentTrackRef = useRef(null);
 
   // Auto-refresh Archive storage cluster nodes for high-speed streaming
   useEffect(() => {
@@ -401,6 +405,36 @@ export default function App() {
   const currentTrack = (currentTrackIndex !== null && currentTrackIndex >= 0 && tracks[currentTrackIndex]) 
     ? tracks[currentTrackIndex] 
     : null;
+  currentTrackRef.current = currentTrack;
+
+  // Immediate MediaSession updater to preserve notification card on Android lock screen & notification shade
+  const updateMediaSession = (track, isBuffering = false, isPlayingState = true) => {
+    if (!('mediaSession' in navigator) || !track) return;
+    try {
+      const cleanTitle = (track.title || '').replace(/_+/g, ' ');
+      const cleanMovie = (track.movie || '').replace(/_+/g, ' ');
+      const cleanArtist = (track.artist || 'Pure Sound').replace(/_+/g, ' ');
+      const displayTitle = isBuffering ? `⏳ Loading: ${cleanTitle}` : cleanTitle;
+      const cover = track.coverUrl || currentTrackRef.current?.coverUrl || FALLBACK_ARTWORK;
+
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: displayTitle,
+        artist: `${cleanArtist}${cleanMovie ? ` (${cleanMovie})` : ''}`,
+        album: cleanMovie || 'Isaiyon Sound Vault',
+        artwork: [
+          { src: cover, sizes: '96x96', type: 'image/jpeg' },
+          { src: cover, sizes: '128x128', type: 'image/jpeg' },
+          { src: cover, sizes: '192x192', type: 'image/jpeg' },
+          { src: cover, sizes: '512x512', type: 'image/jpeg' }
+        ]
+      });
+
+      // Keep playbackState 'playing' during transitions so OS never dismisses the lock screen notification
+      navigator.mediaSession.playbackState = (isPlayingState || isBuffering || isTransitioningRef.current) ? 'playing' : 'paused';
+    } catch (err) {
+      console.warn("MediaSession update error:", err);
+    }
+  };
 
   // Keep global audio references and track states for service worker and background playback
   useEffect(() => {
@@ -465,6 +499,7 @@ export default function App() {
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
     try {
+      if (isTransitioningRef.current) return;
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
     } catch {}
   }, [isPlaying]);
@@ -772,6 +807,7 @@ export default function App() {
       }
     };
     const handlePause = () => {
+      if (isTransitioningRef.current) return;
       setIsPlaying(false);
       if ('mediaSession' in navigator) {
         try {
@@ -779,13 +815,27 @@ export default function App() {
         } catch (_) {}
       }
     };
-    const handleWaiting = () => setIsAudioBuffering(true);
+    const handleWaiting = () => {
+      setIsAudioBuffering(true);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'playing';
+          if (currentTrackRef.current) {
+            updateMediaSession(currentTrackRef.current, true, true);
+          }
+        } catch (_) {}
+      }
+    };
     const handlePlaying = () => {
+      isTransitioningRef.current = false;
       setIsAudioBuffering(false);
       setIsPlaying(true);
       if ('mediaSession' in navigator) {
         try {
           navigator.mediaSession.playbackState = 'playing';
+          if (currentTrackRef.current) {
+            updateMediaSession(currentTrackRef.current, false, true);
+          }
         } catch (_) {}
       }
     };
@@ -804,6 +854,7 @@ export default function App() {
         if (playPromise !== undefined) {
           playPromise
             .then(() => {
+              isTransitioningRef.current = false;
               setIsPlaying(true);
               setIsAudioBuffering(false);
             })
@@ -812,8 +863,14 @@ export default function App() {
         return;
       }
 
+      isTransitioningRef.current = false;
       setIsPlaying(false);
       setIsAudioBuffering(false);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'paused';
+        } catch (_) {}
+      }
       console.warn("Audio playback error (all candidates exhausted):", audio.error);
       if (isPlaying) {
         if (audio.error?.code === 2) {
@@ -925,7 +982,7 @@ export default function App() {
         const cleanTitle = (currentTrack.title || '').replace(/_+/g, ' ');
         const cleanMovie = (currentTrack.movie || '').replace(/_+/g, ' ');
         const cleanArtist = (currentTrack.artist || 'Pure Sound').replace(/_+/g, ' ');
-        const titleText = isAudioBuffering ? `⏳ Loading: ${cleanTitle}` : cleanTitle;
+        const titleText = (isAudioBuffering || isTransitioningRef.current) ? `⏳ Loading: ${cleanTitle}` : cleanTitle;
         navigator.mediaSession.metadata = new MediaMetadata({
           title: titleText,
           artist: `${cleanArtist}${cleanMovie ? ` (${cleanMovie})` : ''}`,
@@ -939,19 +996,29 @@ export default function App() {
         });
 
         // Always keep playbackState updated so OS shows the background notification whether playing or paused
-        navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+        navigator.mediaSession.playbackState = (isPlaying || isAudioBuffering || isTransitioningRef.current) ? 'playing' : 'paused';
 
         navigator.mediaSession.setActionHandler('play', () => {
           audio.play().catch(() => {});
         });
         navigator.mediaSession.setActionHandler('pause', () => {
+          isTransitioningRef.current = false;
           audio.pause();
+          setIsPlaying(false);
+          try { navigator.mediaSession.playbackState = 'paused'; } catch (_) {}
         });
         navigator.mediaSession.setActionHandler('stop', () => {
+          isTransitioningRef.current = false;
           audio.pause();
+          setIsPlaying(false);
+          try { navigator.mediaSession.playbackState = 'paused'; } catch (_) {}
         });
-        navigator.mediaSession.setActionHandler('previoustrack', handlePrev);
-        navigator.mediaSession.setActionHandler('nexttrack', handleNext);
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+          handlePrevRef.current?.();
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+          handleNextRef.current?.();
+        });
         navigator.mediaSession.setActionHandler('seekbackward', (details) => {
           handleSkipSeconds(-(details.seekOffset || 10));
         });
@@ -1042,8 +1109,14 @@ export default function App() {
     } catch (_) {}
     const audio = audioRef.current;
     if (isPlaying) {
+      isTransitioningRef.current = false;
       audio.pause();
       setIsPlaying(false);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'paused';
+        } catch (_) {}
+      }
     } else {
       if ((!audio.src || audio.error || activeTrackIdRef.current !== currentTrack?.id || audio.readyState === 0) && currentTrack) {
         activeTrackIdRef.current = currentTrack.id;
@@ -1100,6 +1173,12 @@ export default function App() {
     } catch (_) {}
     const index = tracks.findIndex(t => t.id === track.id);
     if (index !== -1) {
+      // Keep lock screen / floating notification visible with loading state
+      isTransitioningRef.current = true;
+      setIsAudioBuffering(true);
+      setIsPlaying(true);
+      updateMediaSession(track, true, true);
+
       setCurrentTrackIndex(index);
       setCurrentTime(0);
       setDuration(track.duration || 0);
@@ -1116,16 +1195,17 @@ export default function App() {
         try {
           audio.currentTime = 0;
         } catch (_) {}
-        setIsAudioBuffering(true);
         audio.load();
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise
             .then(() => {
+              isTransitioningRef.current = false;
               setIsPlaying(true);
               setIsAudioBuffering(false);
               try { audio.currentTime = 0; } catch (_) {}
               setCurrentTime(0);
+              updateMediaSession(track, false, true);
             })
             .catch((err) => {
               console.warn("Mobile audio autoplay restriction, trying auto-failover:", err);
@@ -1175,6 +1255,7 @@ export default function App() {
       handleSelectTrack(tracks[nextIndex], false);
     }
   };
+  handleNextRef.current = handleNext;
 
   const handleToggleQueueMode = () => {
     setIsQueueMode(prev => {
@@ -1229,6 +1310,7 @@ export default function App() {
       handleSelectTrack(tracks[prevIndex], false);
     }
   };
+  handlePrevRef.current = handlePrev;
 
   // Queue Operations
   const handleReorderQueue = (newQueue) => setQueue(newQueue);

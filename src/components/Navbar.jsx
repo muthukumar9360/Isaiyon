@@ -184,9 +184,7 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
           {user ? (
             <div className="flex items-center gap-1.5">
               <div
-                className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all active:scale-95 shadow-2xs cursor-pointer"
-                onClick={() => setShowLogoutConfirm(true)}
-                title="View Account"
+                className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all active:scale-95 shadow-2xs"
               >
                 <img
                   src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
