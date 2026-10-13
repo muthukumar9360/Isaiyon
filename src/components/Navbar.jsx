@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink, RefreshCw } from 'lucide-react';
 import {
   auth,
