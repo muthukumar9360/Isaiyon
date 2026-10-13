@@ -266,8 +266,8 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
               <h3 className="text-base font-extrabold text-black font-display">
                 Sign Out
               </h3>
-              <p className="text-xs text-slate-500 font-medium">
-                Are you sure you want to sign out of your account?
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Are you sure you want to sign out?
               </p>
             </div>
 

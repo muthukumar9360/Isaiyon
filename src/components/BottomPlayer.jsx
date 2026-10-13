@@ -55,9 +55,6 @@ export default function BottomPlayer({
                 }
               }}
             />
-            {isPlaying && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-slate-900 animate-pulse" />
-            )}
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="text-xs sm:text-sm font-bold text-white truncate leading-snug group-hover:text-amber-400 transition-colors">

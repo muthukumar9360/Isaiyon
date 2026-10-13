@@ -146,9 +146,9 @@ export default function VinylPlayer({
     return (
       <div className="w-full flex-1 flex flex-col pt-1 pb-24 select-none animate-[fadeIn_0.22s_ease-out] mt-5">
         {/* Suggested Songs Header with Title and X Button */}
-        <div className="flex items-center justify-between py-2.5 mb-2.5 bg-white rounded-2xl border border-white">
+        <div className="flex items-center justify-between py-2 pb-5 mb-2.5 bg-white border-b border-black/30 px-5">
 
-          <div className="flex items-center gap-2 ml-2">
+          <div className="flex items-center gap-2">
             <Sparkles size={30} />
             <div>
               <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 font-display ml-3">
@@ -161,10 +161,10 @@ export default function VinylPlayer({
           </div>
           <button
             onClick={() => onToggleSuggestions?.(false)}
-            className="w-8 h-8 rounded-full bg-white hover:bg-slate-200/80 text-slate-700 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200"
+            className="w-10 h-10 rounded-full bg-white hover:bg-slate-200/80 text-slate-700 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200 -mr-2"
             title="Close Suggestions & Return to Player"
           >
-            <X size={30} />
+            <X size={25} />
           </button>
         </div>
 
@@ -187,11 +187,11 @@ export default function VinylPlayer({
                   <img
                     src={track.coverUrl || FALLBACK_ARTWORK}
                     alt={track.title}
-                    className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
+                    className="w-13 h-13 rounded-xl object-cover border border-slate-200 shrink-0"
                     onError={(e) => { e.target.src = FALLBACK_ARTWORK; }}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-extrabold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
+                    <p className="text-sm font-extrabold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
                       {track.title}
                     </p>
                     <p className="text-[10px] font-semibold text-slate-500 truncate mt-0.5">
@@ -235,17 +235,17 @@ export default function VinylPlayer({
     <div className="w-full flex-1 mt-5 flex flex-col justify-between items-center py-1 px-1 select-none animate-[bigPlayerOpen_0.36s_cubic-bezier(0.16,1,0.3,1)]">
 
       {/* 1. Header Toolbar: Minimize (Left) • Playing From (Center) • Settings & Audio Options (Right) */}
-      <div className="w-full relative flex items-center justify-center px-3 pt-0 pb-1.5 shrink-0">
+      <div className="w-full relative flex items-center justify-center px-3 pt-2 pb-1.5 shrink-0">
         <button
           onClick={handleCollapse}
-          className="absolute left-3 p-1 rounded-full bg-slate-100 hover:bg-slate-200/90 text-black flex items-center gap-1.5 font-extrabold transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200"
+          className="absolute left-3 p-1 rounded-full bg-slate-100 hover:bg-slate-200/90 text-black flex items-center gap-1.5 font-extrabold transition-all active:scale-90 cursor-pointer border border-slate-200"
           title="Minimize player"
         >
-          <ChevronDown size={25} className="text-slate-600" />
+          <ChevronDown size={30} className="text-black" />
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 leading-none">Playing From</span>
+          <span className="text-[11px] font-black uppercase tracking-widest text-amber-600 leading-none">Playing From</span>
           <span className="text-base font-bold text-slate-800 truncate max-w-[200px] mt-0.5">
             {currentTrack?.movie || 'Sound Vault'}
           </span>
@@ -254,10 +254,10 @@ export default function VinylPlayer({
         {/* Top-Right Feature Button: Settings & Audio Options */}
         <button
           onClick={() => setShowOptionsModal(true)}
-          className="absolute right-3 p-2 rounded-full bg-slate-100 hover:bg-slate-200/90 text-black flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200"
+          className="absolute right-3 p-2 rounded-full bg-slate-100 hover:bg-slate-200/90 text-black flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs font-extrabold border border-slate-200"
           title="Audio settings & options"
         >
-          <Settings size={18} className="text-slate-700" />
+          <Settings size={22} className="text-black" />
         </button>
       </div>
 
@@ -304,7 +304,7 @@ export default function VinylPlayer({
             <h2 className="text-xl sm:text-xl font-black text-slate-900 tracking-tight truncate leading-tight">
               {currentTrack?.title || 'No Song Selected'}
             </h2>
-            <p className="text-xs sm:text-sm font-semibold text-slate-500 truncate mt-1">
+            <p className="text-xs sm:text-sm font-semibold text-amber-600 truncate mt-1">
               {currentTrack?.artist || 'Various Artists'}
               {currentTrack?.composer ? ` • ${currentTrack.composer}` : ''}
             </p>
@@ -457,20 +457,13 @@ export default function VinylPlayer({
               <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
                 <span>Sleep Timer</span>
               </span>
-              {sleepTimer !== 0 && (
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-500 text-white">
-                  {sleepTimer === 'track' ? 'End of Song' : `${sleepTimer}m Active`}
-                </span>
-              )}
             </div>
-            <div className="grid grid-cols-6 gap-1 -mt-1">
+            <div className="grid grid-cols-4 gap-1 -mt-1">
               {[
                 { label: 'Off', val: 0 },
-                { label: '15m', val: 15 },
+                { label: '10m', val: 10 },
                 { label: '30m', val: 30 },
-                { label: '45m', val: 45 },
                 { label: '60m', val: 60 },
-                { label: 'Song', val: 'track' }
               ].map(({ label, val }) => (
                 <button
                   key={label}

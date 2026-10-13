@@ -1954,7 +1954,7 @@ export default function App() {
 
         {/* Floating Quick Toast */}
         {toastMessage && (
-          <div className="fixed top-18 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-md border border-white/10 animate-[modalPop_0.2s_ease-out] pointer-events-none whitespace-nowrap text-center">
+          <div className="fixed top-22 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-md border border-white/10 animate-[modalPop_0.2s_ease-out] pointer-events-none whitespace-nowrap text-center">
             {toastMessage}
           </div>
         )}
