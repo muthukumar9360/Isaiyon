@@ -12,7 +12,7 @@ import ManageSongsModal from './components/ManageSongsModal';
 import AddToPlaylistModal from './components/AddToPlaylistModal';
 import LoginView from './components/LoginView';
 import HistoryPage from './components/HistoryPage';
-import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon, Download, LogOut, AlertCircle, X, Power } from 'lucide-react';
+import { Home, Search, ListMusic, Library, Disc3, History as HistoryIcon, Download, LogOut, AlertCircle, X } from 'lucide-react';
 import { FALLBACK_ARTWORK } from './constants/fallbackArt';
 import { 
   resolveDirectArchiveUrl, 
@@ -142,11 +142,10 @@ export default function App() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [playlistModalTrack, setPlaylistModalTrack] = useState(null);
-  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const toastTimeoutRef = useRef(null);
 
-  // Mobile Back Button / Edge Swipe Navigation & Exit Confirm
+  // Mobile Back Button / Edge Swipe Navigation
   const activePageRef = useRef(activePage);
   activePageRef.current = activePage;
 
@@ -161,9 +160,6 @@ export default function App() {
 
   const selectedMovieRef = useRef(selectedMovie);
   selectedMovieRef.current = selectedMovie;
-
-  const isExitModalOpenRef = useRef(isExitModalOpen);
-  isExitModalOpenRef.current = isExitModalOpen;
 
   // Robust multi-layer history buffer to permanently prevent Android from exiting on back swipe
   useEffect(() => {
@@ -252,12 +248,7 @@ export default function App() {
         window.history.pushState({ isaiyonApp: true, time: Date.now() }, '', window.location.href);
       } catch (_) {}
 
-      // 1. If Exit Confirmation dialog is already open -> KEEP IT OPEN
-      if (isExitModalOpenRef.current) {
-        return;
-      }
-
-      // 2. If any modal is open -> close it
+      // 1. If any modal is open -> close it
       if (isAdminModalOpenRef.current) {
         setIsAdminModalOpen(false);
         isAdminModalOpenRef.current = false;
@@ -279,22 +270,21 @@ export default function App() {
         return;
       }
 
-      // 3. If expanded VinylPlayer is open -> minimize to home (audio continues playing in background!)
+      // 2. If expanded VinylPlayer is open -> minimize to home (audio continues playing in background!)
       if (activePageRef.current === 'nowplaying') {
         setActivePage('home');
         activePageRef.current = 'home';
         return;
       }
 
-      // 4. If on any other page (search, library, queue, history) -> return to home (audio continues!)
+      // 3. If on any other page (search, library, queue, history) -> return to home (audio continues!)
       if (activePageRef.current !== 'home') {
         setActivePage('home');
         activePageRef.current = 'home';
         return;
       }
 
-      // 5. If on home page -> keep playing! The app NEVER exits on swipe gesture!
-      // Exit only happens when clicking Exit in the Navbar.
+      // 4. If on home page -> keep playing! The app never exits on swipe gesture!
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -303,32 +293,6 @@ export default function App() {
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
-
-  const handleConfirmExitApp = () => {
-    setIsExitModalOpen(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      try {
-        audioRef.current.currentTime = 0;
-      } catch (_) {}
-      audioRef.current.removeAttribute('src');
-      audioRef.current.load();
-    }
-    if ('mediaSession' in navigator) {
-      try {
-        navigator.mediaSession.metadata = null;
-        navigator.mediaSession.playbackState = 'none';
-      } catch {}
-    }
-    try {
-      window.close();
-    } catch (_) {}
-    setTimeout(() => {
-      try {
-        window.history.go(-2);
-      } catch (_) {}
-    }, 120);
-  };
 
 
   const handleClosePlayer = () => {
@@ -1536,7 +1500,6 @@ export default function App() {
           user={user} 
           onOpenAdminModal={() => setIsAdminModalOpen(true)} 
           onOpenManageModal={() => setIsManageModalOpen(true)}
-          onConfirmExitApp={handleConfirmExitApp}
           onRefresh={handleRefreshData}
           isRefreshing={isRefreshing}
         />
@@ -1801,71 +1764,6 @@ export default function App() {
         />
 
 
-
-        {/* Mobile PWA Exit Confirmation Modal */}
-        {isExitModalOpen && (
-          <div 
-            className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 select-none animate-[modalPop_0.2s_ease-out]"
-            onClick={() => {
-              setIsExitModalOpen(false);
-              isExitModalOpenRef.current = false;
-            }}
-          >
-            <div 
-              className="w-full max-w-xs bg-white rounded-3xl p-5 shadow-2xl relative flex flex-col items-center text-center gap-3 border border-slate-100"
-              onClick={e => e.stopPropagation()}
-            >
-              {/* Top Right X button acts as Cancel */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsExitModalOpen(false);
-                  isExitModalOpenRef.current = false;
-                }}
-                className="absolute top-3.5 right-3.5 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
-                title="Cancel"
-              >
-                <X size={16} />
-              </button>
-
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-xs mt-1">
-                <Power size={22} />
-              </div>
-              <div>
-                <h3 className="text-base font-black text-slate-900 font-display">Account & Exit</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Choose to sign out from your account or completely exit the app.
-                </p>
-              </div>
-              <div className="flex gap-2 w-full pt-1">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setIsExitModalOpen(false);
-                    isExitModalOpenRef.current = false;
-                    try {
-                      await auth.signOut();
-                    } catch (_) {}
-                  }}
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
-                  title="Log Out"
-                >
-                  <LogOut size={13} />
-                  <span>Log Out</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmExitApp}
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
-                  title="Exit App"
-                >
-                  <Power size={13} />
-                  <span>Exit App</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Floating Quick Toast */}
         {toastMessage && (

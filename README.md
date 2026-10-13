@@ -10,11 +10,11 @@
 
   <br />
 
-  <a href="https://music-player-d0eb8.web.app">
-    <img src="https://img.shields.io/badge/Live%20Demo-music--player--d0eb8.web.app-ffca28?style=for-the-badge&logo=firebase&logoColor=black" alt="Live Demo" />
+  <a href="https://isaiyon-music.web.app">
+    <img src="https://img.shields.io/badge/Live%20Demo-isaiyon--music.web.app-ffca28?style=for-the-badge&logo=firebase&logoColor=black" alt="Live Demo" />
   </a>
   <img src="https://img.shields.io/badge/PWA-Installable-blueviolet?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA Ready" />
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
   <img src="https://img.shields.io/badge/Vite-Fast-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-orange?style=for-the-badge&logo=firebase&logoColor=white" alt="Firebase" />
 
@@ -24,8 +24,9 @@
 
 ## 🌐 Live Deployment Links
 
-- 🚀 **Primary Live URL**: [https://music-player-d0eb8.web.app](https://music-player-d0eb8.web.app)
-- 🔗 **Mirror URL**: [https://music-player-d0eb8.firebaseapp.com](https://music-player-d0eb8.firebaseapp.com)
+- 🚀 **Primary Live URL**: [https://isaiyon-music.web.app](https://isaiyon-music.web.app)
+- 🔗 **App Mirror URL**: [https://isaiyon-app.web.app](https://isaiyon-app.web.app)
+- 🔗 **Default Project URL**: [https://music-player-d0eb8.web.app](https://music-player-d0eb8.web.app)
 - 📂 **GitHub Repository**: [muthukumar9360/Isaiyon](https://github.com/muthukumar9360/Isaiyon)
 
 ---
@@ -116,13 +117,13 @@ npm run build && npx firebase deploy --only hosting
 ## 📱 How to Install on Mobile & Laptop
 
 ### On Android / iOS (Mobile)
-1. Open [https://music-player-d0eb8.web.app](https://music-player-d0eb8.web.app) in **Chrome** or **Safari**.
+1. Open [https://isaiyon-music.web.app](https://isaiyon-music.web.app) in **Chrome** or **Safari**.
 2. Tap the browser menu (⋮ on Chrome, Share ⎋ on Safari).
 3. Select **"Install app"** or **"Add to Home Screen"**.
 4. Launch Isaiyon directly from your home screen as a full-screen native app.
 
 ### On Laptop / PC (Chrome or Edge)
-1. Open [https://music-player-d0eb8.web.app](https://music-player-d0eb8.web.app) in **Google Chrome** or **Microsoft Edge**.
+1. Open [https://isaiyon-music.web.app](https://isaiyon-music.web.app) in **Google Chrome** or **Microsoft Edge**.
 2. Look at the right side of the URL address bar and click the **Install App** icon (monitor with down arrow).
 3. Or click the **3 dots menu (⋮)** → **"Install Isaiyon Music"**.
 4. The app opens in its own clean window without browser toolbars.

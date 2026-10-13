@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink, RefreshCw, Power } from 'lucide-react';
+import { Download, Plus, SlidersHorizontal, LogIn, LogOut, AlertTriangle, X, Loader2, ExternalLink, RefreshCw } from 'lucide-react';
 import {
   auth,
   googleProvider,
@@ -53,7 +52,7 @@ function getAuthErrorMessage(err) {
   }
 }
 
-export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onConfirmExitApp, onRefresh, isRefreshing = false }) {
+export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRefresh, isRefreshing = false }) {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -180,11 +179,13 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onCo
 
 
 
-          {/* Google Authentication & Exit */}
+          {/* Google Authentication & Sign Out */}
           {user ? (
             <div className="flex items-center gap-1.5">
               <div
-                className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all active:scale-95 shadow-2xs"
+                className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                onClick={() => setShowLogoutConfirm(true)}
+                title="View Account"
               >
                 <img
                   src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
@@ -193,14 +194,14 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onCo
                 />
               </div>
 
-              {/* Dedicated Exit App Button at top Navbar near to logout button */}
+              {/* Dedicated Sign Out Button */}
               <button
                 type="button"
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200/80 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200/80 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs"
                 onClick={() => setShowLogoutConfirm(true)}
-                title="Exit Application"
+                title="Sign Out"
               >
-                <Power size={15} />
+                <LogOut size={15} />
               </button>
             </div>
           ) : (
@@ -221,7 +222,7 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onCo
         </div>
       </header>
 
-      {/* Account, Logout & Exit Confirmation Modal */}
+      {/* Account & Sign Out Confirmation Modal */}
       {showLogoutConfirm && user && (
         <div
           className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
@@ -243,13 +244,16 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onCo
 
             {/* Icon Graphic */}
             <div className="w-10 h-10 rounded-full bg-slate-900 border border-black text-white flex items-center justify-center mt-1">
-              <Power size={18} />
+              <LogOut size={18} />
             </div>
 
             <div className="flex flex-col gap-1">
               <h3 className="text-base font-extrabold text-black font-display">
-                Sign out / Exit
+                Sign Out
               </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                Are you sure you want to sign out of your account?
+              </p>
             </div>
 
             {/* User Profile Card */}
@@ -269,31 +273,27 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onCo
               </div>
             </div>
 
-            {/* Confirmation Action Buttons: Left is Logout, Right is Exit App */}
+            {/* Confirmation Action Buttons */}
             <div className="w-full flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+                title="Cancel"
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowLogoutConfirm(false);
                   handleSignOut();
                 }}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
-                title="Log Out"
+                className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                title="Sign Out"
               >
                 <LogOut size={13} />
-                <span>Log Out</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowLogoutConfirm(false);
-                  onConfirmExitApp?.();
-                }}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
-                title="Exit App"
-              >
-                <Power size={13} />
-                <span>Exit App</span>
+                <span>Sign Out</span>
               </button>
             </div>
           </div>
