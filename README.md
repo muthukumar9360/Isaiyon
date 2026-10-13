@@ -22,11 +22,9 @@
 
 ---
 
-## 🌐 Live Deployment Links
+## 🌐 Official Live Website
 
-- 🚀 **Primary Live URL**: [https://isaiyon-music.web.app](https://isaiyon-music.web.app)
-- 🔗 **App Mirror URL**: [https://isaiyon-app.web.app](https://isaiyon-app.web.app)
-- 🔗 **Default Project URL**: [https://music-player-d0eb8.web.app](https://music-player-d0eb8.web.app)
+- 🚀 **Live App URL**: [https://isaiyon-music.web.app](https://isaiyon-music.web.app)
 - 📂 **GitHub Repository**: [muthukumar9360/Isaiyon](https://github.com/muthukumar9360/Isaiyon)
 
 ---
