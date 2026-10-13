@@ -320,14 +320,6 @@ export default function ManageSongsModal({
                     </div>
                   </div>
                 </div>
-
-                {/* Storage Target info banner */}
-                <div className="bg-amber-50/80 border border-amber-200/60 px-2.5 py-1 rounded-xl flex items-center text-[10px]">
-                  <span className="font-bold text-amber-800 shrink-0 mr-1">Path :</span>
-                  <code className="text-amber-900 font-mono text-[10px] truncate font-semibold select-all">
-                    {(editForm.movie || 'Movie').trim()}/{(editForm.title || 'Song').trim()}/cover.jpg
-                  </code>
-                </div>
               </div>
 
               {/* Title with Smart Autocomplete */}

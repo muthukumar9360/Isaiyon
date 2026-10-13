@@ -1,15 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Heart, 
-  ListPlus, 
-  FolderPlus, 
-  ListMusic, 
-  ChevronDown, 
-  Sparkles, 
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Heart,
+  ListPlus,
+  FolderPlus,
+  ListMusic,
+  ChevronDown,
+  Sparkles,
   Settings,
   Moon,
   Share2,
@@ -30,9 +30,9 @@ import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 import { resolveDirectArchiveUrl } from '../utils/mediaUrlResolver';
 
 const WAVE_BAR_HEIGHTS = [
-  8, 14, 18, 12, 22, 28, 16, 24, 
-  32, 20, 26, 30, 18, 14, 22, 28, 
-  34, 24, 18, 26, 30, 22, 16, 24, 
+  8, 14, 18, 12, 22, 28, 16, 24,
+  32, 20, 26, 30, 18, 14, 22, 28,
+  34, 24, 18, 26, 30, 22, 16, 24,
   28, 18, 12, 20, 26, 16, 12, 8
 ];
 
@@ -73,13 +73,14 @@ export default function VinylPlayer({
   onShareTrack,
   volume = 0.9,
   onSetVolume,
-  repeatMode = 'all',
+  repeatMode = 'off',
   onToggleRepeatMode,
   isShuffle = false,
   onToggleShuffle,
+  isSuggestedOpen = false,
+  onToggleSuggestions,
   user
 }) {
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [soundProfile, setSoundProfile] = useState(() => {
     try {
@@ -137,9 +138,99 @@ export default function VinylPlayer({
       isDraggingRef.current = false;
       try {
         e.currentTarget.releasePointerCapture?.(e.pointerId);
-      } catch (_) {}
+      } catch (_) { }
     }
   };
+
+  if (isSuggestedOpen) {
+    return (
+      <div className="w-full flex-1 flex flex-col pt-1 pb-24 px-1 select-none animate-[fadeIn_0.22s_ease-out]">
+        {/* Suggested Songs Header with Title and X Button */}
+        <div className="flex items-center justify-between px-3 py-2.5 mb-2.5 bg-slate-50 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+              <Sparkles size={16} />
+            </div>
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 font-display">
+                Suggested Songs
+              </h2>
+              <p className="text-[10px] font-bold text-slate-400">
+                {suggestedTracks.length} tracks tailored for you
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onToggleSuggestions?.(false)}
+            className="w-8 h-8 rounded-full bg-white hover:bg-slate-200/80 text-slate-700 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200"
+            title="Close Suggestions & Return to Player"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Scrollable List of Suggested Songs */}
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[64vh] scrollbar-thin">
+          {suggestedTracks.length === 0 ? (
+            <div className="text-center py-12 text-xs font-semibold text-slate-400">
+              All tracks currently queued or playing!
+            </div>
+          ) : (
+            suggestedTracks.map((track) => (
+              <div 
+                key={track.id}
+                className="p-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-2.5 transition-all group"
+              >
+                <div 
+                  className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+                  onClick={() => onSelectTrack?.(track)}
+                >
+                  <img 
+                    src={track.coverUrl || FALLBACK_ARTWORK} 
+                    alt={track.title} 
+                    className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
+                    onError={(e) => { e.target.src = FALLBACK_ARTWORK; }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-extrabold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
+                      {track.title}
+                    </p>
+                    <p className="text-[10px] font-semibold text-slate-500 truncate mt-0.5">
+                      {track.movie || track.artist || 'Sound Vault'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button 
+                    onClick={() => onAddToQueue?.(track)}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs"
+                    title="Add to queue"
+                  >
+                    <ListPlus size={15} />
+                  </button>
+                  <button 
+                    onClick={() => onOpenPlaylistModal?.(track)}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs"
+                    title="Add to playlist"
+                  >
+                    <FolderPlus size={15} />
+                  </button>
+                  <button 
+                    onClick={() => onSelectTrack?.(track)}
+                    className="w-8 h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs"
+                    title="Play track"
+                  >
+                    <Play size={14} fill="#ffffff" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex-1 mt-5 flex flex-col justify-between items-center py-1 px-1 select-none animate-[bigPlayerOpen_0.36s_cubic-bezier(0.16,1,0.3,1)]">
@@ -148,7 +239,7 @@ export default function VinylPlayer({
       <div className="w-full relative flex items-center justify-center px-3 pt-0 pb-1.5 shrink-0">
         <button
           onClick={handleCollapse}
-          className="absolute left-3 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/90 text-black flex items-center gap-1.5 text-xs font-extrabold transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200"
+          className="absolute left-3 p-1 rounded-full bg-slate-100 hover:bg-slate-200/90 text-black flex items-center gap-1.5 font-extrabold transition-all active:scale-90 cursor-pointer shadow-2xs border border-slate-200"
           title="Minimize player"
         >
           <ChevronDown size={25} className="text-slate-600" />
@@ -171,121 +262,43 @@ export default function VinylPlayer({
         </button>
       </div>
 
-      {/* 2. Middle Centerpiece: Vinyl Disc OR Scrollable Suggested Songs List */}
-      {!showSuggestions ? (
-        /* Realistic Vinyl Record Centerpiece */
-        <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0 animate-[fadeIn_0.25s_ease-out]">
-          <div className="relative w-[min(84vw,34vh,310px)] h-[min(84vw,34vh,310px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 shadow-[0px_0px_45px_rgba(15,23,42,1)] ring-8 ring-white flex items-center justify-center shrink-0 animate-[vinylDiscReveal_0.55s_cubic-bezier(0.22,1,0.36,1)]">
-            {/* Subtle Vinyl Grooves Rings */}
-            <div className="absolute inset-4 rounded-full border border-white/5 pointer-events-none" />
-            <div className="absolute inset-7 rounded-full border border-white/5 pointer-events-none" />
-            <div className="absolute inset-10 rounded-full border border-white/5 pointer-events-none" />
-            
-            {/* Rotating Vinyl Disc with Album Art */}
-            <div 
-              className="w-full h-full rounded-full overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.35)] border-2 border-white"
-              style={{ 
-                animation: isPlaying ? 'spinDisc 16s linear infinite' : 'none'
+      {/* 2. Realistic Vinyl Record Centerpiece */}
+      <div className="w-full flex items-center justify-center my-auto flex-1 min-h-0 animate-[fadeIn_0.25s_ease-out]">
+        <div className="relative w-[min(84vw,34vh,310px)] h-[min(84vw,34vh,310px)] aspect-square rounded-full p-2.5 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 shadow-[0px_0px_45px_rgba(15,23,42,1)] ring-8 ring-white flex items-center justify-center shrink-0 animate-[vinylDiscReveal_0.55s_cubic-bezier(0.22,1,0.36,1)]">
+          {/* Subtle Vinyl Grooves Rings */}
+          <div className="absolute inset-4 rounded-full border border-white/5 pointer-events-none" />
+          <div className="absolute inset-7 rounded-full border border-white/5 pointer-events-none" />
+          <div className="absolute inset-10 rounded-full border border-white/5 pointer-events-none" />
+
+          {/* Rotating Vinyl Disc with Album Art */}
+          <div
+            className="w-full h-full rounded-full overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.35)] border-2 border-white"
+            style={{
+              animation: isPlaying ? 'spinDisc 16s linear infinite' : 'none'
+            }}
+          >
+            <img
+              src={currentTrack?.coverUrl || FALLBACK_ARTWORK}
+              alt={currentTrack?.title}
+              className="w-full h-full object-fit rounded-full pointer-events-none"
+              onError={(e) => {
+                const raw = currentTrack?.coverUrl || '';
+                if (raw.includes('archive.org/download/') && !e.target.dataset.triedDirect) {
+                  e.target.dataset.triedDirect = 'true';
+                  e.target.src = resolveDirectArchiveUrl(raw);
+                } else {
+                  e.target.onerror = null;
+                  e.target.src = FALLBACK_ARTWORK;
+                }
               }}
-            >
-              <img 
-                src={currentTrack?.coverUrl || FALLBACK_ARTWORK} 
-                alt={currentTrack?.title} 
-                className="w-full h-full object-fit rounded-full pointer-events-none"
-                onError={(e) => {
-                  const raw = currentTrack?.coverUrl || '';
-                  if (raw.includes('archive.org/download/') && !e.target.dataset.triedDirect) {
-                    e.target.dataset.triedDirect = 'true';
-                    e.target.src = resolveDirectArchiveUrl(raw);
-                  } else {
-                    e.target.onerror = null;
-                    e.target.src = FALLBACK_ARTWORK;
-                  }
-                }}
-              />
-              {/* Center Spindle Core */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-4 border-black shadow-md z-10" />
-            </div>
+            />
+            {/* Center Spindle Core */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white border-4 border-black shadow-md z-10" />
           </div>
         </div>
-      ) : (
-        /* Scrollable Suggested Songs List (Replacing Disc when opened) */
-        <div className="w-full flex-1 min-h-0 flex flex-col my-1 px-2.5 animate-[fadeIn_0.25s_ease-out]">
-          <div className="flex items-center justify-between px-1 mb-2 shrink-0">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-1.5 font-display">
-              <Sparkles size={14} className="text-amber-500" />
-              <span>Suggested Songs ({suggestedTracks.length})</span>
-            </span>
-            <button 
-              onClick={() => setShowSuggestions(false)}
-              className="text-[11px] font-extrabold text-slate-600 hover:text-black px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer"
-            >
-              Show Disc
-            </button>
-          </div>
+      </div>
 
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[38vh] sm:max-h-[44vh] scrollbar-thin">
-            {suggestedTracks.length === 0 ? (
-              <div className="text-center py-8 text-xs font-semibold text-slate-400">
-                All tracks currently queued or playing!
-              </div>
-            ) : (
-              suggestedTracks.map((track) => (
-                <div 
-                  key={track.id}
-                  className="p-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-2.5 transition-all group"
-                >
-                  <div 
-                    className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
-                    onClick={() => onSelectTrack?.(track)}
-                  >
-                    <img 
-                      src={track.coverUrl || FALLBACK_ARTWORK} 
-                      alt={track.title} 
-                      className="w-11 h-11 rounded-xl object-cover border border-slate-200 shrink-0"
-                      onError={(e) => { e.target.src = FALLBACK_ARTWORK; }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-extrabold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
-                        {track.title}
-                      </p>
-                      <p className="text-[10px] font-semibold text-slate-500 truncate">
-                        {track.movie || track.artist || 'Sound Vault'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button 
-                      onClick={() => onAddToQueue?.(track)}
-                      className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs"
-                      title="Add to queue"
-                    >
-                      <ListPlus size={15} />
-                    </button>
-                    <button 
-                      onClick={() => onOpenPlaylistModal?.(track)}
-                      className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-2xs"
-                      title="Add to playlist"
-                    >
-                      <FolderPlus size={15} />
-                    </button>
-                    <button 
-                      onClick={() => onSelectTrack?.(track)}
-                      className="w-8 h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs"
-                      title="Play track"
-                    >
-                      <Play size={13} fill="#ffffff" color="#ffffff" className="ml-0.5" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 3. Track Details: Title, Artist, Queue Mode Toggle (Double-Tap Supported), and Favorite */}
+      {/* 3. Track Details: Title, Artist, and Favorite */}
       <div className="w-full px-2 my-2 shrink-0">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -299,26 +312,8 @@ export default function VinylPlayer({
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            {/* Queue Mode Toggle Button: Single Tap = On/Off, Double Tap = Open Queue Section */}
-            <button 
-              className={`p-2.5 rounded-full flex items-center justify-center relative cursor-pointer active:scale-90 transition-all ${
-                isQueueMode 
-                  ? 'text-red-500' 
-                  : 'text-black'
-              }`}
-              onClick={handleQueueButtonTap}
-              title={isQueueMode ? "Queue Mode: ON (Double-tap to open queue)" : "Queue Mode: OFF (Tap to toggle)"}
-            >
-              <ListMusic size={36} />
-              {queueCount > 0 && isQueueMode && (
-                <span className="absolute top-0 -right-1 w-4 h-4 bg-amber-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-xs">
-                  {queueCount}
-                </span>
-              )}
-            </button>
-
             {user && (
-              <button 
+              <button
                 className={`p-2 rounded-full transition-all active:scale-90 hover:scale-105 shrink-0 cursor-pointer ${isFavorite ? 'text-rose-600' : 'text-black hover:text-rose-500'}`}
                 onClick={() => onToggleFavorite(currentTrack?.id)}
                 title={isFavorite ? "Remove from Liked" : "Like Song"}
@@ -336,9 +331,9 @@ export default function VinylPlayer({
           {formatTime(currentTime)}
         </span>
 
-        <div 
+        <div
           ref={waveformTrackRef}
-          className="flex-1 h-10 flex items-center justify-between gap-[2.5px] px-1 py-1 cursor-pointer select-none touch-none rounded-xl transition-colors" 
+          className="flex-1 h-10 flex items-center justify-between gap-[2.5px] px-1 py-1 cursor-pointer select-none touch-none rounded-xl transition-colors"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -349,16 +344,15 @@ export default function VinylPlayer({
             const barRatio = i / WAVE_BAR_HEIGHTS.length;
             const isPlayed = barRatio <= progressRatio;
             return (
-              <div 
-                key={i} 
-                className={`flex-1 min-w-[2px] max-w-[4px] rounded-full transition-colors duration-150 ${
-                  isPlayed 
-                    ? 'bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_6px_rgba(217,119,6,0.35)]' 
+              <div
+                key={i}
+                className={`flex-1 min-w-[2px] max-w-[4px] rounded-full transition-colors duration-150 ${isPlayed
+                    ? 'bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_6px_rgba(217,119,6,0.35)]'
                     : 'bg-slate-200'
-                } ${isPlaying && isPlayed ? 'ref-wave-stem-pulse' : ''}`}
-                style={{ 
+                  } ${isPlaying && isPlayed ? 'ref-wave-stem-pulse' : ''}`}
+                style={{
                   height: `${Math.max(18, Math.round((h / 34) * 100))}%`,
-                  animationDelay: `${(i % 5) * 0.15}s` 
+                  animationDelay: `${(i % 5) * 0.15}s`
                 }}
               />
             );
@@ -374,26 +368,26 @@ export default function VinylPlayer({
           [Add to Playlist] [SkipBack] [Play/Pause with Rotating Disc] [SkipForward] [Suggested Songs Toggle] */}
       <div className="w-full mt-3 flex items-center justify-center gap-3 sm:gap-4.5 my-2 shrink-0 pb-2">
         {/* Far Left: Add Current Track to Playlist (replaces duplicate queue button) */}
-        <button 
-          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer" 
-          onClick={() => currentTrack && onOpenPlaylistModal?.(currentTrack)} 
+        <button
+          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer"
+          onClick={() => currentTrack && onOpenPlaylistModal?.(currentTrack)}
           title="Add to Playlist"
         >
           <FolderPlus size={20} />
         </button>
 
-        <button 
-          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer" 
-          onClick={onPrev} 
+        <button
+          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer"
+          onClick={onPrev}
           title="Previous Track"
         >
           <SkipBack size={20} />
         </button>
 
         {/* Center: Play / Pause Button with Rotating Vinyl Disc Loading */}
-        <button 
-          className="w-18 h-18 rounded-full flex items-center justify-center text-black border-none bg-slate-100 hover:bg-slate-200 cursor-pointer relative transition-all active:scale-95 hover:scale-105" 
-          onClick={onPlayPause} 
+        <button
+          className="w-18 h-18 rounded-full flex items-center justify-center text-black border-none bg-slate-100 hover:bg-slate-200 cursor-pointer relative transition-all active:scale-95 hover:scale-105"
+          onClick={onPlayPause}
           title={isPlaying ? 'Pause' : 'Play'}
         >
           {isBuffering ? (
@@ -405,21 +399,19 @@ export default function VinylPlayer({
           )}
         </button>
 
-        <button 
-          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer" 
-          onClick={onNext} 
+        <button
+          className="w-12 h-12 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-black transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer"
+          onClick={onNext}
           title="Next Track"
         >
           <SkipForward size={20} />
         </button>
 
-        {/* Far Right: Toggle Suggested Songs List (replaces playlist button here) */}
-        <button 
-          className={`w-12 h-12 rounded-full border border-slate-200/80 flex items-center justify-center transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer ${
-            showSuggestions ? 'bg-amber-500 text-white border-amber-600 shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-black'
-          }`} 
-          onClick={() => setShowSuggestions(prev => !prev)} 
-          title={showSuggestions ? "Hide Suggested Songs" : "Show Suggested Songs"}
+        {/* Far Right: Toggle Suggested Songs List */}
+        <button
+          className="w-12 h-12 rounded-full border border-slate-200/80 flex items-center justify-center transition-all active:scale-95 hover:scale-105 shadow-2xs cursor-pointer bg-slate-100 hover:bg-slate-200 text-black"
+          onClick={() => onToggleSuggestions?.(true)}
+          title="Show Suggested Songs"
         >
           <Sparkles size={20} />
         </button>
@@ -427,11 +419,11 @@ export default function VinylPlayer({
 
       {/* 6. Audio Options / Quick Features Modal */}
       {showOptionsModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
           onClick={() => setShowOptionsModal(false)}
         >
-          <div 
+          <div
             className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl relative border border-slate-100 flex flex-col gap-4 text-slate-900 max-h-[85vh] overflow-y-auto scrollbar-thin"
             onClick={(e) => e.stopPropagation()}
           >
@@ -439,9 +431,9 @@ export default function VinylPlayer({
             <div className="flex items-center justify-between pb-1 border-b border-slate-100">
               <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 font-display">
                 <Settings size={16} className="text-amber-500" />
-                <span>Audio Settings & Options</span>
+                <span>Audio Settings</span>
               </h3>
-              <button 
+              <button
                 onClick={() => setShowOptionsModal(false)}
                 className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
               >
@@ -449,51 +441,43 @@ export default function VinylPlayer({
               </button>
             </div>
 
-            {/* 1. Global Sleep Timer (Applies to Entire App) */}
-            <div className="flex flex-col gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                  <Moon size={13} className="text-indigo-500" />
-                  <span>Sleep Timer (Entire App)</span>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                <span>Sleep Timer</span>
+              </span>
+              {sleepTimer !== 0 && (
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-500 text-white">
+                  {sleepTimer === 'track' ? 'End of Song' : `${sleepTimer}m Active`}
                 </span>
-                {sleepTimer !== 0 && (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-500 text-white">
-                    {sleepTimer === 'track' ? 'End of Song' : `${sleepTimer}m Active`}
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] text-slate-500 leading-tight">
-                Applies globally: pauses audio across all songs when time expires.
-              </p>
-              <div className="grid grid-cols-6 gap-1 pt-1">
-                {[
-                  { label: 'Off', val: 0 },
-                  { label: '15m', val: 15 },
-                  { label: '30m', val: 30 },
-                  { label: '45m', val: 45 },
-                  { label: '60m', val: 60 },
-                  { label: 'Song', val: 'track' }
-                ].map(({ label, val }) => (
-                  <button
-                    key={label}
-                    onClick={() => {
-                      onSetSleepTimer?.(val);
-                    }}
-                    className={`py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      sleepTimer === val 
-                        ? 'bg-indigo-600 text-white shadow-xs' 
-                        : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/80'
+              )}
+            </div>
+            <div className="grid grid-cols-6 gap-1 -mt-1">
+              {[
+                { label: 'Off', val: 0 },
+                { label: '15m', val: 15 },
+                { label: '30m', val: 30 },
+                { label: '45m', val: 45 },
+                { label: '60m', val: 60 },
+                { label: 'Song', val: 'track' }
+              ].map(({ label, val }) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    onSetSleepTimer?.(val);
+                  }}
+                  className={`py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${sleepTimer === val
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/80'
                     }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
             {/* 2. Playback Speed */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Playback Speed
               </span>
               <div className="grid grid-cols-5 gap-1.5">
@@ -503,11 +487,10 @@ export default function VinylPlayer({
                     onClick={() => {
                       onSetPlaybackRate?.(rate);
                     }}
-                    className={`py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      playbackRate === rate 
-                        ? 'bg-slate-900 text-white shadow-xs' 
+                    className={`py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${playbackRate === rate
+                        ? 'bg-slate-900 text-white shadow-xs'
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                    }`}
+                      }`}
                   >
                     {rate}x
                   </button>
@@ -515,43 +498,10 @@ export default function VinylPlayer({
               </div>
             </div>
 
-            {/* 3. Sound Profile & Equalizer Preset */}
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                <Sliders size={12} className="text-amber-500" />
-                <span>Sound Profile (EQ)</span>
-              </span>
-              <div className="grid grid-cols-2 gap-1.5">
-                {[
-                  { id: 'studio', label: 'Studio Hi-Fi (320k)' },
-                  { id: 'bass', label: 'Bass Boost (+4dB)' },
-                  { id: 'vocal', label: 'Vocal Clarity' },
-                  { id: 'bright', label: 'Treble Crisp' }
-                ].map((prof) => (
-                  <button
-                    key={prof.id}
-                    onClick={() => {
-                      setSoundProfile(prof.id);
-                      try { localStorage.setItem('isaiyon_sound_profile', prof.id); } catch (_) {}
-                    }}
-                    className={`py-2 px-2.5 rounded-xl text-xs font-bold text-left transition-all cursor-pointer flex items-center justify-between border ${
-                      soundProfile === prof.id
-                        ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
-                    }`}
-                  >
-                    <span className="truncate">{prof.label}</span>
-                    {soundProfile === prof.id && <Check size={12} className="shrink-0" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* 4. App Volume Control */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                  {volume === 0 ? <VolumeX size={13} className="text-rose-500" /> : <Volume2 size={13} className="text-slate-600" />}
                   <span>Volume</span>
                 </span>
                 <span className="text-xs font-extrabold text-slate-700">
@@ -560,13 +510,13 @@ export default function VinylPlayer({
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => onSetVolume?.(volume > 0 ? 0 : 0.9)}
-                  className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 cursor-pointer"
+                  onClick={() => onSetVolume?.(volume > 0 ? 0 : 1)}
+                  className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 cursor-pointer"
                   title={volume === 0 ? "Unmute" : "Mute"}
                 >
-                  {volume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                  {volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
                 </button>
-                <input 
+                <input
                   type="range"
                   min="0"
                   max="1"
@@ -578,50 +528,50 @@ export default function VinylPlayer({
               </div>
             </div>
 
-            {/* 5. Repeat & Shuffle Controls */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* 5. Repeat, Shuffle & Queue Mode Controls */}
+            <div className="grid grid-cols-3 gap-1.5">
               <button
                 onClick={onToggleRepeatMode}
-                className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-slate-200/80"
-                title="Toggle Repeat"
+                className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+                  repeatMode === 'one'
+                    ? 'bg-amber-50 text-amber-700 border-amber-300 shadow-2xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80'
+                }`}
+                title="Toggle Repeat Current Song"
               >
-                {repeatMode === 'one' ? <Repeat1 size={14} className="text-amber-600" /> : <Repeat size={14} />}
-                <span>Repeat: {repeatMode === 'one' ? 'One' : repeatMode === 'all' ? 'All' : 'Off'}</span>
+                <Repeat1 size={13} className={repeatMode === 'one' ? 'text-amber-600' : ''} />
+                <span>Repeat: {repeatMode === 'one' ? 'On' : 'Off'}</span>
               </button>
 
               <button
                 onClick={onToggleShuffle}
-                className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
-                  isShuffle 
-                    ? 'bg-amber-50 text-amber-700 border-amber-300' 
+                className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+                  isShuffle
+                    ? 'bg-amber-50 text-amber-700 border-amber-300 shadow-2xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80'
                 }`}
-                title="Toggle Shuffle"
+                title="Toggle Shuffle Mode (turns off queue mode)"
               >
-                <Shuffle size={14} className={isShuffle ? 'text-amber-600' : ''} />
+                <Shuffle size={13} className={isShuffle ? 'text-amber-600' : ''} />
                 <span>Shuffle: {isShuffle ? 'On' : 'Off'}</span>
+              </button>
+
+              <button
+                onClick={onToggleQueueMode}
+                className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer border ${
+                  isQueueMode
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-2xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80'
+                }`}
+                title="Toggle Queue Mode (turns off shuffle mode)"
+              >
+                <ListMusic size={13} className={isQueueMode ? 'text-indigo-600' : ''} />
+                <span>Queue: {isQueueMode ? 'On' : 'Off'}</span>
               </button>
             </div>
 
             {/* 6. Soundtrack & Share Links */}
             <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
-              {currentTrack?.movie && onOpenMovieModal && (
-                <button
-                  onClick={() => {
-                    setShowOptionsModal(false);
-                    onOpenMovieModal(currentTrack.movie);
-                  }}
-                  className="w-full py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-between transition-all cursor-pointer border border-slate-200/80"
-                >
-                  <span className="flex items-center gap-2">
-                    <Film size={14} className="text-amber-600" />
-                    <span>View Movie Soundtrack</span>
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[100px]">
-                    {currentTrack.movie}
-                  </span>
-                </button>
-              )}
 
               {onShareTrack && currentTrack && (
                 <button

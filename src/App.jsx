@@ -58,11 +58,13 @@ export default function App() {
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState(() => {
     try {
-      return localStorage.getItem('isaiyon_repeat_mode') || 'all';
+      const saved = localStorage.getItem('isaiyon_repeat_mode');
+      return saved === 'one' ? 'one' : 'off';
     } catch (_) {
-      return 'all';
+      return 'off';
     }
   });
+  const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [savedAlbums, setSavedAlbums] = useState([]);
   const [playlists, setPlaylists] = useState([]);
@@ -94,6 +96,9 @@ export default function App() {
     try {
       sessionStorage.setItem('isaiyon_active_page', activePage);
     } catch (_) {}
+    if (activePage !== 'nowplaying') {
+      setIsSuggestedOpen(false);
+    }
   }, [activePage]);
 
   // Queue state (Up Next) and history stack
@@ -1125,9 +1130,9 @@ export default function App() {
 
   const handleToggleRepeatMode = () => {
     setRepeatMode(prev => {
-      if (prev === 'all') return 'one';
-      if (prev === 'one') return 'off';
-      return 'all';
+      const next = prev === 'one' ? 'off' : 'one';
+      showToast(next === 'one' ? "Repeat ON" : "Repeat OFF");
+      return next;
     });
   };
 
@@ -1325,7 +1330,21 @@ export default function App() {
   const handleToggleQueueMode = () => {
     setIsQueueMode(prev => {
       const next = !prev;
+      if (next) {
+        setIsShuffle(false);
+      }
       showToast(next ? "Queue ON" : "Queue OFF");
+      return next;
+    });
+  };
+
+  const handleToggleShuffle = () => {
+    setIsShuffle(prev => {
+      const next = !prev;
+      if (next) {
+        setIsQueueMode(false);
+      }
+      showToast(next ? "Shuffle ON" : "Shuffle OFF");
       return next;
     });
   };
@@ -1794,14 +1813,16 @@ export default function App() {
               repeatMode={repeatMode}
               onToggleRepeatMode={handleToggleRepeatMode}
               isShuffle={isShuffle}
-              onToggleShuffle={() => setIsShuffle(prev => !prev)}
+              onToggleShuffle={handleToggleShuffle}
+              isSuggestedOpen={isSuggestedOpen}
+              onToggleSuggestions={setIsSuggestedOpen}
               user={user}
             />
           )}
         </main>
 
         {/* Persistent Bottom Bar Player */}
-        {activePage !== 'nowplaying' && currentTrack && !isBottomPlayerDismissed && (
+        {((activePage !== 'nowplaying') || isSuggestedOpen) && currentTrack && !isBottomPlayerDismissed && (
           <BottomPlayer 
             currentTrack={currentTrack}
             isPlaying={isPlaying}
@@ -1812,7 +1833,10 @@ export default function App() {
             isFavorite={currentTrack ? favorites.includes(currentTrack.id) : false}
             onToggleFavorite={handleToggleFavorite}
             user={user}
-            onOpenFullPlayer={() => setActivePage('nowplaying')}
+            onOpenFullPlayer={() => {
+              setIsSuggestedOpen(false);
+              setActivePage('nowplaying');
+            }}
             onClose={handleClosePlayer}
           />
         )}
