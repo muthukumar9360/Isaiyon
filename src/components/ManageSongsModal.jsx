@@ -8,7 +8,8 @@ import {
   CheckCircle2,
   SlidersHorizontal,
   Tag,
-  Upload
+  Upload,
+  ChevronDown
 } from 'lucide-react';
 import { auth } from '../firebase/config';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
@@ -376,29 +377,61 @@ export default function ManageSongsModal({
                 disabled={isSaving}
               />
 
-              {/* Genre & Mood */}
+              {/* Genre & Mood Dropdown Selects */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
                   <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
                     <Tag size={12} className="text-amber-500" />
                     <span>Genre</span>
                   </label>
-                  <input
-                    type="text"
-                    value={editForm.genre}
-                    onChange={e => setEditForm({ ...editForm, genre: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
-                  />
+                  <div className="relative">
+                    <select
+                      value={editForm.genre || 'Soundtrack'}
+                      onChange={e => setEditForm({ ...editForm, genre: e.target.value })}
+                      disabled={isSaving}
+                      className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
+                    >
+                      {editForm.genre && !['Soundtrack', 'Melody', 'Folk', 'Classical', 'Pop', 'Rock', 'Devotional', 'Indie'].includes(editForm.genre) && (
+                        <option value={editForm.genre}>{editForm.genre}</option>
+                      )}
+                      <option value="Soundtrack">Soundtrack</option>
+                      <option value="Melody">Melody</option>
+                      <option value="Folk">Folk</option>
+                      <option value="Classical">Classical</option>
+                      <option value="Pop">Pop</option>
+                      <option value="Rock">Rock</option>
+                      <option value="Devotional">Devotional</option>
+                      <option value="Indie">Indie</option>
+                    </select>
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                      <ChevronDown size={14} />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-700">Mood / Vibe</label>
-                  <input
-                    type="text"
-                    value={editForm.mood}
-                    onChange={e => setEditForm({ ...editForm, mood: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-100 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200 focus:border-amber-400 outline-hidden"
-                  />
+                  <label className="text-[11px] font-bold text-slate-700">Mood / Category</label>
+                  <div className="relative">
+                    <select
+                      value={editForm.mood || 'Melody Hits'}
+                      onChange={e => setEditForm({ ...editForm, mood: e.target.value })}
+                      disabled={isSaving}
+                      className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
+                    >
+                      {editForm.mood && !['Melody Hits', 'Love Failure', 'Energetic', 'Midnight Chill', 'Mass', 'Love'].includes(editForm.mood) && (
+                        <option value={editForm.mood}>{editForm.mood}</option>
+                      )}
+                      <option value="Melody Hits">🎵 Melody Hits</option>
+                      <option value="Love Failure">💔 Love Failure</option>
+                      <option value="Energetic">⚡ Energetic / Kuthu</option>
+                      <option value="Midnight Chill">🌙 Midnight Chill</option>
+                      <option value="Mass">🔥 Mass & Folk</option>
+                      <option value="Love">❤️ Love & Romance</option>
+                    </select>
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                      <ChevronDown size={14} />
+                    </div>
+                  </div>
                 </div>
               </div>
 
