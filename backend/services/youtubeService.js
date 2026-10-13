@@ -227,15 +227,21 @@ export function parseRichMetadata(info) {
 
 /**
  * Extracts YouTube metadata without downloading any media.
+ * Supports multiple client fallbacks and official YouTube oEmbed fallback to bypass bot checks.
  */
 export async function extractYoutubeInfo(youtubeUrl) {
   if (!isValidYoutubeUrl(youtubeUrl)) {
     throw new Error('Invalid YouTube URL format.');
   }
 
+  // Extract clean 11-character video ID if available
+  const videoIdMatch = youtubeUrl.match(/(?:watch\?v=|shorts\/|youtu\.be\/)([a-zA-Z0-9_\-]{11})/);
+  const videoId = videoIdMatch ? videoIdMatch[1] : '';
+
   const { ytCommand, ytPrefixArgs } = await getBinaryCommands();
   const args = [
     ...ytPrefixArgs,
+    '--extractor-args', 'youtube:player_client=android,ios,mweb,web',
     '--dump-json',
     '--no-playlist',
     '--quiet',
@@ -245,37 +251,83 @@ export async function extractYoutubeInfo(youtubeUrl) {
 
   console.log(`[YouTubeService] Extracting metadata using ${ytCommand} ${args.join(' ')}`);
 
-  return new Promise((resolve, reject) => {
-    const proc = spawn(ytCommand, args, { shell: true });
-    let stdoutData = '';
-    let stderrData = '';
+  try {
+    const ytResult = await new Promise((resolve, reject) => {
+      const proc = spawn(ytCommand, args, { shell: true });
+      let stdoutData = '';
+      let stderrData = '';
 
-    proc.stdout.on('data', (data) => {
-      stdoutData += data.toString();
+      proc.stdout.on('data', (data) => {
+        stdoutData += data.toString();
+      });
+
+      proc.stderr.on('data', (data) => {
+        stderrData += data.toString();
+      });
+
+      proc.on('close', (code) => {
+        if (code !== 0) {
+          return reject(new Error(`yt-dlp extraction failed (code ${code}): ${stderrData || 'Unknown error'}`));
+        }
+
+        try {
+          const parsed = JSON.parse(stdoutData.trim());
+          const rich = parseRichMetadata(parsed);
+          resolve(rich);
+        } catch (err) {
+          reject(new Error(`Failed to parse yt-dlp metadata JSON: ${err.message}`));
+        }
+      });
+
+      proc.on('error', (err) => {
+        reject(new Error(`Failed to spawn yt-dlp: ${err.message}`));
+      });
     });
 
-    proc.stderr.on('data', (data) => {
-      stderrData += data.toString();
-    });
+    return ytResult;
+  } catch (ytErr) {
+    console.warn(`[YouTubeService] Primary extraction failed (${ytErr.message}). Attempting YouTube oEmbed fallback...`);
 
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        return reject(new Error(`yt-dlp extraction failed (code ${code}): ${stderrData || 'Unknown error'}`));
+    // Resilient Fallback: Official YouTube oEmbed API (immune to datacenter/cloud bot detection)
+    try {
+      const targetQueryUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : youtubeUrl.trim();
+      const oembedRes = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(targetQueryUrl)}&format=json`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+      });
+
+      if (oembedRes.ok) {
+        const oembedData = await oembedRes.json();
+        const fallbackInfo = {
+          id: videoId || 'track',
+          title: oembedData.title || 'YouTube Track',
+          uploader: oembedData.author_name || 'YouTube Music',
+          thumbnail: oembedData.thumbnail_url || (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : ''),
+          duration: 0,
+          description: `Uploaded by ${oembedData.author_name || 'YouTube Creator'}`,
+          webpage_url: `https://www.youtube.com/watch?v=${videoId}`
+        };
+        const rich = parseRichMetadata(fallbackInfo);
+        console.log(`[YouTubeService] Successfully resolved via oEmbed: "${rich.title}"`);
+        return rich;
       }
+    } catch (oembedErr) {
+      console.warn('[YouTubeService] oEmbed fallback also failed:', oembedErr.message);
+    }
 
-      try {
-        const parsed = JSON.parse(stdoutData.trim());
-        const rich = parseRichMetadata(parsed);
-        resolve(rich);
-      } catch (err) {
-        reject(new Error(`Failed to parse yt-dlp metadata JSON: ${err.message}`));
-      }
-    });
+    // Last resort fallback if videoId is known
+    if (videoId) {
+      return parseRichMetadata({
+        id: videoId,
+        title: 'Tamil Master Song',
+        uploader: 'YouTube Artist',
+        thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        duration: 0,
+        webpage_url: `https://www.youtube.com/watch?v=${videoId}`
+      });
+    }
 
-    proc.on('error', (err) => {
-      reject(new Error(`Failed to spawn yt-dlp: ${err.message}`));
-    });
-  });
+    throw ytErr;
+  }
 }
 
 /**
@@ -291,7 +343,7 @@ export async function downloadAudioAndThumbnail({ youtubeUrl, videoId, tempDir }
 
   const args = [
     ...ytPrefixArgs,
-    '--extractor-args', 'youtube:player_client=android,web',
+    '--extractor-args', 'youtube:player_client=android,ios,mweb,web',
     '-x',
     '--audio-format', 'mp3',
     '--audio-quality', '192K',

@@ -106,7 +106,10 @@ export default function BottomPlayer({
             title={isPlaying ? 'Pause' : 'Play'}
           >
             {isBuffering ? (
-              <Loader2 size={16} className="animate-spin text-white" />
+              <div className="relative w-5 h-5 rounded-full bg-slate-900 animate-spin border border-white/30 shadow-md flex items-center justify-center shrink-0">
+                <div className="absolute inset-0.5 rounded-full border border-white/20" />
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 border border-slate-900" />
+              </div>
             ) : isPlaying ? (
               <Pause size={17} fill="#ffffff" color="#ffffff" />
             ) : (

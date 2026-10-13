@@ -125,7 +125,39 @@ export default function ManageSongsModal({
 
     setIsSaving(true);
     try {
-      await onUpdateTrack(editingTrackId, editForm);
+      let finalCoverUrl = editForm.coverUrl;
+
+      // If a new photo was selected, upload to Archive.org backend upon saving
+      if (editForm.pendingCoverBase64) {
+        try {
+          const token = await getAuthToken();
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(`${API_BASE_URL}/api/update-cover`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({
+              movie: editForm.movie,
+              title: editForm.title,
+              imageBase64: editForm.pendingCoverBase64
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          const data = await res.json();
+          if (data.success && data.coverUrl) {
+            finalCoverUrl = data.coverUrl;
+          }
+        } catch {
+          // Backend offline or timeout — use compressed cover directly in Firestore
+        }
+      }
+
+      const { pendingCoverBase64, ...fieldsToSave } = editForm;
+      await onUpdateTrack(editingTrackId, { ...fieldsToSave, coverUrl: finalCoverUrl });
       setSuccessMsg(`Updated "${editForm.title}" successfully!`);
       setTimeout(() => {
         setSuccessMsg('');
@@ -146,42 +178,13 @@ export default function ManageSongsModal({
     try {
       setIsUploadingPhoto(true);
       const compressedB64 = await compressImage(file, 500, 500, 0.82);
-      setEditForm(prev => ({ ...prev, coverUrl: compressedB64 }));
-
-      let finalUrl = compressedB64;
-
-      // Try Node.js backend to update Archive.org cover
-      try {
-        const token = await getAuthToken();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const res = await fetch(`${API_BASE_URL}/api/update-cover`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify({
-            movie: editForm.movie,
-            title: editForm.title,
-            imageBase64: compressedB64
-          }),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        const data = await res.json();
-        if (data.success && data.coverUrl) {
-          finalUrl = data.coverUrl;
-        }
-      } catch {
-        // Backend offline or timeout — use compressed cover directly in Firestore
-      }
-
-      setEditForm(prev => ({ ...prev, coverUrl: finalUrl }));
-      if (editingTrackId) {
-        await onUpdateTrack(editingTrackId, { coverUrl: finalUrl });
-      }
-      setSuccessMsg('Cover photo updated in Vault!');
+      // Only stage the new photo in local editForm, DO NOT write to DB until "Save Changes" is clicked
+      setEditForm(prev => ({ 
+        ...prev, 
+        coverUrl: compressedB64,
+        pendingCoverBase64: compressedB64 
+      }));
+      setSuccessMsg('Photo selected! Click "Save Changes" below to apply.');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       alert('Error processing photo: ' + err.message);

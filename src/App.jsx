@@ -355,7 +355,7 @@ export default function App() {
       try {
         sessionStorage.setItem('isaiyon_session_active', 'true');
       } catch (_) {}
-    }, 3800);
+    }, 2000);
     return () => clearTimeout(timer);
   }, [isSplashDone]);
 
@@ -409,22 +409,6 @@ export default function App() {
     : null;
   currentTrackRef.current = currentTrack;
 
-  // Black loading spin icon frames for lock screen & notification title
-  const SPINNER_FRAMES = ['◐', '◓', '◑', '◒'];
-  const [spinnerIndex, setSpinnerIndex] = useState(0);
-
-  // Rotate black spinner frame while buffering or transitioning
-  useEffect(() => {
-    if (!isAudioBuffering && !isTransitioningRef.current) {
-      setSpinnerIndex(0);
-      return;
-    }
-    const interval = setInterval(() => {
-      setSpinnerIndex(prev => (prev + 1) % SPINNER_FRAMES.length);
-    }, 320);
-    return () => clearInterval(interval);
-  }, [isAudioBuffering]);
-
   // Immediate MediaSession updater to preserve notification card on Android lock screen & notification shade
   const updateMediaSession = (track, isBuffering = false, isPlayingState = true) => {
     if (!('mediaSession' in navigator) || !track) return;
@@ -433,10 +417,9 @@ export default function App() {
       const cleanMovie = (track.movie || '').replace(/_+/g, ' ');
       const cleanArtist = (track.artist || 'Pure Sound').replace(/_+/g, ' ');
       const resolvedCover = resolveDirectArchiveUrl(track.coverUrl) || track.coverUrl || FALLBACK_ARTWORK;
-      const titleText = isBuffering ? `${SPINNER_FRAMES[0]} ${cleanTitle}` : cleanTitle;
 
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: titleText,
+        title: cleanTitle,
         artist: `${cleanArtist}${cleanMovie ? ` (${cleanMovie})` : ''}`,
         album: cleanMovie || 'Isaiyon Sound Vault',
         artwork: [
@@ -453,23 +436,6 @@ export default function App() {
       console.warn("MediaSession update error:", err);
     }
   };
-
-  // Mutate title in-place during buffering to animate the black loading spinner without rebuilding MediaMetadata
-  useEffect(() => {
-    if (!('mediaSession' in navigator) || !currentTrack) return;
-    try {
-      const cleanTitle = (currentTrack.title || '').replace(/_+/g, ' ');
-      if (isAudioBuffering || isTransitioningRef.current) {
-        if (navigator.mediaSession.metadata) {
-          navigator.mediaSession.metadata.title = `${SPINNER_FRAMES[spinnerIndex]} ${cleanTitle}`;
-        }
-      } else {
-        if (navigator.mediaSession.metadata && navigator.mediaSession.metadata.title !== cleanTitle) {
-          navigator.mediaSession.metadata.title = cleanTitle;
-        }
-      }
-    } catch (_) {}
-  }, [spinnerIndex, isAudioBuffering, currentTrack]);
 
   // Keep global audio references and track states for service worker and background playback
   useEffect(() => {
@@ -1751,11 +1717,20 @@ export default function App() {
               onOpenPlaylistModal={setPlaylistModalTrack}
               isQueueMode={isQueueMode}
               onToggleQueueMode={handleToggleQueueMode}
+              onOpenQueue={() => setActivePage('queue')}
               queueCount={queue.length}
+              suggestedTracks={suggestedTracks}
+              onSelectTrack={handleSelectTrack}
               onCollapsePlayer={() => {
                 setActivePage(lastActivePageRef.current || 'home');
               }}
               onClosePlayer={handleClosePlayer}
+              onOpenMovieModal={setSelectedMovie}
+              sleepTimer={sleepTimer}
+              onSetSleepTimer={setSleepTimer}
+              playbackRate={playbackRate}
+              onSetPlaybackRate={setPlaybackRate}
+              onShareTrack={handleShareTrack}
               user={user}
             />
           )}
