@@ -204,7 +204,8 @@ export default function App() {
     }
   }, [activePage]);
 
-  // Cancel in-app horizontal edge swipes that would trigger navigation away
+  // Remove swipe left and swipe right logic from the home screen entirely.
+  // Remaining swipe logic continues to work on all other sections/pages.
   useEffect(() => {
     let startX = 0;
     let startY = 0;
@@ -218,14 +219,17 @@ export default function App() {
 
     const handleTouchMove = (e) => {
       if (e.touches && e.touches.length === 1) {
-        const currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
-        const deltaX = Math.abs(currentX - startX);
-        const deltaY = Math.abs(currentY - startY);
-        const isFromEdge = startX < 40 || startX > window.innerWidth - 40;
-        if (isFromEdge && deltaX > deltaY && deltaX > 8) {
-          if (e.cancelable) {
-            e.preventDefault();
+        // Only cancel swipe left / right on the Home screen
+        if (activePageRef.current === 'home') {
+          const currentX = e.touches[0].clientX;
+          const currentY = e.touches[0].clientY;
+          const deltaX = Math.abs(currentX - startX);
+          const deltaY = Math.abs(currentY - startY);
+          // If the movement is horizontal (swipe left or swipe right)
+          if (deltaX > deltaY && deltaX > 8) {
+            if (e.cancelable) {
+              e.preventDefault();
+            }
           }
         }
       }
