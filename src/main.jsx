@@ -20,12 +20,17 @@ if (import.meta.env.DEV && typeof window !== 'undefined' && 'serviceWorker' in n
     }
   });
 
-  // Automatically refresh with new version once the new Service Worker activates, unless audio is playing
+  // Automatically refresh with new version once the new Service Worker activates, unless an audio track is active (playing or paused)
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!refreshing) {
-      const isAudioActive = document.querySelector('audio')?.paused === false;
-      if (!isAudioActive) {
+      const audioEl = document.querySelector('audio');
+      const hasActiveTrack = Boolean(
+        (audioEl && audioEl.src && audioEl.src !== '' && !audioEl.ended) ||
+        (window.__isaiyonAudio && window.__isaiyonAudio.src && window.__isaiyonAudio.src !== '' && !window.__isaiyonAudio.ended) ||
+        window.__isaiyonHasTrack
+      );
+      if (!hasActiveTrack) {
         refreshing = true;
         window.location.reload();
       }

@@ -294,6 +294,21 @@ export default function App() {
   };
 
 
+  const handleClosePlayer = () => {
+    // Closes player and stops notification card
+    setIsBottomPlayerDismissed(true);
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setIsPlaying(false);
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.metadata = null;
+        navigator.mediaSession.playbackState = 'none';
+      } catch (_) {}
+    }
+  };
+
   const handleNavigateToSearch = (queryTerm) => {
     setSearchQuery(queryTerm || '');
     setActivePage('search');
@@ -306,6 +321,14 @@ export default function App() {
   const candidateIndexRef = useRef(0);
   const sleepTimerRef = useRef(null);
   const [isAudioBuffering, setIsAudioBuffering] = useState(false);
+
+  // Keep global audio references and track states for service worker and background playback
+  useEffect(() => {
+    if (audioRef.current) {
+      window.__isaiyonAudio = audioRef.current;
+    }
+    window.__isaiyonHasTrack = Boolean(currentTrack);
+  }, [currentTrack]);
 
   // Auto-refresh Archive storage cluster nodes for high-speed streaming
   useEffect(() => {
@@ -739,12 +762,31 @@ export default function App() {
       setDuration(audio.duration || currentTrack?.duration || 0);
       setIsAudioBuffering(false);
     };
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
+    const handlePlay = () => {
+      setIsPlaying(true);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'playing';
+        } catch (_) {}
+      }
+    };
+    const handlePause = () => {
+      setIsPlaying(false);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'paused';
+        } catch (_) {}
+      }
+    };
     const handleWaiting = () => setIsAudioBuffering(true);
     const handlePlaying = () => {
       setIsAudioBuffering(false);
       setIsPlaying(true);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'playing';
+        } catch (_) {}
+      }
     };
     const handleCanPlay = () => setIsAudioBuffering(false);
     const handleError = () => {
@@ -895,8 +937,18 @@ export default function App() {
           ]
         });
 
-        navigator.mediaSession.setActionHandler('play', () => audio.play());
-        navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+        // Always keep playbackState updated so OS shows the background notification whether playing or paused
+        navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+        navigator.mediaSession.setActionHandler('play', () => {
+          audio.play().catch(() => {});
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+          audio.pause();
+        });
+        navigator.mediaSession.setActionHandler('stop', () => {
+          audio.pause();
+        });
         navigator.mediaSession.setActionHandler('previoustrack', handlePrev);
         navigator.mediaSession.setActionHandler('nexttrack', handleNext);
         navigator.mediaSession.setActionHandler('seekbackward', (details) => {
@@ -905,11 +957,35 @@ export default function App() {
         navigator.mediaSession.setActionHandler('seekforward', (details) => {
           handleSkipSeconds(details.seekOffset || 10);
         });
+        if ('setActionHandler' in navigator.mediaSession) {
+          try {
+            navigator.mediaSession.setActionHandler('seekto', (details) => {
+              if (details.seekTime !== undefined && details.seekTime !== null) {
+                handleSeek(details.seekTime);
+              }
+            });
+          } catch (_) {}
+        }
       } catch (err) {
         console.warn("MediaSession error:", err);
       }
     }
-  }, [currentTrack, isAudioBuffering]);
+  }, [currentTrack, isPlaying, isAudioBuffering]);
+
+  // Keep track of positionState in MediaSession for background lock screen timeline
+  useEffect(() => {
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && currentTrack) {
+      try {
+        if (duration > 0 && !isNaN(duration) && isFinite(duration) && currentTime >= 0) {
+          navigator.mediaSession.setPositionState({
+            duration: Math.max(0, duration),
+            playbackRate: playbackRate || 1,
+            position: Math.min(Math.max(0, currentTime), duration)
+          });
+        }
+      } catch (_) {}
+    }
+  }, [currentTime, duration, playbackRate, currentTrack]);
 
   // 7b. Preload Next Track Audio & Cover for instantaneous playback transition
   useEffect(() => {
@@ -1422,6 +1498,15 @@ export default function App() {
           isRefreshing={isRefreshing}
         />
 
+        {/* Foreground DOM Audio Element with Inline Background Play Permissions */}
+        <audio
+          ref={audioRef}
+          preload="auto"
+          playsInline
+          webkit-playsinline="true"
+          className="hidden"
+        />
+
         {/* Main Screen Router */}
         <main className={`w-full pt-16 ${
           activePage === 'nowplaying' 
@@ -1549,7 +1634,7 @@ export default function App() {
               onCollapsePlayer={() => {
                 setActivePage(lastActivePageRef.current || 'home');
               }}
-              onClosePlayer={handleCloseEntireApp}
+              onClosePlayer={handleClosePlayer}
               user={user}
             />
           )}
@@ -1568,7 +1653,7 @@ export default function App() {
             onToggleFavorite={handleToggleFavorite}
             user={user}
             onOpenFullPlayer={() => setActivePage('nowplaying')}
-            onClose={handleCloseEntireApp}
+            onClose={handleClosePlayer}
           />
         )}
 
