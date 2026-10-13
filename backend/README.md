@@ -53,7 +53,7 @@ Configure these in `backend/.env` for local development, or in the **Environment
 | :--- | :--- | :--- |
 | `PORT` | Listening port for Express | `5001` (Render automatically injects `10000`) |
 | `NODE_ENV` | Environment mode | `production` or `development` |
-| `FRONTEND_ORIGINS` | Comma-separated allowed frontend origins for CORS | `https://music-player-d0eb8.web.app,https://music-player-d0eb8.firebaseapp.com` |
+| `FRONTEND_ORIGINS` | Comma-separated allowed frontend origins for CORS | `https://isaiyon-music.web.app,https://isaiyon-music.firebaseapp.com` |
 | `ADMIN_EMAIL` | Authorized administrator email address | `perumpatayans@gmail.com` |
 | `IA_ACCESS_KEY` | Archive.org S3 Access Key | Obtained from [archive.org/account/s3.php](https://archive.org/account/s3.php) |
 | `IA_SECRET_KEY` | Archive.org S3 Secret Key | Obtained from [archive.org/account/s3.php](https://archive.org/account/s3.php) |
@@ -139,7 +139,7 @@ npm run archive:cleanup-temp -- --confirm
    - `IA_ACCESS_KEY` = `<your-archive-s3-access-key>`
    - `IA_SECRET_KEY` = `<your-archive-s3-secret-key>`
    - `IA_IDENTIFIER` = `muthuramalingam_a-vault`
-   - `FRONTEND_ORIGINS` = `https://music-player-d0eb8.web.app,https://music-player-d0eb8.firebaseapp.com`
+   - `FRONTEND_ORIGINS` = `https://isaiyon-music.web.app,https://isaiyon-music.firebaseapp.com`
    - `FIREBASE_SERVICE_ACCOUNT_JSON` = `<minified-service-account-json>`
    - `NODE_ENV` = `production`
 6. Click **Create Web Service**. Render will build the Docker container with Node 22, FFmpeg, and yt-dlp.

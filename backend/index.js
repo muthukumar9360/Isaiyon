@@ -10,8 +10,8 @@ const PORT = process.env.PORT || 5001;
 
 // 1. Allowed Origins for CORS
 const defaultOrigins = [
-  'https://music-player-d0eb8.web.app',
-  'https://music-player-d0eb8.firebaseapp.com',
+  'https://isaiyon-music.web.app',
+  'https://isaiyon-music.firebaseapp.com',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173',
