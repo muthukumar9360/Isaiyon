@@ -788,7 +788,7 @@ export default function HomePage({
               <div
                 key={artist.id}
                 onClick={() => onNavigateToSearch?.(artist.query)}
-                className={`shrink-0 w-41 h-52 rounded-3xl p-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
+                className={`shrink-0 w-37 h-52 rounded-3xl py-4 px-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
               >
                 {/* Dynamic Artist / Actor Artwork from Vault DB */}
                 <img
@@ -817,9 +817,7 @@ export default function HomePage({
                   <h4 className="text-sm font-black font-display tracking-tight text-white leading-tight truncate drop-shadow-sm">
                     {artist.name}
                   </h4>
-                  <p className="text-[11px] text-slate-200 font-medium truncate drop-shadow-sm">
-                    {artist.subtitle}
-                  </p>
+
                   <div className="flex items-center justify-between mt-1.5 text-[11px] font-bold text-amber-300">
                     <span>{count > 0 ? `${count} ${count === 1 ? 'song' : 'songs'}` : 'Vault Star'}</span>
                     <div className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center group-hover:translate-x-0.5 transition-transform shadow-xs">

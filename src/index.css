@@ -141,19 +141,19 @@ input::-webkit-calendar-picker-indicator {
   overscroll-behavior-x: contain;
 }
 .custom-slider-track::-webkit-scrollbar {
-  height: 8px !important;
+  height: 12px !important;
   display: block !important;
   background: transparent !important;
 }
 .custom-slider-track::-webkit-scrollbar-track {
   background: #e2e8f0 !important;
   border-radius: 9999px !important;
-  margin: 0 16px;
+  margin: 25px 20px;
 }
 .custom-slider-track::-webkit-scrollbar-thumb {
   background: #f59e0b !important;
   border-radius: 9999px !important;
-  border: 1px solid #d97706;
+  border: 2px solid #d97706;
 }
 .custom-slider-track::-webkit-scrollbar-thumb:hover {
   background: #d97706 !important;
