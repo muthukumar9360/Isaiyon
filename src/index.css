@@ -15,9 +15,7 @@
 
   html {
     overscroll-behavior-y: contain;
-    overscroll-behavior-x: none;
-    overscroll-behavior: none;
-    touch-action: pan-x pan-y pinch-zoom;
+    touch-action: manipulation;
   }
 
   body {
@@ -29,9 +27,7 @@
     color: #0f172a;
     font-family: var(--font-sans);
     overflow-x: clip;
-    overscroll-behavior-x: none;
-    overscroll-behavior: none;
-    touch-action: pan-x pan-y pinch-zoom;
+    touch-action: manipulation;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -39,8 +35,7 @@
   #root {
     width: 100%;
     min-height: 100%;
-    overscroll-behavior-x: none;
-    touch-action: pan-x pan-y pinch-zoom;
+    touch-action: manipulation;
   }
 }
 
@@ -138,8 +133,7 @@ input::-webkit-calendar-picker-indicator {
   scrollbar-width: thin !important;
   scrollbar-color: #f59e0b #e2e8f0 !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y !important;
-  overscroll-behavior-x: contain;
+  touch-action: manipulation !important;
 }
 .custom-slider-track::-webkit-scrollbar {
   height: 12px !important;

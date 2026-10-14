@@ -296,6 +296,72 @@ export default function HomePage({
     });
   }, [tracks]);
 
+  // Touch swipe handling specifically tuned for mobile / Android PWA
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const touchScrollLeftRef = useRef(0);
+  const isHorizontalScrollRef = useRef(null);
+  const lastTouchXRef = useRef(0);
+  const lastTouchTimeRef = useRef(0);
+  const touchVelocityXRef = useRef(0);
+
+  const handleSliderTouchStart = (e) => {
+    if (!e.touches || e.touches.length !== 1 || !sliderRef.current) return;
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+    lastTouchXRef.current = e.touches[0].clientX;
+    lastTouchTimeRef.current = Date.now();
+    touchScrollLeftRef.current = sliderRef.current.scrollLeft;
+    isHorizontalScrollRef.current = null;
+    hasMovedSliderRef.current = false;
+    touchVelocityXRef.current = 0;
+  };
+
+  const handleSliderTouchMove = (e) => {
+    if (!e.touches || e.touches.length !== 1 || !sliderRef.current) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = currentX - touchStartXRef.current;
+    const deltaY = currentY - touchStartYRef.current;
+
+    // Measure velocity for momentum coast on release
+    const now = Date.now();
+    const timeDelta = now - lastTouchTimeRef.current;
+    if (timeDelta > 0) {
+      touchVelocityXRef.current = (currentX - lastTouchXRef.current) / timeDelta;
+      lastTouchXRef.current = currentX;
+      lastTouchTimeRef.current = now;
+    }
+
+    // Determine gesture direction once movement exceeds 5px
+    if (isHorizontalScrollRef.current === null) {
+      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+        isHorizontalScrollRef.current = Math.abs(deltaX) > Math.abs(deltaY);
+      }
+    }
+
+    // If horizontal swipe, actively scroll the slider container!
+    if (isHorizontalScrollRef.current === true) {
+      hasMovedSliderRef.current = true;
+      sliderRef.current.scrollLeft = touchScrollLeftRef.current - deltaX;
+    }
+    // If vertical swipe, do nothing: native Y-axis page scroll happens smoothly!
+  };
+
+  const handleSliderTouchEnd = () => {
+    if (isHorizontalScrollRef.current === true && sliderRef.current) {
+      const v = touchVelocityXRef.current;
+      if (Math.abs(v) > 0.15) {
+        const momentum = -v * 260;
+        sliderRef.current.scrollBy({ left: momentum, behavior: 'smooth' });
+      }
+    }
+    isHorizontalScrollRef.current = null;
+    setTimeout(() => {
+      hasMovedSliderRef.current = false;
+    }, 150);
+  };
+
   const handleSliderMouseDown = (e) => {
     isDraggingSliderRef.current = true;
     hasMovedSliderRef.current = false;
@@ -783,12 +849,15 @@ export default function HomePage({
         {/* Horizontal Slider with free, smooth x-axis & y-axis scrolling */}
         <div
           ref={sliderRef}
+          onTouchStart={handleSliderTouchStart}
+          onTouchMove={handleSliderTouchMove}
+          onTouchEnd={handleSliderTouchEnd}
           onMouseDown={handleSliderMouseDown}
           onMouseMove={handleSliderMouseMove}
           onMouseUp={handleSliderMouseUpOrLeave}
           onMouseLeave={handleSliderMouseUpOrLeave}
           className="flex gap-4 overflow-x-auto pb-2 overscroll-x-contain custom-slider-track select-none cursor-grab active:cursor-grabbing"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'manipulation' }}
         >
           {dynamicSpotlights.map(artist => {
             const Icon = artist.icon;
@@ -802,7 +871,7 @@ export default function HomePage({
                   onNavigateToSearch?.(artist.query);
                 }}
                 className={`shrink-0 w-41 h-52 rounded-3xl py-4 px-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
-                style={{ touchAction: 'pan-x pan-y' }}
+                style={{ touchAction: 'manipulation' }}
               >
                 {/* Dynamic Artist / Actor Artwork from Vault DB */}
                 <img

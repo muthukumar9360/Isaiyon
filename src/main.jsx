@@ -22,6 +22,21 @@ if (typeof window !== 'undefined') {
   });
 }
 
+// PWA automatic service worker update detector for mobile apps
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.update().catch(() => {});
+      }
+    }).catch(() => {});
+  });
+}
+
 class GlobalErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
