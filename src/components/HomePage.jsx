@@ -777,7 +777,7 @@ export default function HomePage({
         <div
           ref={sliderRef}
           onScroll={handleSliderScroll}
-          className="flex gap-3.5 overflow-x-auto pb-2 scroll-smooth touch-pan-x overscroll-x-contain custom-slider-track"
+          className="flex gap-4 overflow-x-auto pb-2 scroll-smooth touch-pan-x overscroll-x-contain custom-slider-track"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {dynamicSpotlights.map(artist => {
@@ -930,7 +930,7 @@ export default function HomePage({
         <div
           onTouchStart={handleMovieTouchStart}
           onTouchEnd={handleMovieTouchEnd}
-          className="fixed inset-0 z-30 bg-white flex flex-col h-full w-full max-w-md mx-auto sm:border-x sm:border-slate-200 select-none animate-[fadeIn_0.15s_ease-out]"
+          className="fixed inset-0 z-[60] bg-white flex flex-col h-full w-full max-w-md mx-auto sm:border-x sm:border-slate-200 select-none animate-[fadeIn_0.15s_ease-out]"
         >
           {/* Top Bar Header: Only search button and close button occur until search button is clicked */}
           <div className="p-3.5 sm:p-4 border-b border-black/20 flex items-center justify-between bg-white shrink-0 shadow-2xs">

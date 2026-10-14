@@ -1805,7 +1805,7 @@ export default function App() {
         )}
 
         {/* Bottom Navigation Bar */}
-        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-300 px-3 py-2 pb-4 flex items-center justify-around z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] select-none">
+        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-300 px-3 py-2 pb-4 flex items-center justify-around z-[70] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] select-none">
           <button 
             className={`flex flex-col items-center justify-center py-2 px-2.5 rounded-2xl text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
               activePage === 'home' 
