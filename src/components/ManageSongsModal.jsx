@@ -209,7 +209,7 @@ export default function ManageSongsModal({
 
   return (
     <div
-      className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 select-none animate-[modalPop_0.2s_ease-out]"
+      className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-[90] select-none animate-[modalPop_0.2s_ease-out]"
       onClick={onClose}
     >
       <div

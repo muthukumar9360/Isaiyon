@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { 
-  Play, 
-  Heart, 
-  Film, 
-  Users, 
-  Volume2, 
-  Shuffle, 
-  ListPlus, 
+import {
+  Play,
+  Heart,
+  Film,
+  Users,
+  Volume2,
+  Shuffle,
+  ListPlus,
   FolderPlus,
   Sparkles,
   CheckCircle2,
@@ -35,6 +35,7 @@ const SONGS_PER_PAGE = 8;
 export default function HomePage({
   tracks = [],
   currentTrack,
+  isBottomPlayerActive = false,
   isPlaying,
   onSelectTrack,
   onPlayPause,
@@ -82,9 +83,18 @@ export default function HomePage({
     }
   };
 
-  // Dynamically extract and curate artists, singers, and actors from the database tracks
+  // Dynamically extract and curate lead male actors, singers, and composers from DB tracks
   const dynamicSpotlights = useMemo(() => {
     if (!tracks || tracks.length === 0) return [];
+
+    // Filter out female names to satisfy: "only show the male actress and the singers only"
+    const FEMALE_NAMES = new Set([
+      'tabu', 'aishwarya rai', 'aishwarya', 'nayanthara', 'sunaina', 'laila',
+      'sneha', 'sayyeshaa', 'trisha', 'samantha', 'tamannaah', 'kajal aggarwal',
+      'keerthy suresh', 'hansika', 'priya bhavani shankar', 'anushka', 'anushka shetty',
+      'jyothika', 'simran', 'meena', 'ramya krishnan', 'shruti haasan', 'pooja hegde',
+      'rashmika', 'rashmika mandanna', 'bhavatharini'
+    ]);
 
     const peopleMap = new Map();
 
@@ -113,21 +123,44 @@ export default function HomePage({
     };
 
     tracks.forEach(track => {
-      // 1. Actors from DB
+      // 1. Male Actors from DB:
+      // Pick only the primary/lead male actor for this movie/track,
+      // so movies like Kandukondain are never duplicated across Abbas, Ajith, Aishwarya Rai, etc.
       if (track.actors) {
-        track.actors.split(',').forEach(act => addPerson(act, 'actor', track));
+        const validMaleActors = track.actors
+          .split(',')
+          .map(a => a.trim())
+          .filter(a => a.length >= 2 && a.toLowerCase() !== 'featured stars' && !FEMALE_NAMES.has(a.toLowerCase()));
+
+        if (validMaleActors.length > 0) {
+          // The first entry is the primary lead male actor (e.g., Ajith Kumar for Kandukondain, Suriya for Unnai Ninaithu, Dhanush for Yaaradi Nee Mohini, etc.)
+          addPerson(validMaleActors[0], 'actor', track);
+        }
       }
-      // 2. Singers / Artists from DB
+
+      // 2. Singers / Artists from DB (non-female)
       if (track.artist) {
-        track.artist.split(/[,&]/).forEach(art => addPerson(art, 'singer', track));
+        track.artist.split(/[,&]/).forEach(art => {
+          const clean = art.trim();
+          if (clean.length >= 2 && !FEMALE_NAMES.has(clean.toLowerCase())) {
+            addPerson(clean, 'singer', track);
+          }
+        });
       }
+
       // 3. Music Directors / Composers from DB
       if (track.composer) {
-        track.composer.split(',').forEach(comp => addPerson(comp, 'composer', track));
+        track.composer.split(',').forEach(comp => {
+          const clean = comp.trim();
+          if (clean.length >= 2) {
+            addPerson(clean, 'composer', track);
+          }
+        });
       }
     });
 
     const list = Array.from(peopleMap.values());
+    // Sort by highest count first, as explicitly requested ("based on the highest count")
     list.sort((a, b) => b.trackCount - a.trackCount || a.name.localeCompare(b.name));
 
     const visualStyles = [
@@ -333,7 +366,7 @@ export default function HomePage({
   const filteredAllMovies = useMemo(() => {
     if (!movieSearchQuery.trim()) return movieCollections;
     const q = movieSearchQuery.toLowerCase();
-    return movieCollections.filter(m => 
+    return movieCollections.filter(m =>
       m.name?.toLowerCase().includes(q) ||
       m.composer?.toLowerCase().includes(q) ||
       m.actors?.toLowerCase().includes(q) ||
@@ -376,7 +409,7 @@ export default function HomePage({
   const getMatchCount = (keyword) => {
     if (!keyword) return 0;
     const q = keyword.toLowerCase();
-    return tracks.filter(t => 
+    return tracks.filter(t =>
       t.actors?.toLowerCase().includes(q) ||
       t.composer?.toLowerCase().includes(q) ||
       t.artist?.toLowerCase().includes(q) ||
@@ -389,7 +422,7 @@ export default function HomePage({
 
   return (
     <div className="w-full flex-1 flex flex-col justify-between mt-6 gap-5 select-none">
-      
+
       {/* 1. Dynamic Welcome Hero Card */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-black p-5 text-white shadow-xl border border-white/10">
         <div className="absolute -top-12 -right-12 w-44 h-44 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -425,27 +458,86 @@ export default function HomePage({
         </div>
       </section>
 
-       {/* 5. Refined Exploration Filter Tabs */}
-      <div className="flex items-center gap-1.5 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-lg">
+      {/* 4. Genres & Vibes Stations (DYNAMIC 6 GENRE & MOOD COMBINATIONS) */}
+      <section className="flex flex-col gap-3 px-1 pb-3 -mt-1">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display flex items-center gap-1.5">
+              <span>Genres & Vibes</span>
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Curated mood portals & sonic atmospheres
+            </p>
+          </div>
+        </div>
+
+        {/* 2-Column Responsive Bento Grid with Stylish Gradient Glass Cards */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {dynamicGenreStations.map(station => {
+            const Icon = station.icon;
+            const count = station.count;
+
+            return (
+              <div
+                key={station.id}
+                onClick={() => onNavigateToSearch?.(station.query)}
+                className={`relative p-3.5 rounded-2xl bg-gradient-to-br ${station.gradient} border ${station.border} shadow-md ${station.glow} hover:scale-[1.02] hover:shadow-xl transition-all duration-200 active:scale-95 cursor-pointer flex flex-col justify-between gap-3 group overflow-hidden`}
+              >
+                {/* Decorative Ambient Radial Spot */}
+                <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-300" />
+
+                {/* Top Row: Glowing Icon Badge + Count Tag */}
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs group-hover:bg-white/25 transition-all">
+                    <Icon size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[10px] font-bold text-white/95 bg-black/30 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
+                    {count > 0 ? `${count} ${count === 1 ? 'song' : 'songs'}` : 'Explore'}
+                  </span>
+                </div>
+
+                {/* Bottom Row: Title, Subtitle, and Soundwave Graphic */}
+                <div className="relative z-10">
+                  <h4 className="text-xs sm:text-sm font-black font-display text-white tracking-wide truncate drop-shadow-xs group-hover:translate-x-0.5 transition-transform">
+                    {station.englishTitle || station.subtitle}
+                  </h4>
+                  <p className="text-[10px] text-white/80 font-medium truncate mt-0.5">
+                    {station.name}
+                  </p>
+
+                  {/* Micro Visual Soundwave Indicator */}
+                  <div className="flex items-end gap-0.5 h-2 mt-2 opacity-100 group-hover:opacity-100 transition-opacity">
+                    <span className="w-0.5 h-1.5 bg-white/90 rounded-full animate-pulse" />
+                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:150ms]" />
+                    <span className="w-0.5 h-1 bg-white/90 rounded-full animate-pulse [animation-delay:300ms]" />
+                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:75ms]" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 5. Refined Exploration Filter Tabs */}
+      <div className="flex items-center gap-1.5 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-lg -mt-1">
         <button
           onClick={() => handleFilterChange('unheard')}
-          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
-            selectedFilter === 'unheard'
-              ? 'bg-black text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
+          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${selectedFilter === 'unheard'
+            ? 'bg-black text-white shadow-xs'
+            : 'text-slate-600 hover:text-slate-900'
+            }`}
         >
           <Sparkles size={14} className={selectedFilter === 'unheard' ? 'text-amber-400' : ''} />
           <span>Unheard ({unheardTracks.length})</span>
         </button>
 
-         <button
+        <button
           onClick={() => handleFilterChange('heard')}
-          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
-            selectedFilter === 'heard'
-              ? 'bg-black text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
+          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${selectedFilter === 'heard'
+            ? 'bg-black text-white shadow-xs'
+            : 'text-slate-600 hover:text-slate-900'
+            }`}
         >
           <CheckCircle2 size={14} />
           <span>Heard ({heardTracks.length})</span>
@@ -453,29 +545,28 @@ export default function HomePage({
 
         <button
           onClick={() => handleFilterChange('all')}
-          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
-            selectedFilter === 'all'
-              ? 'bg-black text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
+          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${selectedFilter === 'all'
+            ? 'bg-black text-white shadow-xs'
+            : 'text-slate-600 hover:text-slate-900'
+            }`}
         >
           <Music size={14} />
           <span>All ({tracks.length})</span>
         </button>
 
-       
+
       </div>
 
       {/* 6. Paginated Tracklist Section */}
-      <section className="flex-1 flex flex-col justify-between gap-2">
+      <section className="flex-1 flex flex-col justify-between gap-2 mt-1">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display -mt-2">
-              {selectedFilter === 'unheard' 
-                ? 'Unheard Songs' 
-                : selectedFilter === 'heard' 
-                ? 'Already Heard Songs' 
-                : 'All Vault Songs'
+              {selectedFilter === 'unheard'
+                ? 'Unheard Songs'
+                : selectedFilter === 'heard'
+                  ? 'Already Heard Songs'
+                  : 'All Vault Songs'
               }
             </h3>
             <p className="text-xs text-slate-500 font-medium mb-2">
@@ -489,8 +580,8 @@ export default function HomePage({
             <div className="p-8 mb-3 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
               <Sparkles size={32} className="mx-auto mb-2 opacity-30 text-amber-500" />
               <p className="text-xs sm:text-sm font-bold text-slate-700">
-                {selectedFilter === 'unheard' 
-                  ? "🎉 You have heard all available songs!" 
+                {selectedFilter === 'unheard'
+                  ? "🎉 You have heard all available songs!"
                   : "No songs found for this filter."
                 }
               </p>
@@ -508,25 +599,23 @@ export default function HomePage({
               const isPlayingCurrent = isCurrent && isPlaying;
 
               return (
-                <div 
-                  key={track.id} 
+                <div
+                  key={track.id}
                   onClick={() => onSelectTrack(track, true)}
-                  className={`p-2.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${
-                    isPlayingCurrent 
-                      ? 'bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-amber-500/10 border-amber-400/80 ring-2 ring-amber-400/30 shadow-md shadow-amber-500/10' 
-                      : isCurrent
+                  className={`p-2.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer group active:scale-[0.99] ${isPlayingCurrent
+                    ? 'bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-amber-500/10 border-amber-400/80 ring-2 ring-amber-400/30 shadow-md shadow-amber-500/10'
+                    : isCurrent
                       ? 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-400/40 shadow-xs'
                       : 'bg-white hover:bg-slate-50 border-slate-100 shadow-2xs'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="relative w-12 h-12 shrink-0">
-                      <img 
-                        src={track.coverUrl || FALLBACK_ARTWORK} 
-                        alt={track.title} 
-                        className={`w-12 h-12 rounded-xl object-cover shrink-0 shadow-lg ring-1 ring-black/5 transition-all ${
-                          isPlayingCurrent ? 'ring-2 ring-amber-500 rounded-2xl animate-[spinDisc_10s_linear_infinite]' : ''
-                        }`}
+                      <img
+                        src={track.coverUrl || FALLBACK_ARTWORK}
+                        alt={track.title}
+                        className={`w-12 h-12 rounded-xl object-cover shrink-0 shadow-lg ring-1 ring-black/5 transition-all ${isPlayingCurrent ? 'ring-2 ring-amber-500 rounded-2xl animate-[spinDisc_10s_linear_infinite]' : ''
+                          }`}
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = FALLBACK_ARTWORK;
@@ -547,20 +636,6 @@ export default function HomePage({
                         <h4 className={`text-sm font-bold truncate leading-snug ${isPlayingCurrent ? 'text-amber-900 font-black' : 'text-slate-900'}`}>
                           {track.title}
                         </h4>
-                        {isPlayingCurrent ? (
-                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-black shrink-0 animate-pulse shadow-xs">
-                            <Volume2 size={10} />
-                            <span>Playing</span>
-                          </span>
-                        ) : isHeard ? (
-                          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200 shrink-0">
-                            Heard ✓
-                          </span>
-                        ) : (
-                          <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded-full border border-amber-200 shrink-0">
-                            New
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs font-medium text-slate-500 truncate mt-0.5">
                         {track.movie ? <span className="font-semibold text-amber-700">[{track.movie}] </span> : null}
@@ -570,13 +645,12 @@ export default function HomePage({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  
+
                     {user && (
-                      <button 
+                      <button
                         onClick={() => onToggleFavorite(track.id)}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
-                          isFav ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-500 hover:bg-slate-50'
-                        }`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${isFav ? 'text-rose-600 bg-rose-50' : 'text-slate-400 hover:text-rose-500 hover:bg-slate-50'
+                          }`}
                         title={isFav ? "Unlike" : "Like"}
                       >
                         <Heart size={16} fill={isFav ? '#e11d48' : 'none'} color={isFav ? '#e11d48' : 'currentColor'} />
@@ -584,7 +658,7 @@ export default function HomePage({
                     )}
 
                     {onAddToQueue && (
-                      <button 
+                      <button
                         onClick={() => onAddToQueue(track)}
                         className="w-8 h-8 rounded-full text-slate-400 hover:text-amber-600 hover:bg-amber-50 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
                         title="Add to queue"
@@ -594,7 +668,7 @@ export default function HomePage({
                     )}
 
                     {onOpenPlaylistModal && (
-                      <button 
+                      <button
                         onClick={() => onOpenPlaylistModal(track)}
                         className="w-8 h-8 rounded-full text-slate-400 hover:text-amber-600 hover:bg-amber-50 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
                         title="Add to playlist"
@@ -603,18 +677,17 @@ export default function HomePage({
                       </button>
                     )}
 
-                     <button 
+                    <button
                       onClick={() => {
                         if (isCurrent) onPlayPause('bar');
                         else onSelectTrack(track, false, 'bar');
                       }}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
-                        isPlayingCurrent
-                          ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 scale-105'
-                          : isCurrent
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${isPlayingCurrent
+                        ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 scale-105'
+                        : isCurrent
                           ? 'bg-amber-100 text-amber-900'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                      }`}
+                        }`}
                       title={isPlayingCurrent ? "Pause" : "Play"}
                     >
                       {isPlayingCurrent ? (
@@ -632,17 +705,16 @@ export default function HomePage({
 
         {/* Pagination Controls - Always display page number even if only 1 page */}
         {displayedTracks.length > 0 && (
-          <div className="flex flex-col items-center gap-2 pt-2 pb-4 mt-auto border-b border-black">
+          <div className="flex flex-col items-center gap-2 pt-3 pb-4 mt-auto">
             <div className="flex items-center justify-between w-full px-0.5">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  currentPage === 1
-                    ? 'opacity-100 cursor-not-allowed text-white bg-black'
-                    : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
-                }`}
+                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${currentPage === 1
+                  ? 'opacity-100 cursor-not-allowed text-white bg-black'
+                  : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
+                  }`}
               >
                 <ChevronLeft size={15} />
                 <span>Prev</span>
@@ -660,11 +732,10 @@ export default function HomePage({
                       <button
                         type="button"
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center ${
-                          currentPage === pageNum
-                            ? 'bg-amber-500 text-white shadow-xs font-black'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        }`}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center ${currentPage === pageNum
+                          ? 'bg-amber-500 text-white shadow-xs font-black'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          }`}
                       >
                         {pageNum}
                       </button>
@@ -676,11 +747,10 @@ export default function HomePage({
                 type="button"
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  currentPage >= totalPages
-                    ? 'opacity-100 cursor-not-allowed text-white bg-black'
-                    : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
-                }`}
+                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${currentPage >= totalPages
+                  ? 'opacity-100 cursor-not-allowed text-white bg-black'
+                  : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
+                  }`}
               >
                 <span>Next</span>
                 <ChevronRight size={15} />
@@ -690,102 +760,9 @@ export default function HomePage({
         )}
       </section>
 
-
-      {/* 2. Cinema Soundtracks - Featured 1st Two Albums in One Row (Two Columns) */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between px-1">
-          <div>
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display">
-              Movie Soundtracks
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Featured albums ({movieCollections.length} total)
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setShowAllMovies(true);
-              setIsMovieSearchOpen(false);
-              setMovieSearchQuery('');
-            }}
-            className="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-full transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 border border-amber-200/60 shadow-2xs"
-            title="View all movie soundtracks"
-          >
-            <Eye size={14} className="text-amber-600" />
-            <span>Show All</span>
-          </button>
-        </div>
-
-        {/* First two albums displayed in one row of 2 columns */}
-        <div className="grid grid-cols-2 gap-2">
-          {movieCollections.slice(0, 2).map(movie => {
-            const isSaved = (savedAlbums || []).some(
-              s => s?.trim().toLowerCase() === movie.name?.trim().toLowerCase()
-            );
-            return (
-              <div 
-                key={movie.id} 
-                onClick={() => onOpenMovieModal(movie)}
-                className="flex flex-col cursor-pointer group active:scale-[0.98] transition-all duration-150 bg-slate-50 border border-black/40 rounded-2xl p-2.5 hover:shadow-md hover:border-amber-400"
-              >
-                <div className="w-full h-30 rounded-xl overflow-hidden relative shadow-md shadow-slate-900/5 bg-slate-100">
-                  <img 
-                    src={movie.coverUrl || FALLBACK_ARTWORK} 
-                    alt={movie.name} 
-                    className="w-full h-full object-fit group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = FALLBACK_ARTWORK;
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex items-end justify-start p-2">
-                    <div className="w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-900 shadow-md">
-                      <Film size={13} className="text-amber-600" />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2 flex items-end justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
-                      {formatDisplayName(movie.name)}
-                    </h4>
-                    <p className="text-xs text-slate-500 truncate mt-0.5 font-medium">
-                      {movie.trackCount} {movie.trackCount === 1 ? 'song' : 'songs'} • {movie.composer}
-                    </p>
-                    {movie.actors && (
-                      <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                        {movie.actors}
-                      </p>
-                    )}
-                  </div>
-                  {onToggleSaveAlbum && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleSaveAlbum(movie.name);
-                      }}
-                      className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs border ${
-                        isSaved 
-                          ? 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-                      }`}
-                      title={isSaved ? "Saved in Library" : "Save Album"}
-                    >
-                      <Bookmark size={17} fill={isSaved ? "#ffffff" : "none"} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
       {/* 3. Actor & Artist Spotlight Playlists (HORIZONTAL SLIDER - CLEARLY VISIBLE X-AXIS SCROLL) */}
       <section className="flex flex-col gap-3 px-1">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between -mt-3">
           <div>
             <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display flex items-center gap-1.5">
               <span>Artist & Actor Playlists</span>
@@ -797,7 +774,7 @@ export default function HomePage({
         </div>
 
         {/* Horizontal Slider with free, smooth x-axis scrolling */}
-        <div 
+        <div
           ref={sliderRef}
           onScroll={handleSliderScroll}
           className="flex gap-3.5 overflow-x-auto pb-2 scroll-smooth touch-pan-x overscroll-x-contain custom-slider-track"
@@ -814,7 +791,7 @@ export default function HomePage({
                 className={`shrink-0 w-41 h-52 rounded-3xl p-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
               >
                 {/* Dynamic Artist / Actor Artwork from Vault DB */}
-                <img 
+                <img
                   src={artist.coverUrl || FALLBACK_ARTWORK}
                   alt={artist.name}
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-95"
@@ -856,60 +833,91 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* 4. Genres & Vibes Stations (DYNAMIC 6 GENRE & MOOD COMBINATIONS) */}
-      <section className="flex flex-col gap-3 px-1 pb-3">
-        <div className="flex items-center justify-between">
+
+      {/* 2. Cinema Soundtracks - Featured 1st Two Albums in One Row (Two Columns) */}
+      <section className="flex flex-col gap-3 pb-3">
+        <div className="flex items-center justify-between px-1">
           <div>
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display flex items-center gap-1.5">
-              <span>Genres & Vibes</span>
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display">
+              Movie Soundtracks
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Curated mood portals & sonic atmospheres
+              Featured albums ({movieCollections.length} total)
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAllMovies(true);
+              setIsMovieSearchOpen(false);
+              setMovieSearchQuery('');
+            }}
+            className="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-full transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 border border-amber-200/60 shadow-2xs"
+            title="View all movie soundtracks"
+          >
+            <Eye size={14} className="text-amber-600" />
+            <span>Show All</span>
+          </button>
         </div>
 
-        {/* 2-Column Responsive Bento Grid with Stylish Gradient Glass Cards */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {dynamicGenreStations.map(station => {
-            const Icon = station.icon;
-            const count = station.count;
-
+        {/* First two albums displayed in one row of 2 columns */}
+        <div className="grid grid-cols-2 gap-2">
+          {movieCollections.slice(0, 2).map(movie => {
+            const isSaved = (savedAlbums || []).some(
+              s => s?.trim().toLowerCase() === movie.name?.trim().toLowerCase()
+            );
             return (
               <div
-                key={station.id}
-                onClick={() => onNavigateToSearch?.(station.query)}
-                className={`relative p-3.5 rounded-2xl bg-gradient-to-br ${station.gradient} border ${station.border} shadow-md ${station.glow} hover:scale-[1.02] hover:shadow-xl transition-all duration-200 active:scale-95 cursor-pointer flex flex-col justify-between gap-3 group overflow-hidden`}
+                key={movie.id}
+                onClick={() => onOpenMovieModal(movie)}
+                className="flex flex-col cursor-pointer group active:scale-[0.98] transition-all duration-150 bg-slate-50 border border-black/40 rounded-2xl p-2.5 hover:shadow-md hover:border-amber-400"
               >
-                {/* Decorative Ambient Radial Spot */}
-                <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-300" />
-
-                {/* Top Row: Glowing Icon Badge + Count Tag */}
-                <div className="flex items-center justify-between relative z-10">
-                  <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs group-hover:bg-white/25 transition-all">
-                    <Icon size={16} strokeWidth={2.5} />
+                <div className="w-full h-30 rounded-xl overflow-hidden relative shadow-md shadow-slate-900/5 bg-slate-100">
+                  <img
+                    src={movie.coverUrl || FALLBACK_ARTWORK}
+                    alt={movie.name}
+                    className="w-full h-full object-fit group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = FALLBACK_ARTWORK;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex items-end justify-start p-2">
+                    <div className="w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-900 shadow-md">
+                      <Film size={13} className="text-amber-600" />
+                    </div>
                   </div>
-                  <span className="text-[10px] font-bold text-white/95 bg-black/30 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
-                    {count > 0 ? `${count} ${count === 1 ? 'song' : 'songs'}` : 'Explore'}
-                  </span>
                 </div>
-
-                {/* Bottom Row: Title, Subtitle, and Soundwave Graphic */}
-                <div className="relative z-10">
-                  <h4 className="text-xs sm:text-sm font-black font-display text-white tracking-wide truncate drop-shadow-xs group-hover:translate-x-0.5 transition-transform">
-                    {station.name}
-                  </h4>
-                  <p className="text-[10px] text-white/80 font-medium truncate mt-0.5">
-                    {station.englishTitle || station.subtitle}
-                  </p>
-
-                  {/* Micro Visual Soundwave Indicator */}
-                  <div className="flex items-end gap-0.5 h-2 mt-2 opacity-100 group-hover:opacity-100 transition-opacity">
-                    <span className="w-0.5 h-1.5 bg-white/90 rounded-full animate-pulse" />
-                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:150ms]" />
-                    <span className="w-0.5 h-1 bg-white/90 rounded-full animate-pulse [animation-delay:300ms]" />
-                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:75ms]" />
+                <div className="mt-2 flex items-end justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
+                      {formatDisplayName(movie.name)}
+                    </h4>
+                    <p className="text-xs text-slate-500 truncate mt-0.5 font-medium">
+                      {movie.trackCount} {movie.trackCount === 1 ? 'song' : 'songs'} • {movie.composer}
+                    </p>
+                    {movie.actors && (
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                        {movie.actors}
+                      </p>
+                    )}
                   </div>
+                  {onToggleSaveAlbum && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleSaveAlbum(movie.name);
+                      }}
+                      className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs border ${isSaved
+                        ? 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      title={isSaved ? "Saved in Library" : "Save Album"}
+                    >
+                      <Bookmark size={17} fill={isSaved ? "#ffffff" : "none"} />
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -919,17 +927,17 @@ export default function HomePage({
 
       {/* 7. Show All Movie Soundtracks Full-Screen View with Search & Save Album */}
       {showAllMovies && (
-        <div 
+        <div
           onTouchStart={handleMovieTouchStart}
           onTouchEnd={handleMovieTouchEnd}
-          className="fixed inset-0 z-[45] bg-white flex flex-col h-full w-full max-w-md mx-auto sm:border-x sm:border-slate-200 select-none animate-[fadeIn_0.15s_ease-out]"
+          className="fixed inset-0 z-30 bg-white flex flex-col h-full w-full max-w-md mx-auto sm:border-x sm:border-slate-200 select-none animate-[fadeIn_0.15s_ease-out]"
         >
           {/* Top Bar Header: Only search button and close button occur until search button is clicked */}
           <div className="p-3.5 sm:p-4 border-b border-black/20 flex items-center justify-between bg-white shrink-0 shadow-2xs">
             {isMovieSearchOpen ? (
               <div className="relative flex-1 flex items-center w-full">
                 <Search size={16} className="absolute left-3 text-amber-600 pointer-events-none" />
-                <input 
+                <input
                   type="text"
                   placeholder="Search movies"
                   value={movieSearchQuery}
@@ -972,7 +980,7 @@ export default function HomePage({
                       All Movie Soundtracks
                     </h3>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      {movieCollections.length} soundtrack albums • Swipe to exit
+                      {movieCollections.length} soundtrack albums
                     </p>
                   </div>
                 </div>
@@ -988,8 +996,8 @@ export default function HomePage({
             )}
           </div>
 
-          {/* Movies Grid (Full Screen Height Scrollable Container with clearance for BottomPlayer) */}
-          <div className="flex-1 overflow-y-auto p-4 pb-36 sm:pb-40 no-scrollbar">
+          {/* Movies Grid (Full Screen Height Scrollable Container with conditional clearance for BottomPlayer) */}
+          <div className={`flex-1 overflow-y-auto p-4 ${isBottomPlayerActive ? 'pb-42 sm:pb-40' : 'pb-5'} no-scrollbar`}>
             {filteredAllMovies.length === 0 ? (
               <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 <Film size={32} className="mx-auto mb-2 opacity-35 text-slate-400" />
@@ -1003,7 +1011,7 @@ export default function HomePage({
                     s => s?.trim().toLowerCase() === movie.name?.trim().toLowerCase()
                   );
                   return (
-                    <div 
+                    <div
                       key={movie.id}
                       onClick={() => {
                         onOpenMovieModal(movie);
@@ -1011,9 +1019,9 @@ export default function HomePage({
                       className="flex flex-col rounded-2xl bg-white border border-black/30 p-2.5 hover:border-amber-400 hover:shadow-md transition-all active:scale-95 cursor-pointer group shadow-2xs"
                     >
                       <div className="w-full h-36 rounded-xl overflow-hidden relative bg-slate-100 shadow-2xs">
-                        <img 
-                          src={movie.coverUrl || FALLBACK_ARTWORK} 
-                          alt={movie.name} 
+                        <img
+                          src={movie.coverUrl || FALLBACK_ARTWORK}
+                          alt={movie.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={e => {
                             e.target.onerror = null;
@@ -1047,11 +1055,10 @@ export default function HomePage({
                               e.stopPropagation();
                               onToggleSaveAlbum(movie.name);
                             }}
-                            className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs border ${
-                              isSaved 
-                                ? 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600' 
-                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-                            }`}
+                            className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs border ${isSaved
+                              ? 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600'
+                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                              }`}
                             title={isSaved ? "Saved" : "Save Album"}
                           >
                             <Bookmark size={17} fill={isSaved ? "#ffffff" : "none"} />

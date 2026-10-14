@@ -569,7 +569,7 @@ export default function AdminModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3.5 z-50 select-none animate-[modalPop_0.2s_ease-out]">
+    <div className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3.5 z-[90] select-none animate-[modalPop_0.2s_ease-out]">
       <div
         className="w-full max-w-md bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto relative"
         onClick={e => e.stopPropagation()}
