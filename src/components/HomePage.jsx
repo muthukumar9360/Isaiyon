@@ -889,7 +889,7 @@ export default function HomePage({
           onMouseMove={handleSliderMouseMove}
           onMouseUp={handleSliderMouseUpOrLeave}
           onMouseLeave={handleSliderMouseUpOrLeave}
-          className="flex gap-4 overflow-x-auto pb-2 overscroll-x-contain custom-slider-track select-none cursor-grab active:cursor-grabbing"
+          className="flex gap-4 overflow-x-auto pb-2 overscroll-x-contain select-none custom-slider-track"
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'manipulation' }}
         >
           {dynamicSpotlights.map(artist => {
