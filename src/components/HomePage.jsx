@@ -628,7 +628,7 @@ export default function HomePage({
       <div className="flex items-center gap-1.5 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-lg -mt-1">
         <button
           onClick={() => handleFilterChange('unheard')}
-          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${selectedFilter === 'unheard'
+          className={`flex-1 py-2 px-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-0.5 cursor-pointer ${selectedFilter === 'unheard'
             ? 'bg-black text-white shadow-xs'
             : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -639,7 +639,7 @@ export default function HomePage({
 
         <button
           onClick={() => handleFilterChange('heard')}
-          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${selectedFilter === 'heard'
+          className={`flex-1 py-2 px-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-0.5 cursor-pointer ${selectedFilter === 'heard'
             ? 'bg-black text-white shadow-xs'
             : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -650,7 +650,7 @@ export default function HomePage({
 
         <button
           onClick={() => handleFilterChange('all')}
-          className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${selectedFilter === 'all'
+          className={`flex-1 py-2 px-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-0.5 cursor-pointer ${selectedFilter === 'all'
             ? 'bg-black text-white shadow-xs'
             : 'text-slate-600 hover:text-slate-900'
             }`}
