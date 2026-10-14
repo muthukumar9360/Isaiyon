@@ -133,11 +133,12 @@ input::-webkit-calendar-picker-indicator {
 }
 
 /* Clearly visible horizontal slider track */
-.custom-slider-track {
+.custom-slider-track,
+.custom-slider-track * {
   scrollbar-width: thin !important;
   scrollbar-color: #f59e0b #e2e8f0 !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x !important;
+  touch-action: pan-x pan-y !important;
   overscroll-behavior-x: contain;
 }
 .custom-slider-track::-webkit-scrollbar {

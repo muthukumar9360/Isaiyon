@@ -610,7 +610,7 @@ export default function HomePage({
                     }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="relative w-12 h-12 shrink-0">
+                    <div className="relative w-16 h-12 shrink-0">
                       <img
                         src={track.coverUrl || FALLBACK_ARTWORK}
                         alt={track.title}
@@ -644,7 +644,7 @@ export default function HomePage({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
 
                     {user && (
                       <button
@@ -733,7 +733,7 @@ export default function HomePage({
                         type="button"
                         onClick={() => setCurrentPage(pageNum)}
                         className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center ${currentPage === pageNum
-                          ? 'bg-amber-500 text-white shadow-xs font-black'
+                          ? 'bg-black text-white shadow-xs font-black'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                           }`}
                       >
@@ -773,12 +773,12 @@ export default function HomePage({
           </div>
         </div>
 
-        {/* Horizontal Slider with free, smooth x-axis scrolling */}
+        {/* Horizontal Slider with free, smooth x-axis & y-axis scrolling */}
         <div
           ref={sliderRef}
           onScroll={handleSliderScroll}
-          className="flex gap-4.5 overflow-x-auto pb-2 scroll-smooth touch-pan-x overscroll-x-contain custom-slider-track"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          className="flex gap-4.5 overflow-x-auto pb-2 scroll-smooth overscroll-x-contain custom-slider-track"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
         >
           {dynamicSpotlights.map(artist => {
             const Icon = artist.icon;
