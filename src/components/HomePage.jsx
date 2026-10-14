@@ -777,7 +777,7 @@ export default function HomePage({
         <div
           ref={sliderRef}
           onScroll={handleSliderScroll}
-          className="flex gap-4 overflow-x-auto pb-2 scroll-smooth touch-pan-x overscroll-x-contain custom-slider-track"
+          className="flex gap-4.5 overflow-x-auto pb-2 scroll-smooth touch-pan-x overscroll-x-contain custom-slider-track"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {dynamicSpotlights.map(artist => {
