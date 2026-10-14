@@ -56,8 +56,11 @@ export default function HomePage({
   const [showAllMovies, setShowAllMovies] = useState(false);
   const [isMovieSearchOpen, setIsMovieSearchOpen] = useState(false);
   const [movieSearchQuery, setMovieSearchQuery] = useState('');
-  const [sliderScrollProgress, setSliderScrollProgress] = useState(0);
   const sliderRef = useRef(null);
+  const isDraggingSliderRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragScrollLeftRef = useRef(0);
+  const hasMovedSliderRef = useRef(false);
 
   // Touch swipe to dismiss "All Movie Soundtracks" overlay
   const movieSwipeStartXRef = useRef(0);
@@ -293,21 +296,25 @@ export default function HomePage({
     });
   }, [tracks]);
 
-  const handleSliderScroll = (e) => {
-    const { scrollLeft, scrollWidth, clientWidth } = e.currentTarget;
-    const maxScroll = scrollWidth - clientWidth;
-    if (maxScroll > 0) {
-      setSliderScrollProgress(Math.max(0, Math.min(1, scrollLeft / maxScroll)));
+  const handleSliderMouseDown = (e) => {
+    isDraggingSliderRef.current = true;
+    hasMovedSliderRef.current = false;
+    dragStartXRef.current = e.pageX - (sliderRef.current?.offsetLeft || 0);
+    dragScrollLeftRef.current = sliderRef.current?.scrollLeft || 0;
+  };
+
+  const handleSliderMouseMove = (e) => {
+    if (!isDraggingSliderRef.current || !sliderRef.current) return;
+    const x = e.pageX - (sliderRef.current.offsetLeft || 0);
+    const walk = x - dragStartXRef.current;
+    if (Math.abs(walk) > 4) {
+      hasMovedSliderRef.current = true;
+      sliderRef.current.scrollLeft = dragScrollLeftRef.current - walk;
     }
   };
 
-  const handleTrackClick = (e) => {
-    if (!sliderRef.current) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-    const maxScroll = sliderRef.current.scrollWidth - sliderRef.current.clientWidth;
-    sliderRef.current.scrollTo({ left: ratio * maxScroll, behavior: 'smooth' });
+  const handleSliderMouseUpOrLeave = () => {
+    isDraggingSliderRef.current = false;
   };
 
   // Reset page when filter changes
@@ -776,8 +783,11 @@ export default function HomePage({
         {/* Horizontal Slider with free, smooth x-axis & y-axis scrolling */}
         <div
           ref={sliderRef}
-          onScroll={handleSliderScroll}
-          className="flex gap-4.5 overflow-x-auto pb-2 scroll-smooth overscroll-x-contain custom-slider-track"
+          onMouseDown={handleSliderMouseDown}
+          onMouseMove={handleSliderMouseMove}
+          onMouseUp={handleSliderMouseUpOrLeave}
+          onMouseLeave={handleSliderMouseUpOrLeave}
+          className="flex gap-4 overflow-x-auto pb-2 overscroll-x-contain custom-slider-track select-none cursor-grab active:cursor-grabbing"
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
         >
           {dynamicSpotlights.map(artist => {
@@ -787,14 +797,19 @@ export default function HomePage({
             return (
               <div
                 key={artist.id}
-                onClick={() => onNavigateToSearch?.(artist.query)}
+                onClick={() => {
+                  if (hasMovedSliderRef.current) return;
+                  onNavigateToSearch?.(artist.query);
+                }}
                 className={`shrink-0 w-41 h-52 rounded-3xl py-4 px-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
+                style={{ touchAction: 'pan-x pan-y' }}
               >
                 {/* Dynamic Artist / Actor Artwork from Vault DB */}
                 <img
                   src={artist.coverUrl || FALLBACK_ARTWORK}
                   alt={artist.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-95"
+                  draggable="false"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-95 pointer-events-none"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = FALLBACK_ARTWORK;

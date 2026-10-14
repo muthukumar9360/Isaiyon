@@ -17,7 +17,7 @@
     overscroll-behavior-y: contain;
     overscroll-behavior-x: none;
     overscroll-behavior: none;
-    touch-action: pan-y pinch-zoom;
+    touch-action: pan-x pan-y pinch-zoom;
   }
 
   body {
@@ -31,7 +31,7 @@
     overflow-x: clip;
     overscroll-behavior-x: none;
     overscroll-behavior: none;
-    touch-action: pan-y pinch-zoom;
+    touch-action: pan-x pan-y pinch-zoom;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -40,7 +40,7 @@
     width: 100%;
     min-height: 100%;
     overscroll-behavior-x: none;
-    touch-action: pan-y pinch-zoom;
+    touch-action: pan-x pan-y pinch-zoom;
   }
 }
 
