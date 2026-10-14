@@ -30,163 +30,7 @@ import {
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 import { formatDisplayName } from '../utils/formatUtils';
 
-// Curated Actor & Artist Playlists with Verified Portrait Images
-const ARTIST_SPOTLIGHTS = [
-  {
-    id: 'suriya',
-    name: 'Suriya Hits',
-    subtitle: 'Romance & Mass Anthems',
-    query: 'Suriya',
-    badge: 'Spotlight',
-    icon: Star,
-    imageUrl: '/actors/suriya.jpg',
-    gradient: 'from-blue-600 via-indigo-700 to-slate-950',
-    border: 'border-blue-400/40'
-  },
-  {
-    id: 'dhanush',
-    name: 'Dhanush Hits',
-    subtitle: 'Soulful Folk & Classics',
-    query: 'Dhanush',
-    badge: 'Spotlight',
-    icon: Flame,
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80',
-    gradient: 'from-amber-500 via-orange-600 to-slate-950',
-    border: 'border-amber-400/40'
-  },
-  {
-    id: 'vijay',
-    name: 'Thalapathy Vijay',
-    subtitle: 'Celebration & High Energy',
-    query: 'Vijay',
-    badge: 'Blockbuster',
-    icon: Zap,
-    imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=80',
-    gradient: 'from-rose-600 via-red-700 to-slate-950',
-    border: 'border-rose-400/40'
-  },
-  {
-    id: 'ajith',
-    name: 'Ajith Kumar',
-    subtitle: 'Ultimate Style & Swag',
-    query: 'Ajith',
-    badge: 'Classics',
-    icon: Sparkles,
-    imageUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500&auto=format&fit=crop&q=80',
-    gradient: 'from-emerald-600 via-teal-700 to-slate-950',
-    border: 'border-emerald-400/40'
-  },
-  {
-    id: 'anirudh',
-    name: 'Anirudh Waves',
-    subtitle: 'Viral Beats & Party Hits',
-    query: 'Anirudh',
-    badge: 'Rockstar',
-    icon: Headphones,
-    imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80',
-    gradient: 'from-fuchsia-600 via-purple-700 to-slate-950',
-    border: 'border-fuchsia-400/40'
-  },
-  {
-    id: 'rahman',
-    name: 'A.R. Rahman Magic',
-    subtitle: 'Oscar-Winning Masterpieces',
-    query: 'Rahman',
-    badge: 'Maestro',
-    icon: Disc3,
-    imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
-    gradient: 'from-yellow-600 via-amber-700 to-stone-950',
-    border: 'border-yellow-400/40'
-  },
-  {
-    id: 'yuvan',
-    name: 'Yuvan Drugs',
-    subtitle: 'Late Night Soul & BGM King',
-    query: 'Yuvan',
-    badge: 'BGM King',
-    icon: Radio,
-    imageUrl: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=500&auto=format&fit=crop&q=80',
-    gradient: 'from-indigo-600 via-purple-800 to-slate-950',
-    border: 'border-purple-400/40'
-  },
-  {
-    id: 'harris',
-    name: 'Harris Jayaraj',
-    subtitle: 'Acoustic Bliss & Melodies',
-    query: 'Harris',
-    badge: 'Melody King',
-    icon: Music,
-    imageUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=500&auto=format&fit=crop&q=80',
-    gradient: 'from-cyan-600 via-teal-700 to-slate-950',
-    border: 'border-cyan-400/40'
-  }
-];
-
-// Curated Genre & Vibe Stations (High-Aesthetic Luminous Palettes)
-const GENRE_STATIONS = [
-  {
-    id: 'melody',
-    name: 'Melody & Soul',
-    subtitle: 'Calm & Heartfelt',
-    query: 'Melody',
-    gradient: 'from-rose-600 via-pink-600 to-purple-950',
-    glow: 'shadow-rose-500/20 group-hover:shadow-rose-500/40',
-    border: 'border-rose-400/30',
-    icon: Heart
-  },
-  {
-    id: 'mass',
-    name: 'Mass & Folk',
-    subtitle: 'High Energy Anthems',
-    query: 'Mass',
-    gradient: 'from-amber-500 via-orange-600 to-stone-950',
-    glow: 'shadow-amber-500/20 group-hover:shadow-amber-500/40',
-    border: 'border-amber-400/30',
-    icon: Flame
-  },
-  {
-    id: 'love',
-    name: 'Love & Romance',
-    subtitle: 'Soulful Moments',
-    query: 'Love',
-    gradient: 'from-red-600 via-rose-600 to-slate-950',
-    glow: 'shadow-red-500/20 group-hover:shadow-red-500/40',
-    border: 'border-red-400/30',
-    icon: Sparkles
-  },
-  {
-    id: 'failure',
-    name: 'Soul Therapy',
-    subtitle: 'Deep Emotions & Late Nights',
-    query: 'Failure',
-    gradient: 'from-indigo-600 via-purple-700 to-slate-950',
-    glow: 'shadow-indigo-500/20 group-hover:shadow-indigo-500/40',
-    border: 'border-indigo-400/30',
-    icon: TrendingUp
-  },
-  {
-    id: 'retro',
-    name: '2000s Nostalgia',
-    subtitle: 'Golden Vault Hits',
-    query: '200',
-    gradient: 'from-emerald-600 via-teal-700 to-stone-950',
-    glow: 'shadow-emerald-500/20 group-hover:shadow-emerald-500/40',
-    border: 'border-emerald-400/30',
-    icon: Disc3
-  },
-  {
-    id: 'acoustic',
-    name: 'Acoustic Bliss',
-    subtitle: 'Breeze & Guitar Strings',
-    query: 'Acoustic',
-    gradient: 'from-cyan-500 via-sky-600 to-slate-950',
-    glow: 'shadow-cyan-500/20 group-hover:shadow-cyan-500/40',
-    border: 'border-cyan-400/30',
-    icon: Music
-  }
-];
-
-const SONGS_PER_PAGE = 10;
+const SONGS_PER_PAGE = 8;
 
 export default function HomePage({
   tracks = [],
@@ -213,6 +57,208 @@ export default function HomePage({
   const [movieSearchQuery, setMovieSearchQuery] = useState('');
   const [sliderScrollProgress, setSliderScrollProgress] = useState(0);
   const sliderRef = useRef(null);
+
+  // Touch swipe to dismiss "All Movie Soundtracks" overlay
+  const movieSwipeStartXRef = useRef(0);
+  const movieSwipeStartYRef = useRef(0);
+
+  const handleMovieTouchStart = (e) => {
+    if (e.touches && e.touches.length === 1) {
+      movieSwipeStartXRef.current = e.touches[0].clientX;
+      movieSwipeStartYRef.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleMovieTouchEnd = (e) => {
+    if (e.changedTouches && e.changedTouches.length === 1) {
+      const deltaX = e.changedTouches[0].clientX - movieSwipeStartXRef.current;
+      const deltaY = e.changedTouches[0].clientY - movieSwipeStartYRef.current;
+      // If horizontal swipe distance > 50px and predominantly horizontal (swipe left OR right)
+      if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+        setShowAllMovies(false);
+        setIsMovieSearchOpen(false);
+        setMovieSearchQuery('');
+      }
+    }
+  };
+
+  // Dynamically extract and curate artists, singers, and actors from the database tracks
+  const dynamicSpotlights = useMemo(() => {
+    if (!tracks || tracks.length === 0) return [];
+
+    const peopleMap = new Map();
+
+    const addPerson = (rawName, type, track) => {
+      if (!rawName) return;
+      const clean = rawName.trim();
+      if (clean.length < 2 || clean.toLowerCase() === 'featured stars' || clean.toLowerCase() === 'various artists') return;
+
+      const key = clean.toLowerCase();
+      if (!peopleMap.has(key)) {
+        peopleMap.set(key, {
+          id: key.replace(/[^a-z0-9]/g, '-'),
+          name: clean,
+          query: clean,
+          type,
+          trackCount: 0,
+          coverUrl: track?.coverUrl || '',
+          sampleMovie: track?.movie || ''
+        });
+      }
+      const entry = peopleMap.get(key);
+      entry.trackCount += 1;
+      if (!entry.coverUrl && track?.coverUrl) {
+        entry.coverUrl = track.coverUrl;
+      }
+    };
+
+    tracks.forEach(track => {
+      // 1. Actors from DB
+      if (track.actors) {
+        track.actors.split(',').forEach(act => addPerson(act, 'actor', track));
+      }
+      // 2. Singers / Artists from DB
+      if (track.artist) {
+        track.artist.split(/[,&]/).forEach(art => addPerson(art, 'singer', track));
+      }
+      // 3. Music Directors / Composers from DB
+      if (track.composer) {
+        track.composer.split(',').forEach(comp => addPerson(comp, 'composer', track));
+      }
+    });
+
+    const list = Array.from(peopleMap.values());
+    list.sort((a, b) => b.trackCount - a.trackCount || a.name.localeCompare(b.name));
+
+    const visualStyles = [
+      { gradient: 'from-blue-600 via-indigo-700 to-slate-950', border: 'border-blue-400/40', icon: Star },
+      { gradient: 'from-amber-500 via-orange-600 to-slate-950', border: 'border-amber-400/40', icon: Flame },
+      { gradient: 'from-rose-600 via-red-700 to-slate-950', border: 'border-rose-400/40', icon: Zap },
+      { gradient: 'from-emerald-600 via-teal-700 to-slate-950', border: 'border-emerald-400/40', icon: Sparkles },
+      { gradient: 'from-fuchsia-600 via-purple-700 to-slate-950', border: 'border-fuchsia-400/40', icon: Headphones },
+      { gradient: 'from-yellow-600 via-amber-700 to-stone-950', border: 'border-yellow-400/40', icon: Disc3 },
+      { gradient: 'from-indigo-600 via-purple-800 to-slate-950', border: 'border-purple-400/40', icon: Radio },
+      { gradient: 'from-cyan-600 via-teal-700 to-slate-950', border: 'border-cyan-400/40', icon: Music },
+      { gradient: 'from-teal-600 via-emerald-800 to-slate-950', border: 'border-teal-400/40', icon: Users }
+    ];
+
+    return list.slice(0, 14).map((item, index) => {
+      const style = visualStyles[index % visualStyles.length];
+      const badge = item.type === 'actor' ? 'Actor' : item.type === 'composer' ? 'Composer' : 'Singer';
+      const subtitle = item.sampleMovie ? `${formatDisplayName(item.sampleMovie)}` : `${item.trackCount} ${item.trackCount === 1 ? 'track' : 'tracks'}`;
+
+      return {
+        ...item,
+        badge,
+        subtitle,
+        gradient: style.gradient,
+        border: style.border,
+        icon: style.icon
+      };
+    });
+  }, [tracks]);
+
+  // Curated 6 Dynamic Genre & Vibe Stations combining user-requested Genres and Moods
+  const dynamicGenreStations = useMemo(() => {
+    const stations = [
+      {
+        id: 'love-melody',
+        name: 'காதல் & மெலடி',
+        englishTitle: 'Love & Melody',
+        subtitle: 'Romantic Melodies & Pure Soul',
+        query: 'Love',
+        genreMatch: 'Melody',
+        moodMatch: 'காதல்',
+        gradient: 'from-rose-600 via-pink-600 to-purple-950',
+        glow: 'shadow-rose-500/20 group-hover:shadow-rose-500/40',
+        border: 'border-rose-400/30',
+        icon: Heart
+      },
+      {
+        id: 'breakup-soul',
+        name: 'பிரிவு & மெலடி',
+        englishTitle: 'Breakup & Soul',
+        subtitle: 'Heartbreak, Longing & Memories',
+        query: 'Breakup',
+        genreMatch: 'Melody',
+        moodMatch: 'பிரிவு',
+        gradient: 'from-indigo-600 via-purple-700 to-slate-950',
+        glow: 'shadow-indigo-500/20 group-hover:shadow-indigo-500/40',
+        border: 'border-indigo-400/30',
+        icon: Disc3
+      },
+      {
+        id: 'mass-kuthu',
+        name: 'மாஸ் & குத்து',
+        englishTitle: 'Mass & Kuthu / Pop',
+        subtitle: 'High Voltage Beats & Dance',
+        query: 'Mass',
+        genreMatch: 'Kuthu',
+        moodMatch: 'மாஸ்',
+        gradient: 'from-amber-500 via-orange-600 to-stone-950',
+        glow: 'shadow-amber-500/20 group-hover:shadow-amber-500/40',
+        border: 'border-amber-400/30',
+        icon: Flame
+      },
+      {
+        id: 'chill-folk',
+        name: 'அமைதி & நாட்டுப்புறம்',
+        englishTitle: 'Chill & Folk / Classical',
+        subtitle: 'Peaceful Bliss & Traditional Roots',
+        query: 'Chill',
+        genreMatch: 'Folk',
+        moodMatch: 'அமைதி',
+        gradient: 'from-emerald-600 via-teal-700 to-stone-950',
+        glow: 'shadow-emerald-500/20 group-hover:shadow-emerald-500/40',
+        border: 'border-emerald-400/30',
+        icon: Sparkles
+      },
+      {
+        id: 'motivation-rap',
+        name: 'ஊக்கம் & ராப்',
+        englishTitle: 'Motivation & Rap / Gaana',
+        subtitle: 'Fire Anthems & Energy Boost',
+        query: 'Motivation',
+        genreMatch: 'Rap',
+        moodMatch: 'ஊக்கம்',
+        gradient: 'from-cyan-600 via-blue-700 to-slate-950',
+        glow: 'shadow-cyan-500/20 group-hover:shadow-cyan-500/40',
+        border: 'border-cyan-400/30',
+        icon: TrendingUp
+      },
+      {
+        id: 'devotional-grace',
+        name: 'பக்தி & தெய்வீகம்',
+        englishTitle: 'Devotional & Classical',
+        subtitle: 'Spiritual Peace & Sacred Chants',
+        query: 'Devotional',
+        genreMatch: 'Classical',
+        moodMatch: 'பக்தி',
+        gradient: 'from-yellow-600 via-amber-600 to-red-950',
+        glow: 'shadow-yellow-500/20 group-hover:shadow-yellow-500/40',
+        border: 'border-yellow-400/30',
+        icon: Star
+      }
+    ];
+
+    return stations.map(station => {
+      const count = tracks.filter(t => {
+        const g = (t.genre || '').toLowerCase();
+        const m = (t.mood || '').toLowerCase();
+        return (
+          m.includes(station.moodMatch.toLowerCase()) ||
+          m.includes(station.query.toLowerCase()) ||
+          g.includes(station.genreMatch.toLowerCase()) ||
+          g.includes(station.query.toLowerCase())
+        );
+      }).length;
+
+      return {
+        ...station,
+        count
+      };
+    });
+  }, [tracks]);
 
   const handleSliderScroll = (e) => {
     const { scrollLeft, scrollWidth, clientWidth } = e.currentTarget;
@@ -328,10 +374,12 @@ export default function HomePage({
 
   // Helper to count tracks matching a search keyword
   const getMatchCount = (keyword) => {
+    if (!keyword) return 0;
     const q = keyword.toLowerCase();
     return tracks.filter(t => 
       t.actors?.toLowerCase().includes(q) ||
       t.composer?.toLowerCase().includes(q) ||
+      t.artist?.toLowerCase().includes(q) ||
       t.movie?.toLowerCase().includes(q) ||
       t.title?.toLowerCase().includes(q) ||
       t.genre?.toLowerCase().includes(q) ||
@@ -348,19 +396,13 @@ export default function HomePage({
         <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col gap-3.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
-              <span>{greeting.icon}</span>
-              <span>{greeting.text}</span>
-            </div>
-          </div>
 
           <div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight font-display text-white">
               Hello, {userName}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 font-medium mt-0.5 leading-snug">
-              Fresh songs waiting for you. Hear all without repeating.
+              Fresh songs waiting for you.
             </p>
           </div>
 
@@ -383,240 +425,8 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* 2. Cinema Soundtracks - Featured 1st Two Albums in One Row (Two Columns) */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between px-1">
-          <div>
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display">
-              Movie Soundtracks
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Featured albums ({movieCollections.length} total)
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setShowAllMovies(true);
-              setIsMovieSearchOpen(false);
-              setMovieSearchQuery('');
-            }}
-            className="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-full transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 border border-amber-200/60 shadow-2xs"
-            title="View all movie soundtracks"
-          >
-            <Eye size={14} className="text-amber-600" />
-            <span>Show All</span>
-          </button>
-        </div>
-
-        {/* First two albums displayed in one row of 2 columns */}
-        <div className="grid grid-cols-2 gap-2">
-          {movieCollections.slice(0, 2).map(movie => {
-            const isSaved = (savedAlbums || []).some(
-              s => s?.trim().toLowerCase() === movie.name?.trim().toLowerCase()
-            );
-            return (
-              <div 
-                key={movie.id} 
-                onClick={() => onOpenMovieModal(movie)}
-                className="flex flex-col cursor-pointer group active:scale-[0.98] transition-all duration-150 bg-slate-50 border border-black/40 rounded-2xl p-2.5 hover:shadow-md hover:border-amber-400"
-              >
-                <div className="w-full h-30 rounded-xl overflow-hidden relative shadow-md shadow-slate-900/5 bg-slate-100">
-                  <img 
-                    src={movie.coverUrl || FALLBACK_ARTWORK} 
-                    alt={movie.name} 
-                    className="w-full h-full object-fit group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = FALLBACK_ARTWORK;
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex items-end justify-start p-2">
-                    <div className="w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-900 shadow-md">
-                      <Film size={13} className="text-amber-600" />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2 flex items-end justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
-                      {formatDisplayName(movie.name)}
-                    </h4>
-                    <p className="text-xs text-slate-500 truncate mt-0.5 font-medium">
-                      {movie.trackCount} {movie.trackCount === 1 ? 'song' : 'songs'} • {movie.composer}
-                    </p>
-                    {movie.actors && (
-                      <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                        {movie.actors}
-                      </p>
-                    )}
-                  </div>
-                  {onToggleSaveAlbum && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleSaveAlbum(movie.name);
-                      }}
-                      className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs border ${
-                        isSaved 
-                          ? 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-                      }`}
-                      title={isSaved ? "Saved in Library" : "Save Album"}
-                    >
-                      <Bookmark size={17} fill={isSaved ? "#ffffff" : "none"} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 3. Actor & Artist Spotlight Playlists (HORIZONTAL SLIDER - CLEARLY VISIBLE X-AXIS SCROLL) */}
-      <section className="flex flex-col gap-3 px-1">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display flex items-center gap-1.5">
-              <span>Artist & Actor Playlists</span>
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Curated collections from iconic stars
-            </p>
-          </div>
-        </div>
-
-        {/* Horizontal Slider with visibly active x-axis scrollbar */}
-        <div 
-          ref={sliderRef}
-          onScroll={handleSliderScroll}
-          className="flex gap-3.5 overflow-x-auto pb-2 snap-x scroll-smooth custom-slider-track"
-        >
-          {ARTIST_SPOTLIGHTS.map(artist => {
-            const Icon = artist.icon;
-            const count = getMatchCount(artist.query);
-
-            return (
-              <div
-                key={artist.id}
-                onClick={() => onNavigateToSearch?.(artist.query)}
-                className={`shrink-0 w-42 h-52 rounded-3xl p-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none snap-start active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
-              >
-                {/* Real Actor Portrait Photo from Internet / Public Vault */}
-                <img 
-                  src={artist.imageUrl}
-                  alt={artist.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-95"
-                  onError={(e) => {
-                    const fallbackTrack = tracks.find(t => 
-                      t.actors?.toLowerCase().includes(artist.query.toLowerCase()) || 
-                      t.composer?.toLowerCase().includes(artist.query.toLowerCase())
-                    );
-                    if (fallbackTrack?.coverUrl && e.currentTarget.src !== fallbackTrack.coverUrl) {
-                      e.currentTarget.src = fallbackTrack.coverUrl;
-                    } else {
-                      e.currentTarget.src = FALLBACK_ARTWORK;
-                    }
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-black/25 pointer-events-none" />
-
-                {/* Top Bar with Badge & Icon */}
-                <div className="relative z-10 flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-amber-300 border border-white/10 shadow-xs">
-                    {artist.badge}
-                  </span>
-                  <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-xs">
-                    <Icon size={13} />
-                  </div>
-                </div>
-
-                {/* Bottom Details */}
-                <div className="relative z-10 flex flex-col gap-0.5 pt-6">
-                  <h4 className="text-sm font-black font-display tracking-tight text-white leading-tight truncate drop-shadow-sm">
-                    {artist.name}
-                  </h4>
-                  <p className="text-[11px] text-slate-200 font-medium truncate drop-shadow-sm">
-                    {artist.subtitle}
-                  </p>
-                  <div className="flex items-center justify-between mt-1.5 text-[11px] font-bold text-amber-300">
-                    <span>{count > 0 ? `${count} tracks` : 'Curated'}</span>
-                    <div className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center group-hover:translate-x-0.5 transition-transform shadow-xs">
-                      <ArrowRight size={12} strokeWidth={2.5} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 4. Genres & Vibes Stations (UNIQUE NON-SLIDER BENTO GRID) */}
-      <section className="flex flex-col gap-3 px-1 pb-5 border-b border-black">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display flex items-center gap-1.5">
-              <span>Genres & Vibes</span>
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Curated mood portals & sonic atmospheres
-            </p>
-          </div>
-        </div>
-
-        {/* 2-Column Responsive Bento Grid with Stylish Gradient Glass Cards */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {GENRE_STATIONS.map(station => {
-            const Icon = station.icon;
-            const count = getMatchCount(station.query);
-
-            return (
-              <div
-                key={station.id}
-                onClick={() => onNavigateToSearch?.(station.query)}
-                className={`relative p-3.5 rounded-2xl bg-gradient-to-br ${station.gradient} border ${station.border} shadow-md ${station.glow} hover:scale-[1.02] hover:shadow-xl transition-all duration-200 active:scale-95 cursor-pointer flex flex-col justify-between gap-3 group overflow-hidden`}
-              >
-                {/* Decorative Ambient Radial Spot */}
-                <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-300" />
-
-                {/* Top Row: Glowing Icon Badge + Count Tag */}
-                <div className="flex items-center justify-between relative z-10">
-                  <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs group-hover:bg-white/25 transition-all">
-                    <Icon size={16} strokeWidth={2.5} />
-                  </div>
-                  <span className="text-[10px] font-bold text-white/95 bg-black/30 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
-                    {count > 0 ? `${count} songs` : 'Explore'}
-                  </span>
-                </div>
-
-                {/* Bottom Row: Title, Subtitle, and Soundwave Graphic */}
-                <div className="relative z-10">
-                  <h4 className="text-xs sm:text-sm font-black font-display text-white tracking-wide truncate drop-shadow-xs group-hover:translate-x-0.5 transition-transform">
-                    {station.name}
-                  </h4>
-                  <p className="text-[10px] text-white/75 font-medium truncate mt-0.5">
-                    {station.subtitle}
-                  </p>
-
-                  {/* Micro Visual Soundwave Indicator */}
-                  <div className="flex items-end gap-0.5 h-2 mt-2 opacity-100 group-hover:opacity-100 transition-opacity">
-                    <span className="w-0.5 h-1.5 bg-white/90 rounded-full animate-pulse" />
-                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:150ms]" />
-                    <span className="w-0.5 h-1 bg-white/90 rounded-full animate-pulse [animation-delay:300ms]" />
-                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:75ms]" />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 5. Refined Exploration Filter Tabs */}
-      <div className="flex items-center gap-1.5 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-2xs">
+       {/* 5. Refined Exploration Filter Tabs */}
+      <div className="flex items-center gap-1.5 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-lg">
         <button
           onClick={() => handleFilterChange('unheard')}
           className={`flex-1 py-2 px-2 text-xs sm:text-sm font-bold rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer ${
@@ -714,7 +524,7 @@ export default function HomePage({
                       <img 
                         src={track.coverUrl || FALLBACK_ARTWORK} 
                         alt={track.title} 
-                        className={`w-12 h-12 rounded-xl object-cover shrink-0 shadow-2xs ring-1 ring-black/5 transition-all ${
+                        className={`w-12 h-12 rounded-xl object-cover shrink-0 shadow-lg ring-1 ring-black/5 transition-all ${
                           isPlayingCurrent ? 'ring-2 ring-amber-500 rounded-2xl animate-[spinDisc_10s_linear_infinite]' : ''
                         }`}
                         onError={(e) => {
@@ -822,15 +632,15 @@ export default function HomePage({
 
         {/* Pagination Controls - Always display page number even if only 1 page */}
         {displayedTracks.length > 0 && (
-          <div className="flex flex-col items-center gap-2 pt-1 pb-2 mt-auto">
-            <div className="flex items-center justify-between w-full">
+          <div className="flex flex-col items-center gap-2 pt-2 pb-4 mt-auto border-b border-black">
+            <div className="flex items-center justify-between w-full px-0.5">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
                   currentPage === 1
-                    ? 'opacity-100 cursor-not-allowed text-black bg-slate-100'
+                    ? 'opacity-100 cursor-not-allowed text-white bg-black'
                     : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
                 }`}
               >
@@ -866,9 +676,9 @@ export default function HomePage({
                 type="button"
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1 cursor-pointer ${
                   currentPage >= totalPages
-                    ? 'opacity-100 cursor-not-allowed text-black bg-slate-100'
+                    ? 'opacity-100 cursor-not-allowed text-white bg-black'
                     : 'bg-black text-white hover:bg-slate-800 active:scale-95 shadow-xs'
                 }`}
               >
@@ -880,10 +690,239 @@ export default function HomePage({
         )}
       </section>
 
+
+      {/* 2. Cinema Soundtracks - Featured 1st Two Albums in One Row (Two Columns) */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display">
+              Movie Soundtracks
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Featured albums ({movieCollections.length} total)
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAllMovies(true);
+              setIsMovieSearchOpen(false);
+              setMovieSearchQuery('');
+            }}
+            className="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-full transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 border border-amber-200/60 shadow-2xs"
+            title="View all movie soundtracks"
+          >
+            <Eye size={14} className="text-amber-600" />
+            <span>Show All</span>
+          </button>
+        </div>
+
+        {/* First two albums displayed in one row of 2 columns */}
+        <div className="grid grid-cols-2 gap-2">
+          {movieCollections.slice(0, 2).map(movie => {
+            const isSaved = (savedAlbums || []).some(
+              s => s?.trim().toLowerCase() === movie.name?.trim().toLowerCase()
+            );
+            return (
+              <div 
+                key={movie.id} 
+                onClick={() => onOpenMovieModal(movie)}
+                className="flex flex-col cursor-pointer group active:scale-[0.98] transition-all duration-150 bg-slate-50 border border-black/40 rounded-2xl p-2.5 hover:shadow-md hover:border-amber-400"
+              >
+                <div className="w-full h-30 rounded-xl overflow-hidden relative shadow-md shadow-slate-900/5 bg-slate-100">
+                  <img 
+                    src={movie.coverUrl || FALLBACK_ARTWORK} 
+                    alt={movie.name} 
+                    className="w-full h-full object-fit group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = FALLBACK_ARTWORK;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex items-end justify-start p-2">
+                    <div className="w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-900 shadow-md">
+                      <Film size={13} className="text-amber-600" />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-end justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-slate-900 truncate group-hover:text-amber-600 transition-colors">
+                      {formatDisplayName(movie.name)}
+                    </h4>
+                    <p className="text-xs text-slate-500 truncate mt-0.5 font-medium">
+                      {movie.trackCount} {movie.trackCount === 1 ? 'song' : 'songs'} • {movie.composer}
+                    </p>
+                    {movie.actors && (
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                        {movie.actors}
+                      </p>
+                    )}
+                  </div>
+                  {onToggleSaveAlbum && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleSaveAlbum(movie.name);
+                      }}
+                      className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs border ${
+                        isSaved 
+                          ? 'bg-amber-500 text-white border-amber-600 hover:bg-amber-600' 
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                      }`}
+                      title={isSaved ? "Saved in Library" : "Save Album"}
+                    >
+                      <Bookmark size={17} fill={isSaved ? "#ffffff" : "none"} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 3. Actor & Artist Spotlight Playlists (HORIZONTAL SLIDER - CLEARLY VISIBLE X-AXIS SCROLL) */}
+      <section className="flex flex-col gap-3 px-1">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display flex items-center gap-1.5">
+              <span>Artist & Actor Playlists</span>
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Curated collections from iconic stars
+            </p>
+          </div>
+        </div>
+
+        {/* Horizontal Slider with free, smooth x-axis scrolling */}
+        <div 
+          ref={sliderRef}
+          onScroll={handleSliderScroll}
+          className="flex gap-3.5 overflow-x-auto pb-2 scroll-smooth touch-pan-x overscroll-x-contain custom-slider-track"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          {dynamicSpotlights.map(artist => {
+            const Icon = artist.icon;
+            const count = artist.trackCount;
+
+            return (
+              <div
+                key={artist.id}
+                onClick={() => onNavigateToSearch?.(artist.query)}
+                className={`shrink-0 w-41 h-52 rounded-3xl p-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
+              >
+                {/* Dynamic Artist / Actor Artwork from Vault DB */}
+                <img 
+                  src={artist.coverUrl || FALLBACK_ARTWORK}
+                  alt={artist.name}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-95"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = FALLBACK_ARTWORK;
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-black/25 pointer-events-none" />
+
+                {/* Top Bar with Badge & Icon */}
+                <div className="relative z-10 flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-amber-300 border border-white/10 shadow-xs">
+                    {artist.badge}
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-xs">
+                    <Icon size={13} />
+                  </div>
+                </div>
+
+                {/* Bottom Details */}
+                <div className="relative z-10 flex flex-col gap-0.5 pt-6">
+                  <h4 className="text-sm font-black font-display tracking-tight text-white leading-tight truncate drop-shadow-sm">
+                    {artist.name}
+                  </h4>
+                  <p className="text-[11px] text-slate-200 font-medium truncate drop-shadow-sm">
+                    {artist.subtitle}
+                  </p>
+                  <div className="flex items-center justify-between mt-1.5 text-[11px] font-bold text-amber-300">
+                    <span>{count > 0 ? `${count} ${count === 1 ? 'song' : 'songs'}` : 'Vault Star'}</span>
+                    <div className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center group-hover:translate-x-0.5 transition-transform shadow-xs">
+                      <ArrowRight size={12} strokeWidth={2.5} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 4. Genres & Vibes Stations (DYNAMIC 6 GENRE & MOOD COMBINATIONS) */}
+      <section className="flex flex-col gap-3 px-1 pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight font-display flex items-center gap-1.5">
+              <span>Genres & Vibes</span>
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Curated mood portals & sonic atmospheres
+            </p>
+          </div>
+        </div>
+
+        {/* 2-Column Responsive Bento Grid with Stylish Gradient Glass Cards */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {dynamicGenreStations.map(station => {
+            const Icon = station.icon;
+            const count = station.count;
+
+            return (
+              <div
+                key={station.id}
+                onClick={() => onNavigateToSearch?.(station.query)}
+                className={`relative p-3.5 rounded-2xl bg-gradient-to-br ${station.gradient} border ${station.border} shadow-md ${station.glow} hover:scale-[1.02] hover:shadow-xl transition-all duration-200 active:scale-95 cursor-pointer flex flex-col justify-between gap-3 group overflow-hidden`}
+              >
+                {/* Decorative Ambient Radial Spot */}
+                <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-300" />
+
+                {/* Top Row: Glowing Icon Badge + Count Tag */}
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xs group-hover:bg-white/25 transition-all">
+                    <Icon size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[10px] font-bold text-white/95 bg-black/30 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
+                    {count > 0 ? `${count} ${count === 1 ? 'song' : 'songs'}` : 'Explore'}
+                  </span>
+                </div>
+
+                {/* Bottom Row: Title, Subtitle, and Soundwave Graphic */}
+                <div className="relative z-10">
+                  <h4 className="text-xs sm:text-sm font-black font-display text-white tracking-wide truncate drop-shadow-xs group-hover:translate-x-0.5 transition-transform">
+                    {station.name}
+                  </h4>
+                  <p className="text-[10px] text-white/80 font-medium truncate mt-0.5">
+                    {station.englishTitle || station.subtitle}
+                  </p>
+
+                  {/* Micro Visual Soundwave Indicator */}
+                  <div className="flex items-end gap-0.5 h-2 mt-2 opacity-100 group-hover:opacity-100 transition-opacity">
+                    <span className="w-0.5 h-1.5 bg-white/90 rounded-full animate-pulse" />
+                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:150ms]" />
+                    <span className="w-0.5 h-1 bg-white/90 rounded-full animate-pulse [animation-delay:300ms]" />
+                    <span className="w-0.5 h-2 bg-white/90 rounded-full animate-pulse [animation-delay:75ms]" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* 7. Show All Movie Soundtracks Full-Screen View with Search & Save Album */}
       {showAllMovies && (
         <div 
-          className="fixed inset-0 z-[60] bg-white flex flex-col h-full w-full max-w-md mx-auto sm:border-x sm:border-slate-200 select-none animate-[fadeIn_0.15s_ease-out]"
+          onTouchStart={handleMovieTouchStart}
+          onTouchEnd={handleMovieTouchEnd}
+          className="fixed inset-0 z-[45] bg-white flex flex-col h-full w-full max-w-md mx-auto sm:border-x sm:border-slate-200 select-none animate-[fadeIn_0.15s_ease-out]"
         >
           {/* Top Bar Header: Only search button and close button occur until search button is clicked */}
           <div className="p-3.5 sm:p-4 border-b border-black/20 flex items-center justify-between bg-white shrink-0 shadow-2xs">
@@ -921,7 +960,7 @@ export default function HomePage({
                       setMovieSearchQuery('');
                     }}
                     className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 cursor-pointer active:scale-90 transition-all"
-                    title="Close Window"
+                    title="Close Window (or swipe left/right)"
                   >
                     <X size={20} />
                   </button>
@@ -933,7 +972,7 @@ export default function HomePage({
                       All Movie Soundtracks
                     </h3>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      {movieCollections.length} soundtrack albums
+                      {movieCollections.length} soundtrack albums • Swipe to exit
                     </p>
                   </div>
                 </div>
@@ -949,8 +988,8 @@ export default function HomePage({
             )}
           </div>
 
-          {/* Movies Grid (Full Screen Height Scrollable Container) */}
-          <div className="flex-1 overflow-y-auto p-4 pb-28 no-scrollbar">
+          {/* Movies Grid (Full Screen Height Scrollable Container with clearance for BottomPlayer) */}
+          <div className="flex-1 overflow-y-auto p-4 pb-36 sm:pb-40 no-scrollbar">
             {filteredAllMovies.length === 0 ? (
               <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 <Film size={32} className="mx-auto mb-2 opacity-35 text-slate-400" />

@@ -27,7 +27,7 @@ export default function BottomPlayer({
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-22 left-0 right-0 max-w-md mx-auto px-3 z-40 pointer-events-none animate-[barSlideUp_0.4s_cubic-bezier(0.22,1,0.36,1)]">
+    <div className="fixed bottom-22 left-0 right-0 max-w-md mx-auto px-3 z-[70] pointer-events-none animate-[barSlideUp_0.4s_cubic-bezier(0.22,1,0.36,1)]">
       <aside 
         className="pointer-events-auto w-full bg-slate-900/95 hover:bg-slate-900 text-white backdrop-blur-xl border border-slate-800/90 rounded-full p-2.5 shadow-[0_12px_32px_rgba(15,23,42,0.3)] flex items-center justify-between gap-2.5 select-none transition-all duration-200"
       >

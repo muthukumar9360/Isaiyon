@@ -14,8 +14,8 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { auth } from '../firebase/config';
-import { compressImage } from '../utils/imageCompressor';
 import AutocompleteInput from './AutocompleteInput';
+import { MOOD_OPTIONS, GENRE_OPTIONS, DEFAULT_GENRE, DEFAULT_MOOD } from '../constants/genresAndMoods';
 
 const YoutubeIcon = ({ size = 18, color = '#ef4444' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className="inline mr-1.5 shrink-0">
@@ -179,8 +179,8 @@ export default function AdminModal({
     composer: '',
     artist: '',
     actors: '',
-    genre: 'Soundtrack',
-    mood: 'Melody Hits'
+    genre: DEFAULT_GENRE,
+    mood: DEFAULT_MOOD
   });
 
   // -------------------------------------------------------------
@@ -196,8 +196,8 @@ export default function AdminModal({
     actors: '',
     composer: '',
     artist: '',
-    genre: 'Soundtrack',
-    mood: 'Melody Hits',
+    genre: DEFAULT_GENRE,
+    mood: DEFAULT_MOOD,
     thumbnailUrl: '',
     duration: 250
   });
@@ -336,8 +336,8 @@ export default function AdminModal({
         actors: directForm.actors.trim(),
         composer: directForm.composer.trim(),
         artist: directForm.artist.trim(),
-        genre: directForm.genre || 'Soundtrack',
-        mood: directForm.mood || 'Melody Hits',
+        genre: directForm.genre || DEFAULT_GENRE,
+        mood: directForm.mood || DEFAULT_MOOD,
         duration: directAudioDuration || 240,
         audioUrl: finalAudioUrl,
         coverUrl: finalCoverUrl,
@@ -372,8 +372,8 @@ export default function AdminModal({
       composer: '',
       artist: '',
       actors: '',
-      genre: 'Soundtrack',
-      mood: 'Melody Hits'
+      genre: DEFAULT_GENRE,
+      mood: DEFAULT_MOOD
     });
     setSuccessCreatedTrack(null);
     setUploadProgress(0);
@@ -405,8 +405,8 @@ export default function AdminModal({
       if (data.success && data.data) {
         setYtEditMeta({
           ...data.data,
-          genre: data.data.genre || 'Soundtrack',
-          mood: data.data.mood || 'Melody Hits',
+          genre: data.data.genre || DEFAULT_GENRE,
+          mood: data.data.mood || DEFAULT_MOOD,
           projectIdentifier: 'muthuramalingam_a-vault'
         });
         setYtStage('preview_edit');
@@ -503,8 +503,8 @@ export default function AdminModal({
           actors: ytEditMeta.actors || '',
           composer: ytEditMeta.composer || '',
           artist: ytEditMeta.artist || '',
-          genre: ytEditMeta.genre || 'Soundtrack',
-          mood: ytEditMeta.mood || 'Melody Hits',
+          genre: ytEditMeta.genre || DEFAULT_GENRE,
+          mood: ytEditMeta.mood || DEFAULT_MOOD,
           duration: ytEditMeta.duration || 260,
           audioUrl: result.audioUrl,
           coverUrl: result.coverUrl || ytEditMeta.thumbnailUrl,
@@ -542,8 +542,8 @@ export default function AdminModal({
       actors: '',
       composer: '',
       artist: '',
-      genre: 'Soundtrack',
-      mood: 'Melody Hits',
+      genre: DEFAULT_GENRE,
+      mood: DEFAULT_MOOD,
       thumbnailUrl: '',
       duration: 250
     });
@@ -844,14 +844,9 @@ export default function AdminModal({
                           disabled={isSubmitting}
                           className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
                         >
-                          <option value="Soundtrack">Soundtrack</option>
-                          <option value="Melody">Melody</option>
-                          <option value="Folk">Folk</option>
-                          <option value="Classical">Classical</option>
-                          <option value="Pop">Pop</option>
-                          <option value="Rock">Rock</option>
-                          <option value="Devotional">Devotional</option>
-                          <option value="Indie">Indie</option>
+                          {GENRE_OPTIONS.map(g => (
+                            <option key={g} value={g}>{g}</option>
+                          ))}
                         </select>
                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                           <ChevronDown size={14} />
@@ -868,12 +863,9 @@ export default function AdminModal({
                           disabled={isSubmitting}
                           className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
                         >
-                          <option value="Melody Hits">🎵 Melody Hits</option>
-                          <option value="Love Failure">💔 Love Failure</option>
-                          <option value="Energetic">⚡ Energetic / Kuthu</option>
-                          <option value="Midnight Chill">🌙 Midnight Chill</option>
-                          <option value="Mass">🔥 Mass & Folk</option>
-                          <option value="Love">❤️ Love & Romance</option>
+                          {MOOD_OPTIONS.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
                         </select>
                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                           <ChevronDown size={14} />
@@ -1024,19 +1016,14 @@ export default function AdminModal({
                       <label className="text-[11px] font-bold text-slate-600">Genre (Song Type)</label>
                       <div className="relative">
                         <select
-                          value={ytEditMeta.genre || 'Soundtrack'}
+                          value={ytEditMeta.genre || DEFAULT_GENRE}
                           onChange={e => setYtEditMeta(prev => ({ ...prev, genre: e.target.value }))}
                           disabled={ytIsUploading}
                           className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
                         >
-                          <option value="Soundtrack">Soundtrack</option>
-                          <option value="Melody">Melody</option>
-                          <option value="Folk">Folk</option>
-                          <option value="Classical">Classical</option>
-                          <option value="Pop">Pop</option>
-                          <option value="Rock">Rock</option>
-                          <option value="Devotional">Devotional</option>
-                          <option value="Indie">Indie</option>
+                          {GENRE_OPTIONS.map(g => (
+                            <option key={g} value={g}>{g}</option>
+                          ))}
                         </select>
                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                           <ChevronDown size={14} />
@@ -1048,17 +1035,14 @@ export default function AdminModal({
                       <label className="text-[11px] font-bold text-slate-600">Mood / Category</label>
                       <div className="relative">
                         <select
-                          value={ytEditMeta.mood || 'Melody Hits'}
+                          value={ytEditMeta.mood || DEFAULT_MOOD}
                           onChange={e => setYtEditMeta(prev => ({ ...prev, mood: e.target.value }))}
                           disabled={ytIsUploading}
                           className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
                         >
-                          <option value="Melody Hits">🎵 Melody Hits</option>
-                          <option value="Love Failure">💔 Love Failure</option>
-                          <option value="Energetic">⚡ Energetic / Kuthu</option>
-                          <option value="Midnight Chill">🌙 Midnight Chill</option>
-                          <option value="Mass">🔥 Mass & Folk</option>
-                          <option value="Love">❤️ Love & Romance</option>
+                          {MOOD_OPTIONS.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
                         </select>
                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                           <ChevronDown size={14} />

@@ -205,45 +205,7 @@ export default function App() {
     }
   }, [activePage]);
 
-  // Remove swipe left and swipe right logic from the home screen entirely.
-  // Remaining swipe logic continues to work on all other sections/pages.
-  useEffect(() => {
-    let startX = 0;
-    let startY = 0;
 
-    const handleTouchStart = (e) => {
-      if (e.touches && e.touches.length === 1) {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      if (e.touches && e.touches.length === 1) {
-        // Only cancel swipe left / right on the Home screen
-        if (activePageRef.current === 'home') {
-          const currentX = e.touches[0].clientX;
-          const currentY = e.touches[0].clientY;
-          const deltaX = Math.abs(currentX - startX);
-          const deltaY = Math.abs(currentY - startY);
-          // If the movement is horizontal (swipe left or swipe right)
-          if (deltaX > deltaY && deltaX > 8) {
-            if (e.cancelable) {
-              e.preventDefault();
-            }
-          }
-        }
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, []);
 
   // Intercept back gesture (popstate): NEVER close app, NEVER kill music!
   useEffect(() => {
@@ -1842,7 +1804,7 @@ export default function App() {
         )}
 
         {/* Bottom Navigation Bar */}
-        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-300 px-3 py-2 pb-4 flex items-center justify-around z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] select-none">
+        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-slate-300 px-3 py-2 pb-4 flex items-center justify-around z-[60] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] select-none">
           <button 
             className={`flex flex-col items-center justify-center py-2 px-2.5 rounded-2xl text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer ${
               activePage === 'home' 

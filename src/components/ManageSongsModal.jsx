@@ -15,6 +15,7 @@ import { auth } from '../firebase/config';
 import { FALLBACK_ARTWORK } from '../constants/fallbackArt';
 import { compressImage } from '../utils/imageCompressor';
 import AutocompleteInput from './AutocompleteInput';
+import { MOOD_OPTIONS, GENRE_OPTIONS, DEFAULT_GENRE, DEFAULT_MOOD } from '../constants/genresAndMoods';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/+$/, '');
 
@@ -106,8 +107,8 @@ export default function ManageSongsModal({
       artist: track.artist || '',
       composer: track.composer || '',
       actors: track.actors || '',
-      genre: track.genre || 'Soundtrack',
-      mood: track.mood || 'Vibrant',
+      genre: track.genre || DEFAULT_GENRE,
+      mood: track.mood || DEFAULT_MOOD,
       audioUrl: track.audioUrl || '',
       coverUrl: track.coverUrl || '',
       duration: track.duration || 260
@@ -386,22 +387,17 @@ export default function ManageSongsModal({
                   </label>
                   <div className="relative">
                     <select
-                      value={editForm.genre || 'Soundtrack'}
+                      value={editForm.genre || DEFAULT_GENRE}
                       onChange={e => setEditForm({ ...editForm, genre: e.target.value })}
                       disabled={isSaving}
                       className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
                     >
-                      {editForm.genre && !['Soundtrack', 'Melody', 'Folk', 'Classical', 'Pop', 'Rock', 'Devotional', 'Indie'].includes(editForm.genre) && (
+                      {editForm.genre && !GENRE_OPTIONS.includes(editForm.genre) && (
                         <option value={editForm.genre}>{editForm.genre}</option>
                       )}
-                      <option value="Soundtrack">Soundtrack</option>
-                      <option value="Melody">Melody</option>
-                      <option value="Folk">Folk</option>
-                      <option value="Classical">Classical</option>
-                      <option value="Pop">Pop</option>
-                      <option value="Rock">Rock</option>
-                      <option value="Devotional">Devotional</option>
-                      <option value="Indie">Indie</option>
+                      {GENRE_OPTIONS.map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
                     </select>
                     <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                       <ChevronDown size={14} />
@@ -413,20 +409,17 @@ export default function ManageSongsModal({
                   <label className="text-[11px] font-bold text-slate-700">Mood / Category</label>
                   <div className="relative">
                     <select
-                      value={editForm.mood || 'Melody Hits'}
+                      value={editForm.mood || DEFAULT_MOOD}
                       onChange={e => setEditForm({ ...editForm, mood: e.target.value })}
                       disabled={isSaving}
                       className="w-full pl-3 pr-8 py-2 bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-xs font-semibold rounded-xl border border-slate-200/80 focus:border-amber-400 outline-hidden cursor-pointer appearance-none transition-colors"
                     >
-                      {editForm.mood && !['Melody Hits', 'Love Failure', 'Energetic', 'Midnight Chill', 'Mass', 'Love'].includes(editForm.mood) && (
+                      {editForm.mood && !MOOD_OPTIONS.includes(editForm.mood) && (
                         <option value={editForm.mood}>{editForm.mood}</option>
                       )}
-                      <option value="Melody Hits">🎵 Melody Hits</option>
-                      <option value="Love Failure">💔 Love Failure</option>
-                      <option value="Energetic">⚡ Energetic / Kuthu</option>
-                      <option value="Midnight Chill">🌙 Midnight Chill</option>
-                      <option value="Mass">🔥 Mass & Folk</option>
-                      <option value="Love">❤️ Love & Romance</option>
+                      {MOOD_OPTIONS.map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
                     </select>
                     <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                       <ChevronDown size={14} />
