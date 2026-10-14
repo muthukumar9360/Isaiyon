@@ -71,7 +71,7 @@ export default function VinylPlayer({
   playbackRate = 1.0,
   onSetPlaybackRate,
   onShareTrack,
-  volume = 0.9,
+  volume = 1.0,
   onSetVolume,
   repeatMode = 'off',
   onToggleRepeatMode,

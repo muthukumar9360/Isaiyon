@@ -48,9 +48,9 @@ export default function App() {
   const [volume, setVolume] = useState(() => {
     try {
       const saved = localStorage.getItem('isaiyon_volume');
-      return saved !== null ? parseFloat(saved) : 0.9;
+      return saved !== null ? parseFloat(saved) : 1.0;
     } catch (_) {
-      return 0.9;
+      return 1.0;
     }
   });
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -561,16 +561,40 @@ export default function App() {
     const unsubscribe = onSnapshot(tracksCol, (snapshot) => {
       if (!snapshot.empty) {
         const cleanDisplay = (val) => (typeof val === 'string' ? val.replace(/_+/g, ' ').trim() : val);
+        const cleanTamilText = (str) => {
+          if (!str || typeof str !== 'string') return str;
+          if (/[\u0B80-\u0BFF]/.test(str)) {
+            const parts = str.split('—').map(p => p.trim());
+            const eng = parts.find(p => !/[\u0B80-\u0BFF]/.test(p) && p.length > 0);
+            if (eng) return eng;
+            return str.replace(/[\u0B80-\u0BFF]/g, '').replace(/\s*—\s*/g, '').trim();
+          }
+          return str;
+        };
+
         const loadedTracks = snapshot.docs.map(d => {
           const data = d.data();
+          const cleanG = cleanTamilText(cleanDisplay(data.genre));
+          const cleanM = cleanTamilText(cleanDisplay(data.mood));
+
+          // Auto-sanitize and update database document in Firestore if Tamil was present
+          if (/[\u0B80-\u0BFF]/.test(data.genre || '') || /[\u0B80-\u0BFF]/.test(data.mood || '')) {
+            updateDoc(doc(db, 'tracks', d.id), {
+              genre: cleanG || 'Melody / Romantic',
+              mood: cleanM || 'Love'
+            }).catch(() => {});
+          }
+
           const trk = {
             id: d.id,
             ...data,
-            title: cleanDisplay(data.title),
-            movie: cleanDisplay(data.movie),
-            artist: cleanDisplay(data.artist),
-            composer: cleanDisplay(data.composer),
-            actors: cleanDisplay(data.actors)
+            title: cleanTamilText(cleanDisplay(data.title)),
+            movie: cleanTamilText(cleanDisplay(data.movie)),
+            artist: cleanTamilText(cleanDisplay(data.artist)),
+            composer: cleanTamilText(cleanDisplay(data.composer)),
+            actors: cleanTamilText(cleanDisplay(data.actors)),
+            genre: cleanG,
+            mood: cleanM
           };
           return normalizeTrack(trk);
         });

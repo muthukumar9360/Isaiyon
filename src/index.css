@@ -127,28 +127,32 @@ input::-webkit-calendar-picker-indicator {
   50% { transform: translateY(-3px); }
 }
 
-/* Clearly visible horizontal slider track */
-.custom-slider-track,
-.custom-slider-track * {
+/* Clearly visible permanent horizontal slider track */
+.custom-slider-track {
+  overflow-x: scroll !important;
   scrollbar-width: thin !important;
   scrollbar-color: #f59e0b #e2e8f0 !important;
   -webkit-overflow-scrolling: touch;
   touch-action: manipulation !important;
 }
+.custom-slider-track * {
+  touch-action: manipulation !important;
+}
 .custom-slider-track::-webkit-scrollbar {
-  height: 12px !important;
+  height: 8px !important;
   display: block !important;
-  background: transparent !important;
+  background: #e2e8f0 !important;
+  border-radius: 9999px !important;
 }
 .custom-slider-track::-webkit-scrollbar-track {
   background: #e2e8f0 !important;
   border-radius: 9999px !important;
-  margin: 25px 20px;
 }
 .custom-slider-track::-webkit-scrollbar-thumb {
   background: #f59e0b !important;
   border-radius: 9999px !important;
-  border: 2px solid #d97706;
+  min-width: 48px !important;
+  border: 1.5px solid #d97706 !important;
 }
 .custom-slider-track::-webkit-scrollbar-thumb:hover {
   background: #d97706 !important;

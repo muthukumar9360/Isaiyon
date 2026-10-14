@@ -57,6 +57,7 @@ export default function HomePage({
   const [isMovieSearchOpen, setIsMovieSearchOpen] = useState(false);
   const [movieSearchQuery, setMovieSearchQuery] = useState('');
   const sliderRef = useRef(null);
+  const scrollbarThumbRef = useRef(null);
   const isDraggingSliderRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragScrollLeftRef = useRef(0);
@@ -194,17 +195,17 @@ export default function HomePage({
     });
   }, [tracks]);
 
-  // Curated 6 Dynamic Genre & Vibe Stations combining user-requested Genres and Moods
+  // Curated 6 Dynamic Genre & Vibe Stations combining user-requested Genres and Moods (Clean English)
   const dynamicGenreStations = useMemo(() => {
     const stations = [
       {
         id: 'love-melody',
-        name: 'காதல் & மெலடி',
+        name: 'Love & Romance',
         englishTitle: 'Love & Melody',
         subtitle: 'Romantic Melodies & Pure Soul',
         query: 'Love',
         genreMatch: 'Melody',
-        moodMatch: 'காதல்',
+        moodMatch: 'Love',
         gradient: 'from-rose-600 via-pink-600 to-purple-950',
         glow: 'shadow-rose-500/20 group-hover:shadow-rose-500/40',
         border: 'border-rose-400/30',
@@ -212,12 +213,12 @@ export default function HomePage({
       },
       {
         id: 'breakup-soul',
-        name: 'பிரிவு & மெலடி',
+        name: 'Heartbreak & Soul',
         englishTitle: 'Breakup & Soul',
         subtitle: 'Heartbreak, Longing & Memories',
         query: 'Breakup',
         genreMatch: 'Melody',
-        moodMatch: 'பிரிவு',
+        moodMatch: 'Breakup',
         gradient: 'from-indigo-600 via-purple-700 to-slate-950',
         glow: 'shadow-indigo-500/20 group-hover:shadow-indigo-500/40',
         border: 'border-indigo-400/30',
@@ -225,12 +226,12 @@ export default function HomePage({
       },
       {
         id: 'mass-kuthu',
-        name: 'மாஸ் & குத்து',
+        name: 'Mass & Dance',
         englishTitle: 'Mass & Kuthu / Pop',
         subtitle: 'High Voltage Beats & Dance',
         query: 'Mass',
         genreMatch: 'Kuthu',
-        moodMatch: 'மாஸ்',
+        moodMatch: 'Mass',
         gradient: 'from-amber-500 via-orange-600 to-stone-950',
         glow: 'shadow-amber-500/20 group-hover:shadow-amber-500/40',
         border: 'border-amber-400/30',
@@ -238,12 +239,12 @@ export default function HomePage({
       },
       {
         id: 'chill-folk',
-        name: 'அமைதி & நாட்டுப்புறம்',
+        name: 'Peace & Roots',
         englishTitle: 'Chill & Folk / Classical',
         subtitle: 'Peaceful Bliss & Traditional Roots',
         query: 'Chill',
         genreMatch: 'Folk',
-        moodMatch: 'அமைதி',
+        moodMatch: 'Chill',
         gradient: 'from-emerald-600 via-teal-700 to-stone-950',
         glow: 'shadow-emerald-500/20 group-hover:shadow-emerald-500/40',
         border: 'border-emerald-400/30',
@@ -251,12 +252,12 @@ export default function HomePage({
       },
       {
         id: 'motivation-rap',
-        name: 'ஊக்கம் & ராப்',
+        name: 'Energy & Power',
         englishTitle: 'Motivation & Rap / Gaana',
         subtitle: 'Fire Anthems & Energy Boost',
         query: 'Motivation',
         genreMatch: 'Rap',
-        moodMatch: 'ஊக்கம்',
+        moodMatch: 'Motivation',
         gradient: 'from-cyan-600 via-blue-700 to-slate-950',
         glow: 'shadow-cyan-500/20 group-hover:shadow-cyan-500/40',
         border: 'border-cyan-400/30',
@@ -264,12 +265,12 @@ export default function HomePage({
       },
       {
         id: 'devotional-grace',
-        name: 'பக்தி & தெய்வீகம்',
+        name: 'Spiritual & Chants',
         englishTitle: 'Devotional & Classical',
         subtitle: 'Spiritual Peace & Sacred Chants',
         query: 'Devotional',
         genreMatch: 'Classical',
-        moodMatch: 'பக்தி',
+        moodMatch: 'Devotional',
         gradient: 'from-yellow-600 via-amber-600 to-red-950',
         glow: 'shadow-yellow-500/20 group-hover:shadow-yellow-500/40',
         border: 'border-yellow-400/30',
@@ -278,16 +279,17 @@ export default function HomePage({
     ];
 
     return stations.map(station => {
-      const count = tracks.filter(t => {
-        const g = (t.genre || '').toLowerCase();
-        const m = (t.mood || '').toLowerCase();
-        return (
-          m.includes(station.moodMatch.toLowerCase()) ||
-          m.includes(station.query.toLowerCase()) ||
-          g.includes(station.genreMatch.toLowerCase()) ||
-          g.includes(station.query.toLowerCase())
-        );
-      }).length;
+      const q = station.query.toLowerCase();
+      // Count tracks matching this category query exactly as SearchPage matches them
+      const count = tracks.filter(t => (
+        t.title?.toLowerCase().includes(q) ||
+        t.movie?.toLowerCase().includes(q) ||
+        t.actors?.toLowerCase().includes(q) ||
+        t.artist?.toLowerCase().includes(q) ||
+        t.composer?.toLowerCase().includes(q) ||
+        t.genre?.toLowerCase().includes(q) ||
+        t.mood?.toLowerCase().includes(q)
+      )).length;
 
       return {
         ...station,
@@ -344,6 +346,7 @@ export default function HomePage({
     if (isHorizontalScrollRef.current === true) {
       hasMovedSliderRef.current = true;
       sliderRef.current.scrollLeft = touchScrollLeftRef.current - deltaX;
+      updateScrollbarIndicator();
     }
     // If vertical swipe, do nothing: native Y-axis page scroll happens smoothly!
   };
@@ -376,11 +379,40 @@ export default function HomePage({
     if (Math.abs(walk) > 4) {
       hasMovedSliderRef.current = true;
       sliderRef.current.scrollLeft = dragScrollLeftRef.current - walk;
+      updateScrollbarIndicator();
     }
   };
 
   const handleSliderMouseUpOrLeave = () => {
     isDraggingSliderRef.current = false;
+  };
+
+  // Live updater for permanently visible scrollbar indicator (zero main-thread re-render)
+  const updateScrollbarIndicator = () => {
+    if (!sliderRef.current || !scrollbarThumbRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    const thumbWidthPercent = Math.max(18, Math.min(100, (clientWidth / scrollWidth) * 100));
+    scrollbarThumbRef.current.style.width = `${thumbWidthPercent}%`;
+    if (maxScroll > 0) {
+      const ratio = Math.max(0, Math.min(1, scrollLeft / maxScroll));
+      scrollbarThumbRef.current.style.left = `${ratio * (100 - thumbWidthPercent)}%`;
+    } else {
+      scrollbarThumbRef.current.style.left = '0%';
+    }
+  };
+
+  useEffect(() => {
+    updateScrollbarIndicator();
+  }, [dynamicSpotlights]);
+
+  const handleCustomScrollbarClick = (e) => {
+    if (!sliderRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    const maxScroll = sliderRef.current.scrollWidth - sliderRef.current.clientWidth;
+    sliderRef.current.scrollTo({ left: ratio * maxScroll, behavior: 'smooth' });
   };
 
   // Reset page when filter changes
@@ -572,10 +604,10 @@ export default function HomePage({
                 {/* Bottom Row: Title, Subtitle, and Soundwave Graphic */}
                 <div className="relative z-10">
                   <h4 className="text-xs sm:text-sm font-black font-display text-white tracking-wide truncate drop-shadow-xs group-hover:translate-x-0.5 transition-transform">
-                    {station.englishTitle || station.subtitle}
+                    {station.englishTitle || station.name}
                   </h4>
                   <p className="text-[10px] text-white/80 font-medium truncate mt-0.5">
-                    {station.name}
+                    {station.subtitle}
                   </p>
 
                   {/* Micro Visual Soundwave Indicator */}
@@ -849,6 +881,7 @@ export default function HomePage({
         {/* Horizontal Slider with free, smooth x-axis & y-axis scrolling */}
         <div
           ref={sliderRef}
+          onScroll={updateScrollbarIndicator}
           onTouchStart={handleSliderTouchStart}
           onTouchMove={handleSliderTouchMove}
           onTouchEnd={handleSliderTouchEnd}
@@ -912,6 +945,21 @@ export default function HomePage({
               </div>
             );
           })}
+        </div>
+
+        {/* Permanently Visible Custom Scrollbar (Always visible on all screens & mobile) */}
+        <div 
+          onClick={handleCustomScrollbarClick}
+          className="w-full px-1 py-1 cursor-pointer select-none"
+          title="Scroll indicator (Click to jump)"
+        >
+          <div className="w-full h-2 bg-slate-200/90 rounded-full relative overflow-hidden shadow-inner">
+            <div 
+              ref={scrollbarThumbRef}
+              className="absolute top-0 bottom-0 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full shadow-xs transition-[left] duration-75 min-w-[36px]"
+              style={{ width: '25%', left: '0%' }}
+            />
+          </div>
         </div>
       </section>
 
