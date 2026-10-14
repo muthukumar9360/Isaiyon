@@ -950,13 +950,13 @@ export default function HomePage({
         {/* Permanently Visible Custom Scrollbar (Always visible on all screens & mobile) */}
         <div 
           onClick={handleCustomScrollbarClick}
-          className="w-full px-1 py-1 cursor-pointer select-none"
+          className="w-full px-1 py-1 cursor-pointer select-none -mt-2"
           title="Scroll indicator (Click to jump)"
         >
-          <div className="w-full h-2 bg-slate-200/90 rounded-full relative overflow-hidden shadow-inner">
+          <div className="w-full h-3 bg-slate-200/90 rounded-full relative overflow-hidden shadow-inner">
             <div 
               ref={scrollbarThumbRef}
-              className="absolute top-0 bottom-0 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full shadow-xs transition-[left] duration-75 min-w-[36px]"
+              className="absolute top-0 bottom-0 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full shadow-xs transition-[left] duration-25 min-w-[36px]"
               style={{ width: '25%', left: '0%' }}
             />
           </div>
