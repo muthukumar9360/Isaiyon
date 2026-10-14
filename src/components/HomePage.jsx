@@ -788,7 +788,7 @@ export default function HomePage({
               <div
                 key={artist.id}
                 onClick={() => onNavigateToSearch?.(artist.query)}
-                className={`shrink-0 w-37 h-52 rounded-3xl py-4 px-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
+                className={`shrink-0 w-41 h-52 rounded-3xl py-4 px-4 flex flex-col justify-between relative overflow-hidden cursor-pointer select-none active:scale-95 transition-all duration-200 bg-gradient-to-br ${artist.gradient} border ${artist.border} shadow-lg group`}
               >
                 {/* Dynamic Artist / Actor Artwork from Vault DB */}
                 <img
@@ -995,7 +995,7 @@ export default function HomePage({
           </div>
 
           {/* Movies Grid (Full Screen Height Scrollable Container with conditional clearance for BottomPlayer) */}
-          <div className={`flex-1 overflow-y-auto p-4 ${isBottomPlayerActive ? 'pb-42 sm:pb-40' : 'pb-5'} no-scrollbar`}>
+          <div className={`flex-1 overflow-y-auto p-4 ${isBottomPlayerActive ? 'pb-42 sm:pb-40' : 'pb-18'} no-scrollbar`}>
             {filteredAllMovies.length === 0 ? (
               <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 <Film size={32} className="mx-auto mb-2 opacity-35 text-slate-400" />
