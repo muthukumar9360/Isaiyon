@@ -173,8 +173,8 @@ export default function VinylPlayer({
         <div 
           className={`flex-1 overflow-y-auto space-y-1 scrollbar-thin border-b border-black/30 transition-all duration-200 ${
             isBottomPlayerActive 
-              ? 'max-h-[56vh] pb-3' 
-              : 'max-h-[66vh] sm:max-h-[78vh] pb-3'
+              ? 'max-h-[57vh] pb-3' 
+              : 'max-h-[67vh] sm:max-h-[78vh] pb-3'
           }`}
         >
           {suggestedTracks.length === 0 ? (
