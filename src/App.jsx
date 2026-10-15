@@ -48,7 +48,16 @@ export default function App() {
   const [volume, setVolume] = useState(() => {
     try {
       const saved = localStorage.getItem('isaiyon_volume');
-      return saved !== null ? parseFloat(saved) : 1.0;
+      if (saved !== null) {
+        const parsed = parseFloat(saved);
+        // Migrate legacy 0.9 (90%) to 1.0 (100% default)
+        if (parsed === 0.9 || isNaN(parsed)) {
+          localStorage.setItem('isaiyon_volume', '1');
+          return 1.0;
+        }
+        return parsed;
+      }
+      return 1.0;
     } catch (_) {
       return 1.0;
     }
