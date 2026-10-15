@@ -140,22 +140,6 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
           <span className="text-black text-xl font-black tracking-widest text-slate-900 font-display uppercase">
             ISAIYON
           </span>
-
-          {/* Floating Navbar Rotating Mini Vinyl Disc Loading Animation */}
-          {isBuffering && (
-            <div 
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-800 animate-[fadeIn_0.2s_ease-out]"
-              title="Buffering audio..."
-            >
-              <div className="relative w-4 h-4 rounded-full bg-slate-950 animate-spin border border-slate-700 shadow-xs flex items-center justify-center shrink-0">
-                <div className="absolute inset-0.5 rounded-full border border-white/20" />
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 border border-slate-900" />
-              </div>
-              <span className="text-[10px] font-black tracking-wider uppercase hidden xs:inline text-amber-800 font-display">
-                Loading
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Nav Actions */}
@@ -200,7 +184,7 @@ export default function Navbar({ user, onOpenAdminModal, onOpenManageModal, onRe
           {user ? (
             <div className="flex items-center gap-1.5">
               <div
-                className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all active:scale-95 shadow-2xs"
+                className="flex items-center gap-1.5 p-1.5 rounded-full bg-slate-100 border border-slate-200 transition-all active:scale-95 shadow-2xs"
               >
                 <img
                   src={user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}

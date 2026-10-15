@@ -45,6 +45,7 @@ function formatTime(seconds) {
 
 export default function VinylPlayer({
   currentTrack,
+  isBottomPlayerActive = false,
   isPlaying,
   isBuffering = false,
   currentTime,
@@ -144,7 +145,7 @@ export default function VinylPlayer({
 
   if (isSuggestedOpen) {
     return (
-      <div className="w-full flex-1 flex flex-col pt-1 pb-24 select-none animate-[fadeIn_0.22s_ease-out] mt-5">
+      <div className="w-full flex-1 flex flex-col select-none animate-[fadeIn_0.22s_ease-out] mt-5">
         {/* Suggested Songs Header with Title and X Button */}
         <div className="flex items-center justify-between py-2 pb-5 mb-2.5 bg-white border-b border-black/30 px-5">
 
@@ -169,7 +170,13 @@ export default function VinylPlayer({
         </div>
 
         {/* Scrollable List of Suggested Songs */}
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[64vh] scrollbar-thin">
+        <div 
+          className={`flex-1 overflow-y-auto space-y-1 scrollbar-thin border-b border-black/30 transition-all duration-200 ${
+            isBottomPlayerActive 
+              ? 'max-h-[56vh] pb-3' 
+              : 'max-h-[66vh] sm:max-h-[78vh] pb-3'
+          }`}
+        >
           {suggestedTracks.length === 0 ? (
             <div className="text-center py-12 text-xs font-semibold text-slate-400">
               All tracks currently queued or playing!

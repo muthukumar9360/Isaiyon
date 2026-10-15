@@ -1767,6 +1767,7 @@ export default function App() {
           {activePage === 'nowplaying' && (
             <VinylPlayer 
               currentTrack={currentTrack}
+              isBottomPlayerActive={Boolean(currentTrack && !isBottomPlayerDismissed)}
               isPlaying={isPlaying}
               isBuffering={isAudioBuffering}
               currentTime={currentTime}
