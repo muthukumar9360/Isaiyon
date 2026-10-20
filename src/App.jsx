@@ -304,6 +304,7 @@ export default function App() {
   const handlePlayRef = useRef(null);
   const handlePauseRef = useRef(null);
   const currentTrackRef = useRef(null);
+  const handleErrorRef = useRef(null);
 
   // Auto-refresh Archive storage cluster nodes for high-speed streaming
   useEffect(() => {
@@ -948,6 +949,7 @@ export default function App() {
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
     audio.addEventListener('waiting', handleWaiting);
+    handleErrorRef.current = handleError;
     audio.addEventListener('playing', handlePlaying);
     audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('ended', handleEnded);
@@ -1034,7 +1036,7 @@ export default function App() {
               setCurrentTime(0);
             }).catch((err) => {
               console.warn("Track change play error:", err);
-              handleError();
+              handleErrorRef.current?.();
             });
           }
         }
@@ -1196,7 +1198,7 @@ export default function App() {
           })
           .catch((err) => {
             console.warn("Play error, trying auto-failover:", err);
-            handleError();
+            handleErrorRef.current?.();
           });
       }
       setIsBottomPlayerDismissed(false);
@@ -1273,7 +1275,7 @@ export default function App() {
               })
               .catch((err) => {
                 console.warn("Mobile audio autoplay restriction, trying auto-failover:", err);
-                handleError();
+                handleErrorRef.current?.();
               });
           }
         }
@@ -1284,10 +1286,8 @@ export default function App() {
     try {
       localStorage.setItem('isaiyon_last_track_id', track.id);
     } catch (_) {}
-    if (openBig) {
+    if (openBig || targetViewMode === 'full') {
       setActivePage('nowplaying');
-    } else if (targetViewMode) {
-      setPlayerViewMode(targetViewMode);
     }
   };
 
