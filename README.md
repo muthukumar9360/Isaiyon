@@ -10,7 +10,7 @@
 
   <br />
 
-  <a href="https://isaiyon.netlify.app">
+  <a href="https://isaiyon.netlify.app/">
     <img src="https://img.shields.io/badge/Live%20Demo-isaiyon.netlify.app-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Live Demo" />
   </a>
   <img src="https://img.shields.io/badge/PWA-Installable-blueviolet?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA Ready" />
@@ -24,7 +24,7 @@
 
 ## 🌐 Official Live Website
 
-- 🚀 **Live App URL**: [https://isaiyon.netlify.app](https://isaiyon.netlify.app)
+- 🚀 **Live App URL**: [https://isaiyon.netlify.app/](https://isaiyon.netlify.app/)
 - 📂 **GitHub Repository**: [muthukumar9360/Isaiyon](https://github.com/muthukumar9360/Isaiyon)
 
 ---
@@ -64,7 +64,7 @@
 | **Styling & Animation** | Tailwind CSS, Lucide Icons, Custom Keyframe Motion |
 | **Audio Engine** | HTML5 Audio, Web Audio API, `navigator.mediaSession` |
 | **Cloud Backend** | Google Cloud Firestore, Firebase Authentication |
-| **Hosting & CDN** | Firebase Hosting (Global Google Edge CDN) |
+| **Hosting & CDN** | Netlify (Global Edge CDN with Automated CI/CD) |
 | **Audio Source CDN** | Internet Archive (`archive.org`) High-Fidelity Audio Streams |
 | **PWA Engine** | `vite-plugin-pwa`, Workbox Service Worker |
 
@@ -98,16 +98,13 @@ Open `http://localhost:5173` in your browser.
 npm run build
 ```
 
-### Deploy to Firebase Hosting
+### 🚀 Deploy to Netlify
+Production deployments are automated via the **`deploy`** branch on GitHub. To publish updates:
 ```bash
-npx firebase login
-npx firebase deploy --only hosting
-```
-
-### 🔄 Update Live App in 1 Command
-Whenever you make any changes to the code and want to deploy the update immediately to your live website and installed mobile PWA:
-```bash
-npm run build
+git checkout deploy
+git merge main
+git push origin deploy
+git checkout main
 ```
 
 ---
@@ -115,13 +112,13 @@ npm run build
 ## 📱 How to Install on Mobile & Laptop
 
 ### On Android / iOS (Mobile)
-1. Open [https://isaiyon.netlify.app](https://isaiyon.netlify.app) in **Chrome** or **Safari**.
+1. Open [https://isaiyon.netlify.app/](https://isaiyon.netlify.app/) in **Chrome** or **Safari**.
 2. Tap the browser menu (⋮ on Chrome, Share ⎋ on Safari).
 3. Select **"Install app"** or **"Add to Home Screen"**.
 4. Launch Isaiyon directly from your home screen as a full-screen native app.
 
 ### On Laptop / PC (Chrome or Edge)
-1. Open [https://isaiyon.netlify.app](https://isaiyon.netlify.app) in **Google Chrome** or **Microsoft Edge**.
+1. Open [https://isaiyon.netlify.app/](https://isaiyon.netlify.app/) in **Google Chrome** or **Microsoft Edge**.
 2. Look at the right side of the URL address bar and click the **Install App** icon (monitor with down arrow).
 3. Or click the **3 dots menu (⋮)** → **"Install Isaiyon Music"**.
 4. The app opens in its own clean window without browser toolbars.
