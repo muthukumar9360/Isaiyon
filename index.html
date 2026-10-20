@@ -15,7 +15,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    
+    <!-- Hide Netlify injected badge / HUD overlay -->
+    <style>
+      #nl-badge-frame, #nl-hud-frame, iframe[id^="nl-"], iframe[title*="Netlify"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+        z-index: -9999 !important;
+      }
+    </style>
+
     <title>Isaiyon - Pure Sound</title>
   </head>
   <body>
