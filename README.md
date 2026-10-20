@@ -10,8 +10,8 @@
 
   <br />
 
-  <a href="https://isaiyon-music.web.app">
-    <img src="https://img.shields.io/badge/Live%20Demo-isaiyon--music.web.app-ffca28?style=for-the-badge&logo=firebase&logoColor=black" alt="Live Demo" />
+  <a href="https://isaiyon.netlify.app">
+    <img src="https://img.shields.io/badge/Live%20Demo-isaiyon.netlify.app-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Live Demo" />
   </a>
   <img src="https://img.shields.io/badge/PWA-Installable-blueviolet?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA Ready" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
@@ -24,7 +24,7 @@
 
 ## 🌐 Official Live Website
 
-- 🚀 **Live App URL**: [https://isaiyon-music.web.app](https://isaiyon-music.web.app)
+- 🚀 **Live App URL**: [https://isaiyon.netlify.app](https://isaiyon.netlify.app)
 - 📂 **GitHub Repository**: [muthukumar9360/Isaiyon](https://github.com/muthukumar9360/Isaiyon)
 
 ---
@@ -107,7 +107,7 @@ npx firebase deploy --only hosting
 ### 🔄 Update Live App in 1 Command
 Whenever you make any changes to the code and want to deploy the update immediately to your live website and installed mobile PWA:
 ```bash
-npm run build && npx firebase deploy --only hosting
+npm run build
 ```
 
 ---
@@ -115,13 +115,13 @@ npm run build && npx firebase deploy --only hosting
 ## 📱 How to Install on Mobile & Laptop
 
 ### On Android / iOS (Mobile)
-1. Open [https://isaiyon-music.web.app](https://isaiyon-music.web.app) in **Chrome** or **Safari**.
+1. Open [https://isaiyon.netlify.app](https://isaiyon.netlify.app) in **Chrome** or **Safari**.
 2. Tap the browser menu (⋮ on Chrome, Share ⎋ on Safari).
 3. Select **"Install app"** or **"Add to Home Screen"**.
 4. Launch Isaiyon directly from your home screen as a full-screen native app.
 
 ### On Laptop / PC (Chrome or Edge)
-1. Open [https://isaiyon-music.web.app](https://isaiyon-music.web.app) in **Google Chrome** or **Microsoft Edge**.
+1. Open [https://isaiyon.netlify.app](https://isaiyon.netlify.app) in **Google Chrome** or **Microsoft Edge**.
 2. Look at the right side of the URL address bar and click the **Install App** icon (monitor with down arrow).
 3. Or click the **3 dots menu (⋮)** → **"Install Isaiyon Music"**.
 4. The app opens in its own clean window without browser toolbars.

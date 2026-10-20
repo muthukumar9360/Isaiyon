@@ -1,4 +1,4 @@
-﻿services:
+services:
   - type: web
     name: isaiyon-backend
     runtime: docker
@@ -14,7 +14,7 @@
       - key: PORT
         value: 10000
       - key: FRONTEND_ORIGINS
-        value: https://isaiyon-music.web.app,https://isaiyon-music.firebaseapp.com,https://music-player-d0eb8.web.app,https://music-player-d0eb8.firebaseapp.com,http://localhost:5173
+        value: https://isaiyon.netlify.app,https://isaiyon-music.web.app,https://isaiyon-music.firebaseapp.com,https://music-player-d0eb8.web.app,https://music-player-d0eb8.firebaseapp.com,http://localhost:5173
       - key: IA_IDENTIFIER
         value: muthuramalingam_a-vault
       - key: FIREBASE_PROJECT_ID

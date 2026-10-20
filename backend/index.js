@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 5001;
 
 // 1. Allowed Origins for CORS
 const defaultOrigins = [
+  'https://isaiyon.netlify.app',
   'https://isaiyon-music.web.app',
   'https://isaiyon-music.firebaseapp.com',
   'http://localhost:5173',
@@ -34,8 +35,8 @@ app.use(cors({
       return callback(null, true);
     }
 
-    // Check if origin matches subdomains of firebaseapp or web.app
-    if (origin.endsWith('.firebaseapp.com') || origin.endsWith('.web.app')) {
+    // Check if origin matches subdomains of firebaseapp, web.app, or netlify.app
+    if (origin.endsWith('.firebaseapp.com') || origin.endsWith('.web.app') || origin.endsWith('.netlify.app')) {
       return callback(null, true);
     }
 
