@@ -1,0 +1,29 @@
+﻿services:
+  - type: web
+    name: isaiyon-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    branch: deploy
+    autoDeploy: true
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_ORIGINS
+        value: https://isaiyon-music.web.app,https://isaiyon-music.firebaseapp.com,https://music-player-d0eb8.web.app,https://music-player-d0eb8.firebaseapp.com,http://localhost:5173
+      - key: IA_IDENTIFIER
+        value: muthuramalingam_a-vault
+      - key: FIREBASE_PROJECT_ID
+        value: music-player-d0eb8
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: IA_ACCESS_KEY
+        sync: false
+      - key: IA_SECRET_KEY
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
