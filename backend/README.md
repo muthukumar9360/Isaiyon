@@ -53,7 +53,7 @@ Configure these in `backend/.env` for local development, or in the **Environment
 | :--- | :--- | :--- |
 | `PORT` | Listening port for Express | `5001` (Render automatically injects `10000`) |
 | `NODE_ENV` | Environment mode | `production` or `development` |
-| `FRONTEND_ORIGINS` | Comma-separated allowed frontend origins for CORS | `https://isaiyon-music.web.app,https://isaiyon-music.firebaseapp.com` |
+| `FRONTEND_ORIGINS` | Comma-separated allowed frontend origins for CORS | `https://isaiyon.netlify.app,http://localhost:5173` |
 | `ADMIN_EMAIL` | Authorized administrator email address | `perumpatayans@gmail.com` |
 | `IA_ACCESS_KEY` | Archive.org S3 Access Key | Obtained from [archive.org/account/s3.php](https://archive.org/account/s3.php) |
 | `IA_SECRET_KEY` | Archive.org S3 Secret Key | Obtained from [archive.org/account/s3.php](https://archive.org/account/s3.php) |
@@ -139,18 +139,19 @@ npm run archive:cleanup-temp -- --confirm
    - `IA_ACCESS_KEY` = `<your-archive-s3-access-key>`
    - `IA_SECRET_KEY` = `<your-archive-s3-secret-key>`
    - `IA_IDENTIFIER` = `muthuramalingam_a-vault`
-   - `FRONTEND_ORIGINS` = `https://isaiyon-music.web.app,https://isaiyon-music.firebaseapp.com`
+   - `FRONTEND_ORIGINS` = `https://isaiyon.netlify.app,http://localhost:5173`
    - `FIREBASE_SERVICE_ACCOUNT_JSON` = `<minified-service-account-json>`
    - `NODE_ENV` = `production`
    - `YOUTUBE_COOKIES` = *(Optional but recommended: Paste contents of your exported Netscape cookies.txt to bypass cloud datacenter 429 bot checks)*
 6. Click **Create Web Service**. Render will build the Docker container with Node 22, FFmpeg, and yt-dlp.
 7. Once deployed, note down your Render service URL (e.g., `https://isaiyon-backend.onrender.com`).
-8. Add this URL to your frontend's `.env.production`:
+8. Add this URL to your frontend's `.env.production` (and Netlify Environment Variables):
    ```bash
    VITE_API_BASE_URL=https://isaiyon-backend.onrender.com
    ```
-9. Rebuild and deploy frontend to Firebase Hosting:
+9. Rebuild and deploy frontend to Netlify:
    ```bash
-   npm run build
-   firebase deploy --only hosting
+   git checkout deploy
+   git merge main
+   git push origin deploy
    ```
